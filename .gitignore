@@ -1,0 +1,94 @@
+############################
+# General / OS files
+############################
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.history
+.svn/
+.atom/
+.swiftpm/
+.build/
+.buildlog/
+migrate_working_dir/
+
+
+############################
+# IDE / Editor files
+############################
+
+# IntelliJ / Android Studio
+*.iml
+*.ipr
+*.iws
+.idea/
+android/.idea/
+android/*.iml
+
+# VS Code (optional – uncomment if you don’t want to share settings)
+# .vscode/
+
+
+############################
+# Flutter / Dart
+############################
+
+# Dart & Flutter tooling
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+
+# Build outputs
+/build/
+/coverage/
+
+# Generated documentation
+**/doc/api/
+
+# Flutter iOS build cache
+**/ios/Flutter/.last_build_id
+
+
+############################
+# Android
+############################
+
+# Android build outputs
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# Android signing (NEVER commit)
+*.jks
+*.keystore
+android/key.properties
+
+
+############################
+# iOS
+############################
+
+# CocoaPods
+ios/Pods/
+ios/.symlinks/
+
+# Xcode user-specific data (signing, accounts, breakpoints)
+ios/Runner.xcworkspace/xcuserdata/
+ios/Runner.xcodeproj/xcuserdata/
+
+# Flutter-generated iOS files
+ios/Flutter/Flutter.podspec
+
+
+############################
+# Symbols & obfuscation
+############################
+
+# Debug symbols
+app.*.symbols
+
+# Obfuscation maps
+app.*.map.json
