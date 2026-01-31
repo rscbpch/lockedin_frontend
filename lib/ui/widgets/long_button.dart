@@ -3,7 +3,7 @@ import '../../theme/app_colors.dart';
 
 class LongButton extends StatelessWidget {
   final String text;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final bool isOutlined;
   final Widget? icon;
   final double? width;
@@ -11,7 +11,7 @@ class LongButton extends StatelessWidget {
   const LongButton({
     super.key,
     required this.text,
-    required this.onPressed,
+    this.onPressed,
     this.isOutlined = false,
     this.icon,
     this.width,

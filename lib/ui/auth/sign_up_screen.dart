@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:lockedin_frontend/ui/auth/sign_up_screen.dart';
 import '../../theme/app_colors.dart';
 import '../widgets/long_button.dart';
-import 'login_screen.dart';
+import '../widgets/sign_up_form.dart';
 
-class GettingStartedScreen extends StatelessWidget {
-  const GettingStartedScreen({super.key});
+class SignUpScreen extends StatelessWidget {
+  const SignUpScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,13 +19,14 @@ class GettingStartedScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
                       Image.asset("assets/icon.png", height: 81, width: 81),
                       const SizedBox(width: 15),
                       const Text(
-                        "LockedIn",
+                        "Sign Up",
                         style: TextStyle(
                           fontFamily: 'Quicksand',
                           fontSize: 28,
@@ -37,36 +37,18 @@ class GettingStartedScreen extends StatelessWidget {
                     ],
                   ),
                   const Text(
-                    "LockedIn is a mobile app designed for learning and productivity purposes to help students learn more effectively.",
+                    "Please sign up to create your account",
                     style: TextStyle(
                       fontFamily: 'Nunito',
                       fontSize: 16,
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 59),
-                  LongButton(
-                    text: "Login",
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const LoginScreen()),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  LongButton(
-                    text: "Sign up", 
-                    onPressed: () {
-                      Navigator.push(
-                        context, 
-                        MaterialPageRoute(builder: (context) => const SignUpScreen())
-                      );
-                    }
-                  ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16,),
+                  SignUpForm(),
                   Row(
                     children: [
+
                       const Expanded(
                         child: Divider(
                           color: AppColors.textPrimary,
@@ -93,16 +75,20 @@ class GettingStartedScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  LongButton(
-                    text: "Continue with Google",
-                    onPressed: () {},
-                    isOutlined: true,
-                    icon: Image.asset(
-                      "assets/google.png",
-                      height: 24,
-                      width: 24,
+                  Align(
+                    alignment: Alignment.center,
+                    child: LongButton(
+                      text: "Continue with Google",
+                      onPressed: () {},
+                      isOutlined: true,
+                      icon: Image.asset(
+                        "assets/google.png",
+                        height: 24,
+                        width: 24,
+                      ),
                     ),
                   ),
+                  SizedBox(height: 16,),
                 ],
               ),
             ),
