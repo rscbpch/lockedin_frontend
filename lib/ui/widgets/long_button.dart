@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_colors.dart';
+import 'package:lockedin_frontend/theme/app_colors.dart';
 
 class LongButton extends StatelessWidget {
   final String text;

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lockedin_frontend/ui/productivity_hub/productivity_hub_screen.dart';
 import 'ui/auth/getting_started_screen.dart';
 
 void main() {
@@ -13,7 +14,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const GettingStartedScreen(), // first screen
+      // home: const GettingStartedScreen(), // first screen
+      home: const ProductivityHubScreen(),
       debugShowCheckedModeBanner: false,
     );
   }
