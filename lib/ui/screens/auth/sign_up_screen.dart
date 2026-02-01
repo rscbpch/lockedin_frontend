@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_colors.dart';
-import '../widgets/long_button.dart';
-import '../widgets/sign_up_form.dart';
+import '../../../theme/app_colors.dart';
+import '../../widgets/long_button.dart';
+import '../../widgets/sign_up_form.dart';
 
 class SignUpScreen extends StatelessWidget {
   const SignUpScreen({super.key});
