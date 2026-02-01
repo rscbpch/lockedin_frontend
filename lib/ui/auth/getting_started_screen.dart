@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lockedin_frontend/ui/auth/sign_up_screen.dart';
-import '../../theme/app_colors.dart';
+import 'package:lockedin_frontend/theme/app_colors.dart';
 import '../widgets/long_button.dart';
 import 'login_screen.dart';
 
@@ -12,7 +12,7 @@ class GettingStartedScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Container(
+        child: SizedBox(
           width: double.infinity,
           height: double.infinity,
           child: Center(
