@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_colors.dart';
+import 'package:lockedin_frontend/theme/app_colors.dart';
 import '../widgets/long_button.dart';
 import '../widgets/login_form.dart';
 
@@ -11,7 +11,7 @@ class LoginScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Container(
+        child: SizedBox(
           width: double.infinity,
           height: double.infinity,
           child: Center(

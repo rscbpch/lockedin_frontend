@@ -34,6 +34,9 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  flutter_feather_icons: ^2.0.0
+  phosphor_flutter: ^2.1.0
+  flutter_staggered_grid_view: ^0.7.0
 
 dev_dependencies:
   flutter_test:
@@ -61,6 +64,11 @@ flutter:
   assets:
     - assets/icon.png
     - assets/google.png
+    - assets/pomodoro.png
+    - assets/todo-list.png
+    - assets/flashcard.png
+    - assets/task-breakdown.png
+    - assets/streak.png
 
   fonts:
     - family: Nunito
@@ -74,9 +82,9 @@ flutter:
     - family: Quicksand
       fonts:
         - asset: assets/fonts/Quicksand-Regular.ttf
-          weight: 400
-        - asset: assets/fonts/Quicksand-Medium.ttf
           weight: 500
+        - asset: assets/fonts/Quicksand-Medium.ttf
+          weight: 600
         - asset: assets/fonts/Quicksand-Bold.ttf
           weight: 700
 
