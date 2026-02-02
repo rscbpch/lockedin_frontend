@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lockedin_frontend/theme/app_colors.dart';
+import 'package:lockedin_frontend/ui/screens/auth/sign_up_screen.dart';
 import '../../widgets/long_button.dart';
 import '../../widgets/login_form.dart';
 
@@ -35,15 +36,23 @@ class LoginScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const Text(
-                    "Please login to you account",
-                    style: TextStyle(
-                      fontFamily: 'Nunito',
-                      fontSize: 16,
-                      color: AppColors.textPrimary,
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: const Text(
+                      "Please login to your account",
+                      style: TextStyle(
+                        fontFamily: 'Nunito',
+                        fontSize: 16,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   ),
+                  SizedBox(height: 26),
                   LoginForm(),
+                  LongButton(text: 'Login', onPressed: () {
+                    // do login or navigate
+                  }),
+                  SizedBox(height: 16,),
                   Row(
                     children: [
                       const Expanded(
@@ -92,6 +101,12 @@ class LoginScreen extends StatelessWidget {
                         fontFamily: 'Nunito'
                       )),
                       GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const SignUpScreen()),
+                      );
+                        },
                         child: Text(" Sign up",style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
