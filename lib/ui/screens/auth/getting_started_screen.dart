@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:lockedin_frontend/ui/screens/auth/sign_up_screen.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lockedin_frontend/theme/app_colors.dart';
-import '../../widgets/long_button.dart';
-import 'login_screen.dart';
+import 'package:lockedin_frontend/ui/widgets/long_button.dart';
 
 class GettingStartedScreen extends StatelessWidget {
   const GettingStartedScreen({super.key});
@@ -48,20 +47,14 @@ class GettingStartedScreen extends StatelessWidget {
                   LongButton(
                     text: "Login",
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const LoginScreen()),
-                      );
+                      context.push('/login');
                     },
                   ),
                   const SizedBox(height: 16),
                   LongButton(
                     text: "Sign up", 
                     onPressed: () {
-                      Navigator.push(
-                        context, 
-                        MaterialPageRoute(builder: (context) => const SignUpScreen())
-                      );
+                      context.push('/register');
                     }
                   ),
                   const SizedBox(height: 24),
