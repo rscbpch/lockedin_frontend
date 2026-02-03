@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lockedin_frontend/theme/app_colors.dart';
 import 'package:lockedin_frontend/ui/widgets/agreement_box.dart';
 import 'package:lockedin_frontend/ui/widgets/long_button.dart';
@@ -19,79 +20,101 @@ class SignUpScreen extends StatelessWidget {
           child: Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Image.asset("assets/icon.png", height: 81, width: 81),
-                      const SizedBox(width: 15),
-                      const Text(
-                        "Sign Up",
-                        style: TextStyle(
-                          fontFamily: 'Quicksand',
-                          fontSize: 28,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Text(
-                    "Please sign up to create your account",
-                    style: TextStyle(
-                      fontFamily: 'Nunito',
-                      fontSize: 16,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 16,),
-                  SignUpForm(),
-                  Row(
-                    children: [
-
-                      const Expanded(
-                        child: Divider(
-                          color: AppColors.textPrimary,
-                          thickness: 1,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          'or',
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Image.asset("assets/icon.png", height: 81, width: 81),
+                        const SizedBox(width: 15),
+                        const Text(
+                          "Sign Up",
                           style: TextStyle(
-                            fontFamily: 'Nunito',
-                            fontSize: 16,
+                            fontFamily: 'Quicksand',
+                            fontSize: 28,
+                            fontWeight: FontWeight.w600,
                             color: AppColors.textPrimary,
                           ),
                         ),
-                      ),
-                      const Expanded(
-                        child: Divider(
-                          color: AppColors.textPrimary,
-                          thickness: 1,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Align(
-                    alignment: Alignment.center,
-                    child: LongButton(
-                      text: "Continue with Google",
-                      onPressed: () {},
-                      isOutlined: true,
-                      icon: Image.asset(
-                        "assets/google.png",
-                        height: 24,
-                        width: 24,
+                      ],
+                    ),
+                    const Text(
+                      "Please sign up to create your account",
+                      style: TextStyle(
+                        fontFamily: 'Nunito',
+                        fontSize: 16,
+                        color: AppColors.textPrimary,
                       ),
                     ),
-                  ),
-                  SizedBox(height: 16,),
-                ],
+                    const SizedBox(height: 16),
+                    SignUpForm(),
+                    const SizedBox(height: 12,),
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Divider(
+                            color: AppColors.textPrimary,
+                            thickness: 1,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            'or',
+                            style: TextStyle(
+                              fontFamily: 'Nunito',
+                              fontSize: 16,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        const Expanded(
+                          child: Divider(
+                            color: AppColors.textPrimary,
+                            thickness: 1,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text("Already have an account?",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontFamily: 'Nunito'
+                        )),
+                        GestureDetector(
+                          onTap: () {
+                            context.push('/login');
+                          },
+                          child: Text(" Login",style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            fontFamily: 'Nunito'
+                          ),),
+                        )
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Align(
+                      alignment: Alignment.center,
+                      child: LongButton(
+                        text: "Continue with Google",
+                        onPressed: () {},
+                        isOutlined: true,
+                        icon: Image.asset(
+                          "assets/google.png",
+                          height: 24,
+                          width: 24,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                  ],
+                ),
               ),
             ),
           ),
@@ -189,7 +212,7 @@ class _SignUpFormState extends State<SignUpForm> {
             onChanged: (v) => setState(() => agree = v ?? false),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           LongButton(
             text: 'Sign Up',
