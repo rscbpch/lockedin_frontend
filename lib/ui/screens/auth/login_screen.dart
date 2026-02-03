@@ -50,10 +50,13 @@ class LoginScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 26),
                   LoginForm(),
-                  LongButton(text: 'Login', onPressed: () {
-                    // do login or navigate
-                  }),
-                  SizedBox(height: 16,),
+                  LongButton(
+                    text: 'Login',
+                    onPressed: () {
+                      // do login or navigate
+                    },
+                  ),
+                  SizedBox(height: 16),
                   Row(
                     children: [
                       const Expanded(
@@ -92,27 +95,29 @@ class LoginScreen extends StatelessWidget {
                       width: 24,
                     ),
                   ),
-                  SizedBox(height: 16,),
+                  SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text("Don't have an account?",
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontFamily: 'Nunito'
-                      )),
+                      Text(
+                        "Don't have an account?",
+                        style: TextStyle(fontSize: 12, fontFamily: 'Nunito'),
+                      ),
                       GestureDetector(
                         onTap: () {
                           context.push('/register');
                         },
-                        child: Text(" Sign up",style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                          fontFamily: 'Nunito'
-                        ),),
-                      )
+                        child: Text(
+                          " Sign up",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            fontFamily: 'Nunito',
+                          ),
+                        ),
+                      ),
                     ],
-                  )
+                  ),
                 ],
               ),
             ),

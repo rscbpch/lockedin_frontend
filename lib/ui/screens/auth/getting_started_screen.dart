@@ -52,10 +52,10 @@ class GettingStartedScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   LongButton(
-                    text: "Sign up", 
+                    text: "Sign up",
                     onPressed: () {
                       context.push('/register');
-                    }
+                    },
                   ),
                   const SizedBox(height: 24),
                   Row(

@@ -19,9 +19,8 @@ class LongButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final buttonWidth = width ?? MediaQuery.of(context).size.width * 0.85;
-    final maxWidth = 358.0;
-    final effectiveWidth = buttonWidth > maxWidth ? maxWidth : buttonWidth;
+    final buttonWidth = width ?? double.infinity;
+    final effectiveWidth = buttonWidth;
 
     if (isOutlined) {
       return SizedBox(
