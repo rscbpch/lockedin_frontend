@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lockedin_frontend/theme/app_colors.dart';
 import 'package:lockedin_frontend/ui/widgets/agreement_box.dart';
 import 'package:lockedin_frontend/ui/widgets/long_button.dart';
+import 'package:lockedin_frontend/ui/widgets/text_field.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -19,106 +20,107 @@ class LoginScreen extends StatelessWidget {
           child: Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    children: [
-                      Image.asset("assets/icon.png", height: 81, width: 81),
-                      const SizedBox(width: 15),
-                      const Text(
-                        "Login",
-                        style: TextStyle(
-                          fontFamily: 'Quicksand',
-                          fontSize: 28,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: const Text(
-                      "Please login to your account",
-                      style: TextStyle(
-                        fontFamily: 'Nunito',
-                        fontSize: 16,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 26),
-                  LoginForm(),
-                  LongButton(
-                    text: 'Login',
-                    onPressed: () {
-                      // do login or navigate
-                    },
-                  ),
-                  SizedBox(height: 16),
-                  Row(
-                    children: [
-                      const Expanded(
-                        child: Divider(
-                          color: AppColors.textPrimary,
-                          thickness: 1,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          'or',
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      children: [
+                        Image.asset("assets/icon.png", height: 81, width: 81),
+                        const SizedBox(width: 15),
+                        const Text(
+                          "Login",
                           style: TextStyle(
-                            fontFamily: 'Nunito',
-                            fontSize: 16,
+                            fontFamily: 'Quicksand',
+                            fontSize: 28,
+                            fontWeight: FontWeight.w600,
                             color: AppColors.textPrimary,
                           ),
                         ),
-                      ),
-                      const Expanded(
-                        child: Divider(
+                      ],
+                    ),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: const Text(
+                        "Please login to your account",
+                        style: TextStyle(
+                          fontFamily: 'Nunito',
+                          fontSize: 16,
                           color: AppColors.textPrimary,
-                          thickness: 1,
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  LongButton(
-                    text: "Continue with Google",
-                    onPressed: () {},
-                    isOutlined: true,
-                    icon: Image.asset(
-                      "assets/google.png",
-                      height: 24,
-                      width: 24,
                     ),
-                  ),
-                  SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Don't have an account?",
-                        style: TextStyle(fontSize: 12, fontFamily: 'Nunito'),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          context.push('/register');
-                        },
-                        child: Text(
-                          " Sign up",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                            fontFamily: 'Nunito',
+                    SizedBox(height: 26),
+                    LoginForm(
+                      onSubmit: (email, password) {
+                        // do login or navigate
+                        context.push("/productivity-hub");
+                      },
+                    ),
+                    SizedBox(height: 16),
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Divider(
+                            color: AppColors.textPrimary,
+                            thickness: 1,
                           ),
                         ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            'or',
+                            style: TextStyle(
+                              fontFamily: 'Nunito',
+                              fontSize: 16,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        const Expanded(
+                          child: Divider(
+                            color: AppColors.textPrimary,
+                            thickness: 1,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    LongButton(
+                      text: "Continue with Google",
+                      onPressed: () {},
+                      isOutlined: true,
+                      icon: Image.asset(
+                        "assets/google.png",
+                        height: 24,
+                        width: 24,
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Don't have an account?",
+                          style: TextStyle(fontSize: 12, fontFamily: 'Nunito'),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            context.push('/register');
+                          },
+                          child: Text(
+                            " Sign up",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              fontFamily: 'Nunito',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -141,7 +143,18 @@ class _LoginFormState extends State<LoginForm> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _rememberMe = false;
-  bool _obscurePassword = true;
+
+  bool get isFormValid {
+    return _emailController.text.isNotEmpty &&
+        _passwordController.text.isNotEmpty;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController.addListener(() => setState(() {}));
+    _passwordController.addListener(() => setState(() {}));
+  }
 
   @override
   void dispose() {
@@ -156,8 +169,11 @@ class _LoginFormState extends State<LoginForm> {
       key: _formKey,
       child: Column(
         children: [
-          TextFormField(
+          AppTextField(
+            label: 'Email',
+            hint: 'Enter your email',
             controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
             validator: (value) {
               if (value == null ||
                   value.trim().isEmpty ||
@@ -166,67 +182,19 @@ class _LoginFormState extends State<LoginForm> {
               }
               return null;
             },
-            decoration: InputDecoration(
-              labelText: 'Email',
-              hintText: 'Enter your email',
-              floatingLabelBehavior: FloatingLabelBehavior.always,
-              labelStyle: TextStyle(
-                fontFamily: 'Nunito',
-                fontSize: 16,
-                color: AppColors.textPrimary,
-              ),
-              hintStyle: TextStyle(
-                fontFamily: 'Nunito',
-                fontSize: 14,
-                color: AppColors.textPrimary,
-              ),
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.cancel),
-                onPressed: () => _emailController.clear(),
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
           ),
           SizedBox(height: 16),
-          TextFormField(
+          AppTextField(
+            label: 'Password',
+            hint: 'Enter your password',
             controller: _passwordController,
-            obscureText: _obscurePassword,
+            isPassword: true,
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
                 return "Password is required";
               }
               return null;
             },
-            decoration: InputDecoration(
-              labelText: 'Password',
-              hintText: 'Enter your password',
-              floatingLabelBehavior: FloatingLabelBehavior.always,
-              labelStyle: TextStyle(
-                fontFamily: 'Nunito',
-                fontSize: 16,
-                color: AppColors.textPrimary,
-              ),
-              hintStyle: TextStyle(
-                fontFamily: 'Nunito',
-                fontSize: 14,
-                color: AppColors.textPrimary,
-              ),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _obscurePassword = !_obscurePassword;
-                  });
-                },
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -257,6 +225,20 @@ class _LoginFormState extends State<LoginForm> {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 16),
+          LongButton(
+            text: 'Login',
+            onPressed: isFormValid
+                ? () {
+                    if (_formKey.currentState!.validate()) {
+                      widget.onSubmit?.call(
+                        _emailController.text,
+                        _passwordController.text,
+                      );
+                    }
+                  }
+                : null,
           ),
         ],
       ),
