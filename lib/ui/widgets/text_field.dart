@@ -32,7 +32,6 @@ class _AppTextFieldState extends State<AppTextField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.label),
         const SizedBox(height: 6),
         TextFormField(
           controller: widget.controller,
@@ -41,7 +40,9 @@ class _AppTextFieldState extends State<AppTextField> {
           validator: widget.validator,
           onChanged: (_) => setState(() {}),
           decoration: InputDecoration(
+            labelText: widget.label,
             hintText: widget.hint,
+            floatingLabelBehavior: FloatingLabelBehavior.always,
             suffixIcon: _buildSuffixIcon(hasText),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
