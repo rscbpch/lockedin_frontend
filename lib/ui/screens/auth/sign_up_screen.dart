@@ -49,8 +49,12 @@ class SignUpScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    SignUpForm(),
-                    const SizedBox(height: 12,),
+                    SignUpForm(
+                      onSubmit: (email, username, password) {
+                        context.push('/productivity-hub');
+                      },
+                    ),
+                    const SizedBox(height: 12),
                     Row(
                       children: [
                         const Expanded(
@@ -81,21 +85,23 @@ class SignUpScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text("Already have an account?",
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontFamily: 'Nunito'
-                        )),
+                        Text(
+                          "Already have an account?",
+                          style: TextStyle(fontSize: 12, fontFamily: 'Nunito'),
+                        ),
                         GestureDetector(
                           onTap: () {
                             context.push('/login');
                           },
-                          child: Text(" Login",style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                            fontFamily: 'Nunito'
-                          ),),
-                        )
+                          child: Text(
+                            " Login",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              fontFamily: 'Nunito',
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
