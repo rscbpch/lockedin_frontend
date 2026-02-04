@@ -213,6 +213,7 @@ class _LoginFormState extends State<LoginForm> {
               TextButton(
                 onPressed: () {
                   // Handle forget password
+                  context.push('/forget-password');
                 },
                 child: const Text(
                   'Forget Password?',
