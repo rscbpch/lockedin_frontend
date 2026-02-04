@@ -92,3 +92,6 @@ app.*.symbols
 
 # Obfuscation maps
 app.*.map.json
+
+.plist
+.pbxproj
