@@ -222,7 +222,7 @@ class _OTPFormState extends State<OTPForm> {
               minimumSize: const Size(double.infinity, 50),
               side: const BorderSide(color: AppColors.primary),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
               ),
             ),
             child: const Text(
