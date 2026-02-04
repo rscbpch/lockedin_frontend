@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
-import 'package:lockedin_frontend/theme/app_colors.dart';
+import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 
 class Navbar extends StatelessWidget {
   final int currentIndex;

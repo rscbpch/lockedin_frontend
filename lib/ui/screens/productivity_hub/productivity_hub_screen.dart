@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'package:lockedin_frontend/theme/app_colors.dart';
-import 'package:lockedin_frontend/ui/widgets/navbar.dart';
+import 'package:lockedin_frontend/ui/theme/app_theme.dart';
+import 'package:lockedin_frontend/ui/widgets/display/navbar.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class ProductivityHubScreen extends StatefulWidget {
@@ -60,10 +60,10 @@ class _ProductivityHubScreenState extends State<ProductivityHubScreen> {
               childCount: 4,
               itemBuilder: (context, index) {
                 final items = [
-                  FeatureCard(color: Color(0xFFFFDBDB), label: 'Pomodoro', imagePath: 'assets/pomodoro.png'),
-                  FeatureCard(color: Color(0xFFAEDEFC), label: 'To-do List', imagePath: 'assets/todo-list.png'),
-                  FeatureCard(color: Color(0xFFFFE893), label: 'Flashcards', imagePath: 'assets/flashcard.png'),
-                  FeatureCard(color: Color(0xFFC8E6C9), label: 'Task Breakdown', imagePath: 'assets/task-breakdown.png'),
+                  FeatureCard(color: Color(0xFFFFDBDB), label: 'Pomodoro', imagePath: 'assets/images/pomodoro.png'),
+                  FeatureCard(color: Color(0xFFAEDEFC), label: 'To-do List', imagePath: 'assets/images/todo-list.png'),
+                  FeatureCard(color: Color(0xFFFFE893), label: 'Flashcards', imagePath: 'assets/images/flashcard.png'),
+                  FeatureCard(color: Color(0xFFC8E6C9), label: 'Task Breakdown', imagePath: 'assets/images/task-breakdown.png'),
                 ];
                 return items[index];
               },
@@ -157,7 +157,7 @@ class ProductivityStatsCard extends StatelessWidget {
       child: Column(
         children: [
           Image.asset(
-            'assets/streak.png',
+            'assets/images/streak.png',
             height: 140,
           ),
           const SizedBox(height: 4),

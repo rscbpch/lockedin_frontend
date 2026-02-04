@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lockedin_frontend/theme/app_colors.dart';
-import 'package:lockedin_frontend/ui/widgets/long_button.dart';
+import 'package:lockedin_frontend/ui/theme/app_theme.dart';
+import 'package:lockedin_frontend/ui/widgets/actions/long_button.dart';
 
 class GettingStartedScreen extends StatelessWidget {
   const GettingStartedScreen({super.key});
@@ -22,7 +22,7 @@ class GettingStartedScreen extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Image.asset("assets/icon.png", height: 81, width: 81),
+                      Image.asset("assets/images/icon.png", height: 81, width: 81),
                       const SizedBox(width: 15),
                       const Text(
                         "LockedIn",
@@ -91,7 +91,7 @@ class GettingStartedScreen extends StatelessWidget {
                     onPressed: () {},
                     isOutlined: true,
                     icon: Image.asset(
-                      "assets/google.png",
+                      "assets/images/google.png",
                       height: 24,
                       width: 24,
                     ),
