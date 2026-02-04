@@ -26,7 +26,7 @@ class LoginScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Image.asset("assets/icon.png", height: 81, width: 81),
+                        Image.asset("assets/images/icon.png", height: 81, width: 81),
                         const SizedBox(width: 15),
                         const Text(
                           "Login",
@@ -91,7 +91,7 @@ class LoginScreen extends StatelessWidget {
                       onPressed: () {},
                       isOutlined: true,
                       icon: Image.asset(
-                        "assets/google.png",
+                        "assets/images/google.png",
                         height: 24,
                         width: 24,
                       ),

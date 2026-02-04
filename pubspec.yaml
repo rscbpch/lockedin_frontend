@@ -70,15 +70,15 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/icon.png
-    - assets/google.png
-    - assets/pomodoro.png
-    - assets/todo-list.png
-    - assets/flashcard.png
-    - assets/task-breakdown.png
-    - assets/streak.png
-    - assets/forgetPass.png
-    - assets/otp.png
+    - assets/images/icon.png
+    - assets/images/google.png
+    - assets/images/pomodoro.png
+    - assets/images/todo-list.png
+    - assets/images/flashcard.png
+    - assets/images/task-breakdown.png
+    - assets/images/streak.png
+    - assets/images/forgetPass.png
+    - assets/images/otp.png
 
   fonts:
     - family: Nunito
@@ -127,5 +127,5 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: assets/icon.png
+  image_path: assets/images/icon.png
   remove_alpha_ios: true

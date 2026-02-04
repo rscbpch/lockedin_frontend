@@ -22,7 +22,7 @@ class GettingStartedScreen extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Image.asset("assets/icon.png", height: 81, width: 81),
+                      Image.asset("assets/images/icon.png", height: 81, width: 81),
                       const SizedBox(width: 15),
                       const Text(
                         "LockedIn",
@@ -91,7 +91,7 @@ class GettingStartedScreen extends StatelessWidget {
                     onPressed: () {},
                     isOutlined: true,
                     icon: Image.asset(
-                      "assets/google.png",
+                      "assets/images/google.png",
                       height: 24,
                       width: 24,
                     ),

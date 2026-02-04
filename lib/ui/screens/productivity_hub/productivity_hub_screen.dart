@@ -60,10 +60,10 @@ class _ProductivityHubScreenState extends State<ProductivityHubScreen> {
               childCount: 4,
               itemBuilder: (context, index) {
                 final items = [
-                  FeatureCard(color: Color(0xFFFFDBDB), label: 'Pomodoro', imagePath: 'assets/pomodoro.png'),
-                  FeatureCard(color: Color(0xFFAEDEFC), label: 'To-do List', imagePath: 'assets/todo-list.png'),
-                  FeatureCard(color: Color(0xFFFFE893), label: 'Flashcards', imagePath: 'assets/flashcard.png'),
-                  FeatureCard(color: Color(0xFFC8E6C9), label: 'Task Breakdown', imagePath: 'assets/task-breakdown.png'),
+                  FeatureCard(color: Color(0xFFFFDBDB), label: 'Pomodoro', imagePath: 'assets/images/pomodoro.png'),
+                  FeatureCard(color: Color(0xFFAEDEFC), label: 'To-do List', imagePath: 'assets/images/todo-list.png'),
+                  FeatureCard(color: Color(0xFFFFE893), label: 'Flashcards', imagePath: 'assets/images/flashcard.png'),
+                  FeatureCard(color: Color(0xFFC8E6C9), label: 'Task Breakdown', imagePath: 'assets/images/task-breakdown.png'),
                 ];
                 return items[index];
               },
@@ -157,7 +157,7 @@ class ProductivityStatsCard extends StatelessWidget {
       child: Column(
         children: [
           Image.asset(
-            'assets/streak.png',
+            'assets/images/streak.png',
             height: 140,
           ),
           const SizedBox(height: 4),

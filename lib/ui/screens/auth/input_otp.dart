@@ -39,7 +39,7 @@ class OTPScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    Image.asset('assets/otp.png', width: 259, height: 259),
+                    Image.asset('assets/images/otp.png', width: 259, height: 259),
                     Align(
                       alignment: Alignment.topLeft,
                       child: const Text(

@@ -41,7 +41,7 @@ class ForgetPasswordScreen extends StatelessWidget {
                       ),
                     ),
                     Image.asset(
-                      'assets/forgetPass.png',
+                      'assets/images/forgetPass.png',
                       width: 259,
                       height: 259,
                     ),
