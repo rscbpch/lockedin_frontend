@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'package:lockedin_frontend/theme/app_colors.dart';
-import 'package:lockedin_frontend/ui/widgets/navbar.dart';
+import 'package:lockedin_frontend/ui/theme/app_theme.dart';
+import 'package:lockedin_frontend/ui/widgets/display/navbar.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class ProductivityHubScreen extends StatefulWidget {

@@ -1,10 +1,7 @@
-import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lockedin_frontend/theme/app_colors.dart';
-
-import 'package:lockedin_frontend/ui/widgets/long_button.dart';
-import 'package:lockedin_frontend/ui/widgets/text_field.dart';
+import 'package:lockedin_frontend/ui/theme/app_theme.dart';
+import 'package:lockedin_frontend/ui/widgets/actions/long_button.dart';
 
 class OTPScreen extends StatelessWidget {
   final String email;

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lockedin_frontend/theme/app_colors.dart';
-import 'package:lockedin_frontend/ui/widgets/long_button.dart';
+import 'package:lockedin_frontend/ui/theme/app_theme.dart';
+import 'package:lockedin_frontend/ui/widgets/actions/long_button.dart';
 
 class GettingStartedScreen extends StatelessWidget {
   const GettingStartedScreen({super.key});
