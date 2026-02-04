@@ -1,16 +1,12 @@
+import 'package:email_validator/email_validator.dart';
+
 class Validators {
   static String? email(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Email is required';
+    if (value == null ||
+        value.trim().isEmpty ||
+        !EmailValidator.validate(value)) {
+      return "Email is required";
     }
-
-    final regex =
-        RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-
-    if (!regex.hasMatch(value)) {
-      return 'Enter a valid email';
-    }
-
     return null;
   }
 
@@ -34,8 +30,7 @@ class Validators {
     return null;
   }
 
-  static String? confirmPassword(
-      String? value, String password) {
+  static String? confirmPassword(String? value, String password) {
     if (value != password) {
       return 'Passwords do not match';
     }
