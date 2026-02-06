@@ -1,13 +1,20 @@
-import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lockedin_frontend/services/auth_service.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/actions/long_button.dart';
 import 'package:lockedin_frontend/ui/widgets/inputs/text_field.dart';
+import 'package:lockedin_frontend/utils/validator.dart';
 
-class ForgetPasswordScreen extends StatelessWidget {
-  const ForgetPasswordScreen({super.key});
+class ResetPasswordScreen extends StatelessWidget {
+  final String email;
+  final String otp;
+  
+  const ResetPasswordScreen({
+    super.key, 
+    required this.email, 
+    required this.otp,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -42,14 +49,14 @@ class ForgetPasswordScreen extends StatelessWidget {
                       ),
                     ),
                     Image.asset(
-                      'assets/images/forgetPass.png',
+                      'assets/images/resetPass.png',
                       width: 259,
                       height: 259,
                     ),
-                    Align(
+                    const Align(
                       alignment: Alignment.topLeft,
-                      child: const Text(
-                        "Forget password",
+                      child: Text(
+                        "Reset Password",
                         style: TextStyle(
                           fontFamily: 'Quicksand',
                           fontSize: 28,
@@ -59,10 +66,10 @@ class ForgetPasswordScreen extends StatelessWidget {
                       ),
                     ),
 
-                    Align(
+                    const Align(
                       alignment: Alignment.centerLeft,
-                      child: const Text(
-                        "Don’t worry! it happens. Please enter the email that associate with your account",
+                      child: Text(
+                        "Enter your new password below",
                         style: TextStyle(
                           fontFamily: 'Nunito',
                           fontSize: 16,
@@ -70,26 +77,33 @@ class ForgetPasswordScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    SizedBox(height: 26),
-                    ForgetPasswordForm(
-                      onSubmit: (email) async {
-                        // Handle forget password - send OTP
-                        final result = await AuthService.sendOTP(email: email);
+                    const SizedBox(height: 26),
+                    ResetPasswordForm(
+                      email: email,
+                      otp: otp,
+                      onSubmit: (newPassword) async {
+                        final result = await AuthService.resetPasswordWithOTP(
+                          email: email,
+                          otp: otp,
+                          newPassword: newPassword,
+                        );
+                        
                         if (result['success']) {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(result['message'] ?? 'OTP sent to your email'),
+                                content: Text(result['message'] ?? 'Password reset successfully'),
                                 backgroundColor: Colors.green,
                               ),
                             );
-                            context.push('/OTP/${Uri.encodeComponent(email)}');
+                            // Navigate to login screen
+                            context.go('/login');
                           }
                         } else {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(result['message'] ?? 'Failed to send OTP'),
+                                content: Text(result['message'] ?? 'Failed to reset password'),
                                 backgroundColor: Colors.red,
                               ),
                             );
@@ -97,7 +111,7 @@ class ForgetPasswordScreen extends StatelessWidget {
                         }
                       },
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                   ],
                 ),
               ),
@@ -109,32 +123,45 @@ class ForgetPasswordScreen extends StatelessWidget {
   }
 }
 
-class ForgetPasswordForm extends StatefulWidget {
-  final Future<void> Function(String email)? onSubmit;
-  const ForgetPasswordForm({super.key, this.onSubmit});
+class ResetPasswordForm extends StatefulWidget {
+  final String email;
+  final String otp;
+  final Future<void> Function(String newPassword)? onSubmit;
+  
+  const ResetPasswordForm({
+    super.key, 
+    required this.email,
+    required this.otp,
+    this.onSubmit,
+  });
 
   @override
-  State<ForgetPasswordForm> createState() => _ForgetPasswordFormState();
+  State<ResetPasswordForm> createState() => _ResetPasswordFormState();
 }
 
-class _ForgetPasswordFormState extends State<ForgetPasswordForm> {
+class _ResetPasswordFormState extends State<ResetPasswordForm> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
 
   bool get isFormValid {
-    return _emailController.text.isNotEmpty && !_isLoading;
+    return _passwordController.text.isNotEmpty &&
+        _confirmPasswordController.text.isNotEmpty &&
+        !_isLoading;
   }
 
   @override
   void initState() {
     super.initState();
-    _emailController.addListener(() => setState(() {}));
+    _passwordController.addListener(() => setState(() {}));
+    _confirmPasswordController.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -145,7 +172,7 @@ class _ForgetPasswordFormState extends State<ForgetPasswordForm> {
       });
       
       try {
-        await widget.onSubmit?.call(_emailController.text.trim());
+        await widget.onSubmit?.call(_passwordController.text.trim());
       } finally {
         if (mounted) {
           setState(() {
@@ -163,22 +190,26 @@ class _ForgetPasswordFormState extends State<ForgetPasswordForm> {
       child: Column(
         children: [
           AppTextField(
-            label: 'Email',
-            hint: 'Enter your email',
-            controller: _emailController,
-            keyboardType: TextInputType.emailAddress,
-            validator: (value) {
-              if (value == null ||
-                  value.trim().isEmpty ||
-                  !EmailValidator.validate(value)) {
-                return "Please enter a valid email address";
-              }
-              return null;
-            },
+            label: 'New Password',
+            hint: 'Enter your new password',
+            controller: _passwordController,
+            isPassword: true,
+            validator: Validators.password,
+          ),
+          const SizedBox(height: 16),
+          AppTextField(
+            label: 'Confirm New Password',
+            hint: 'Confirm your new password',
+            controller: _confirmPasswordController,
+            isPassword: true,
+            validator: (value) => Validators.confirmPassword(
+              value,
+              _passwordController.text,
+            ),
           ),
           const SizedBox(height: 32),
           LongButton(
-            text: _isLoading ? 'Sending...' : 'Get OTP',
+            text: _isLoading ? 'Resetting...' : 'Reset Password',
             onPressed: isFormValid ? _handleSubmit : null,
           ),
         ],

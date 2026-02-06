@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lockedin_frontend/services/auth_service.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/actions/long_button.dart';
 
@@ -68,13 +69,29 @@ class OTPScreen extends StatelessWidget {
                     OTPForm(
                       email: email,
                       onSubmit: (otp) {
-                        // Handle OTP verification
-                        print("Verify OTP: $otp for email: $email");
-                        // You can add navigation to next screen here
+                        // Navigate to reset password screen with email and OTP
+                        context.push('/reset-password/${Uri.encodeComponent(email)}/${Uri.encodeComponent(otp)}');
                       },
-                      onResend: () {
+                      onResend: () async {
                         // Handle resend OTP
-                        print("Resend OTP to: $email");
+                        final result = await AuthService.sendOTP(email: email);
+                        if (context.mounted) {
+                          if (result['success']) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(result['message'] ?? 'OTP sent successfully'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(result['message'] ?? 'Failed to send OTP'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
                       },
                     ),
                     SizedBox(height: 16),
@@ -92,7 +109,7 @@ class OTPScreen extends StatelessWidget {
 class OTPForm extends StatefulWidget {
   final String email;
   final void Function(String otp)? onSubmit;
-  final VoidCallback? onResend;
+  final Future<void> Function()? onResend;
   const OTPForm({super.key, required this.email, this.onSubmit, this.onResend});
 
   @override
@@ -106,6 +123,7 @@ class _OTPFormState extends State<OTPForm> {
     (index) => TextEditingController(),
   );
   final List<FocusNode> _focusNodes = List.generate(4, (index) => FocusNode());
+  bool _isResending = false;
 
   bool get isFormValid {
     return _controllers.every((controller) => controller.text.isNotEmpty);
@@ -139,6 +157,22 @@ class _OTPFormState extends State<OTPForm> {
       _focusNodes[index + 1].requestFocus();
     } else if (value.isEmpty && index > 0) {
       _focusNodes[index - 1].requestFocus();
+    }
+  }
+
+  Future<void> _handleResend() async {
+    setState(() {
+      _isResending = true;
+    });
+    
+    try {
+      await widget.onResend?.call();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isResending = false;
+        });
+      }
     }
   }
 
@@ -214,7 +248,7 @@ class _OTPFormState extends State<OTPForm> {
           const SizedBox(height: 16),
           // Resend OTP Button
           OutlinedButton(
-            onPressed: widget.onResend,
+            onPressed: _isResending ? null : _handleResend,
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(double.infinity, 50),
               side: const BorderSide(color: AppColors.primary),
@@ -222,12 +256,12 @@ class _OTPFormState extends State<OTPForm> {
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
-            child: const Text(
-              'Resend OTP (00:48)',
+            child: Text(
+              _isResending ? 'Sending...' : 'Resend OTP (00:48)',
               style: TextStyle(
                 fontFamily: 'Nunito',
                 fontSize: 16,
-                color: AppColors.primary,
+                color: _isResending ? Colors.grey : AppColors.primary,
                 fontWeight: FontWeight.w500,
               ),
             ),
