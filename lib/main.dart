@@ -16,7 +16,7 @@ final GoRouter router = GoRouter(
     // auth
     GoRoute(
       path: '/',
-      builder: (context, state) => const GettingStartedScreen(),
+      builder: (context, state) => const ProductivityHubScreen(),
     ),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(

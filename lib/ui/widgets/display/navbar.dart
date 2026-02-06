@@ -2,12 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 
-class Navbar extends StatelessWidget {
+class Navbar extends StatefulWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
 
   const Navbar({super.key, required this.currentIndex, required this.onTap});
 
+  @override
+  State<Navbar> createState() => _NavbarState();
+}
+
+class _NavbarState extends State<Navbar> {
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -27,9 +32,10 @@ class Navbar extends StatelessWidget {
   }
 
   Widget _navItem(IconData icon, int index) {
-    final isActive = currentIndex == index;
+    final isActive = widget.currentIndex == index;
+
     return GestureDetector(
-      onTap: () => onTap(index),
+      onTap: () => widget.onTap(index),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10),
         child: Column(
@@ -41,11 +47,14 @@ class Navbar extends StatelessWidget {
               size: 25,
             ),
             const SizedBox(height: 6),
-            Container(
-              width: 24,
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              width: isActive ? 24 : 0, 
               height: 2,
               decoration: BoxDecoration(
-                color: isActive ? AppColors.primary : Colors.transparent,
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(1),
               ),
             ),
           ],
