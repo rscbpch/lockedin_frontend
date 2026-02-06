@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/inputs/agreement_box.dart';
 import 'package:lockedin_frontend/ui/widgets/actions/long_button.dart';
 import 'package:lockedin_frontend/ui/widgets/inputs/text_field.dart';
-import 'package:lockedin_frontend/utils/validator.dart';
+// import 'package:lockedin_frontend/utils/validator.dart';
+import '../../../provider/auth_provider.dart';
 
 class SignUpScreen extends StatelessWidget {
   const SignUpScreen({super.key});
@@ -50,8 +52,25 @@ class SignUpScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     SignUpForm(
-                      onSubmit: (email, username, password) {
-                        context.push('/productivity-hub');
+                      onSubmit: (email, username, password, confirmPassword) async {
+                        final authProvider = context.read<AuthProvider>();
+
+                        final success = await authProvider.register(
+                          email: email,
+                          username: username,
+                          password: password,
+                          confirmPassword: confirmPassword,
+                        );
+
+                        if (success) {
+                          context.push('/productivity-hub');
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(authProvider.errorMessage ?? 'Something went wrong'),
+                            ),
+                          );
+                        }
                       },
                     ),
                     const SizedBox(height: 12),
@@ -131,7 +150,7 @@ class SignUpScreen extends StatelessWidget {
 }
 
 class SignUpForm extends StatefulWidget {
-  final void Function(String email, String username, String password)? onSubmit;
+  final void Function(String email, String username, String password, String confirmPassword)? onSubmit;
 
   const SignUpForm({super.key, this.onSubmit});
 
@@ -146,8 +165,20 @@ class _SignUpFormState extends State<SignUpForm> {
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmController = TextEditingController();
-
+  
   bool agree = false;
+  
+  @override
+  void initState() {
+    super.initState();
+    // Update form state when any controller changes so `isFormValid` is recalculated
+    emailController.addListener(_onFieldChanged);
+    usernameController.addListener(_onFieldChanged);
+    passwordController.addListener(_onFieldChanged);
+    confirmController.addListener(_onFieldChanged);
+  }
+
+  void _onFieldChanged() => setState(() {});
 
   bool get isFormValid {
     return agree &&
@@ -163,11 +194,16 @@ class _SignUpFormState extends State<SignUpForm> {
     usernameController.dispose();
     passwordController.dispose();
     confirmController.dispose();
+    emailController.removeListener(_onFieldChanged);
+    usernameController.removeListener(_onFieldChanged);
+    passwordController.removeListener(_onFieldChanged);
+    confirmController.removeListener(_onFieldChanged);
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
     return Form(
       key: _formKey,
       child: Column(
@@ -177,7 +213,6 @@ class _SignUpFormState extends State<SignUpForm> {
             hint: 'Enter your email',
             controller: emailController,
             keyboardType: TextInputType.emailAddress,
-            validator: Validators.email,
           ),
 
           const SizedBox(height: 10),
@@ -186,7 +221,6 @@ class _SignUpFormState extends State<SignUpForm> {
             label: 'Username',
             hint: 'Enter your username',
             controller: usernameController,
-            validator: Validators.username,
           ),
 
           const SizedBox(height: 10),
@@ -196,7 +230,6 @@ class _SignUpFormState extends State<SignUpForm> {
             hint: 'Enter your password',
             controller: passwordController,
             isPassword: true,
-            validator: Validators.password,
           ),
 
           const SizedBox(height: 10),
@@ -206,8 +239,6 @@ class _SignUpFormState extends State<SignUpForm> {
             hint: 'Enter your password again',
             controller: confirmController,
             isPassword: true,
-            validator: (v) =>
-                Validators.confirmPassword(v, passwordController.text),
           ),
 
           const SizedBox(height: 10),
@@ -219,20 +250,20 @@ class _SignUpFormState extends State<SignUpForm> {
           ),
 
           const SizedBox(height: 12),
-
           LongButton(
-            text: 'Sign Up',
-            onPressed: isFormValid
-                ? () {
+            text: auth.isLoading ? 'Signing Up...' : 'Sign Up',
+            onPressed: (!isFormValid || auth.isLoading)
+                ? null
+                : () {
                     if (_formKey.currentState!.validate()) {
                       widget.onSubmit?.call(
                         emailController.text,
                         usernameController.text,
                         passwordController.text,
+                        confirmController.text
                       );
                     }
-                  }
-                : null,
+                  },
           ),
         ],
       ),
