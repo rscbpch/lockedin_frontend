@@ -1,6 +1,8 @@
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../../../provider/auth_provider.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/inputs/agreement_box.dart';
 import 'package:lockedin_frontend/ui/widgets/actions/long_button.dart';
@@ -26,7 +28,11 @@ class LoginScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Image.asset("assets/images/icon.png", height: 81, width: 81),
+                        Image.asset(
+                          "assets/images/icon.png",
+                          height: 81,
+                          width: 81,
+                        ),
                         const SizedBox(width: 15),
                         const Text(
                           "Login",
@@ -52,9 +58,24 @@ class LoginScreen extends StatelessWidget {
                     ),
                     SizedBox(height: 26),
                     LoginForm(
-                      onSubmit: (email, password) {
-                        // do login or navigate
-                        context.push("/productivity-hub");
+                      onSubmit: (email, password) async {
+                        final auth = context.read<AuthProvider>();
+                        final success = await auth.login(
+                          email: email,
+                          password: password,
+                        );
+
+                        if (success) {
+                          context.push('/productivity-hub');
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                auth.errorMessage ?? 'Login failed',
+                              ),
+                            ),
+                          );
+                        }
                       },
                     ),
                     SizedBox(height: 16),
@@ -165,6 +186,7 @@ class _LoginFormState extends State<LoginForm> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
     return Form(
       key: _formKey,
       child: Column(
@@ -229,17 +251,17 @@ class _LoginFormState extends State<LoginForm> {
           ),
           const SizedBox(height: 16),
           LongButton(
-            text: 'Login',
-            onPressed: isFormValid
-                ? () {
+            text: auth.isLoading ? 'Logging in...' : 'Login',
+            onPressed: (!isFormValid || auth.isLoading)
+                ? null
+                : () {
                     if (_formKey.currentState!.validate()) {
                       widget.onSubmit?.call(
                         _emailController.text,
                         _passwordController.text,
                       );
                     }
-                  }
-                : null,
+                  },
           ),
         ],
       ),
