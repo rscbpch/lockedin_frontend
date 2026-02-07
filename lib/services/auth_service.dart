@@ -113,7 +113,8 @@ class AuthService {
       final GoogleSignIn googleSignIn = GoogleSignIn(
         scopes: ['email', 'profile'],
         clientId: Env.googleClientId, // Platform-specific client ID
-        serverClientId: Env.googleWebClientId, // Web client ID for backend token verification
+        serverClientId: Env
+            .googleWebClientId, // Web client ID for backend token verification
       );
 
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
@@ -134,9 +135,7 @@ class AuthService {
       final response = await http.post(
         Uri.parse('${Env.apiBaseUrl}/auth/google'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'idToken': idToken,
-        }),
+        body: jsonEncode({'idToken': idToken}),
       );
 
       final status = response.statusCode;
@@ -161,6 +160,104 @@ class AuthService {
       }
 
       String message = 'Google sign-in failed';
+      if (parsed is Map && parsed['message'] != null) {
+        message = parsed['message'].toString();
+      } else if (body.isNotEmpty) {
+        message = body;
+      }
+
+      return {'success': false, 'message': message, 'statusCode': status};
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> sendOTP({required String email}) async {
+    try {
+      final response = await http.post(
+        Uri.parse(ApiConfig.sendOTP),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email}),
+      );
+
+      final status = response.statusCode;
+      final body = response.body;
+      // Log for debugging
+      // ignore: avoid_print
+      print('AuthService.sendOTP -> status: $status body: $body');
+
+      dynamic parsed;
+      try {
+        parsed = jsonDecode(body);
+      } catch (_) {
+        parsed = null;
+      }
+
+      if (status >= 200 && status < 300) {
+        if (parsed is Map<String, dynamic>) {
+          if (parsed.containsKey('success')) return parsed;
+          return {
+            'success': true,
+            'message': parsed['message'] ?? 'OTP sent successfully',
+          };
+        }
+        return {'success': true, 'message': 'OTP sent successfully'};
+      }
+
+      String message = 'Failed to send OTP';
+      if (parsed is Map && parsed['message'] != null) {
+        message = parsed['message'].toString();
+      } else if (body.isNotEmpty) {
+        message = body;
+      }
+
+      return {'success': false, 'message': message, 'statusCode': status};
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> resetPasswordWithOTP({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse(ApiConfig.resetPasswordWithOTP),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'otp': otp,
+          'newPassword': newPassword,
+        }),
+      );
+
+      final status = response.statusCode;
+      final body = response.body;
+      // Log for debugging
+      // ignore: avoid_print
+      print('AuthService.resetPasswordWithOTP -> status: $status body: $body');
+
+      dynamic parsed;
+      try {
+        parsed = jsonDecode(body);
+      } catch (_) {
+        parsed = null;
+      }
+
+      if (status >= 200 && status < 300) {
+        if (parsed is Map<String, dynamic>) {
+          if (parsed.containsKey('success')) return parsed;
+          return {
+            'success': true,
+            'message': parsed['message'] ?? 'Password reset successfully',
+          };
+        }
+        return {'success': true, 'message': 'Password reset successfully'};
+      }
+
+      String message = 'Failed to reset password';
       if (parsed is Map && parsed['message'] != null) {
         message = parsed['message'].toString();
       } else if (body.isNotEmpty) {
