@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:google_sign_in/google_sign_in.dart';
 import '../config/api_config.dart';
-import 'api_client.dart';
+import '../config/env.dart';
 
 class AuthService {
   static Future<Map<String, dynamic>> register({
@@ -11,8 +12,8 @@ class AuthService {
     required String confirmPassword,
   }) async {
     try {
-      final response = await ApiClient.post(
-        ApiConfig.register,
+      final response = await http.post(
+        Uri.parse(ApiConfig.register),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': email,
@@ -53,9 +54,8 @@ class AuthService {
 
       return {'success': false, 'message': message, 'statusCode': status};
     } catch (e) {
-      // Network, timeout, or other error
-      String errorMessage = _getErrorMessage(e);
-      return {'success': false, 'message': errorMessage};
+      // Network or other error (DNS, connection refused, TLS, etc.)
+      return {'success': false, 'message': e.toString()};
     }
   }
 
@@ -67,8 +67,8 @@ class AuthService {
       final payload = {'email': email, 'username': email, 'password': password};
       // ignore: avoid_print
       print('AuthService.login -> request body: ${jsonEncode(payload)}');
-      final response = await ApiClient.post(
-        ApiConfig.login,
+      final response = await http.post(
+        Uri.parse(ApiConfig.login),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(payload),
       );
@@ -103,75 +103,47 @@ class AuthService {
 
       return {'success': false, 'message': message, 'statusCode': status};
     } catch (e) {
-      String errorMessage = _getErrorMessage(e);
-      return {'success': false, 'message': errorMessage};
+      return {'success': false, 'message': e.toString()};
     }
   }
 
-  static Future<Map<String, dynamic>> sendOTP({required String email}) async {
+  static Future<Map<String, dynamic>> signInWithGoogle() async {
     try {
-      final response = await ApiClient.post(
-        ApiConfig.sendOTP,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email}),
+      // For Google Cloud Console (not Firebase), explicitly specify client ID
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        scopes: ['email', 'profile'],
+        clientId: Env.googleClientId, // Platform-specific client ID
+        serverClientId: Env.googleWebClientId, // Web client ID for backend token verification
       );
 
-      final status = response.statusCode;
-      final body = response.body;
-      // Log for debugging
-      // ignore: avoid_print
-      print('AuthService.sendOTP -> status: $status body: $body');
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
-      dynamic parsed;
-      try {
-        parsed = jsonDecode(body);
-      } catch (_) {
-        parsed = null;
+      if (googleUser == null) {
+        return {'success': false, 'message': 'Google sign-in cancelled'};
       }
 
-      if (status >= 200 && status < 300) {
-        if (parsed is Map<String, dynamic>) {
-          if (parsed.containsKey('success')) return parsed;
-          return {'success': true, 'message': parsed['message'] ?? 'OTP sent successfully'};
-        }
-        return {'success': true, 'message': 'OTP sent successfully'};
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      final String? idToken = googleAuth.idToken;
+
+      if (idToken == null) {
+        return {'success': false, 'message': 'Failed to get Google ID token'};
       }
 
-      String message = 'Failed to send OTP';
-      if (parsed is Map && parsed['message'] != null) {
-        message = parsed['message'].toString();
-      } else if (body.isNotEmpty) {
-        message = body;
-      }
-
-      return {'success': false, 'message': message, 'statusCode': status};
-    } catch (e) {
-      String errorMessage = _getErrorMessage(e);
-      return {'success': false, 'message': errorMessage};
-    }
-  }
-
-  static Future<Map<String, dynamic>> resetPasswordWithOTP({
-    required String email,
-    required String otp,
-    required String newPassword,
-  }) async {
-    try {
-      final response = await ApiClient.post(
-        ApiConfig.resetPasswordWithOTP,
+      // Send to backend
+      final response = await http.post(
+        Uri.parse('${Env.apiBaseUrl}/auth/google'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'email': email,
-          'otp': otp,
-          'newPassword': newPassword,
+          'idToken': idToken,
         }),
       );
 
       final status = response.statusCode;
       final body = response.body;
-      // Log for debugging
+
       // ignore: avoid_print
-      print('AuthService.resetPasswordWithOTP -> status: $status body: $body');
+      print('AuthService.signInWithGoogle -> status: $status body: $body');
 
       dynamic parsed;
       try {
@@ -183,12 +155,12 @@ class AuthService {
       if (status >= 200 && status < 300) {
         if (parsed is Map<String, dynamic>) {
           if (parsed.containsKey('success')) return parsed;
-          return {'success': true, 'message': parsed['message'] ?? 'Password reset successfully'};
+          return {'success': true, 'data': parsed};
         }
-        return {'success': true, 'message': 'Password reset successfully'};
+        return {'success': true, 'data': parsed};
       }
 
-      String message = 'Failed to reset password';
+      String message = 'Google sign-in failed';
       if (parsed is Map && parsed['message'] != null) {
         message = parsed['message'].toString();
       } else if (body.isNotEmpty) {
@@ -197,35 +169,7 @@ class AuthService {
 
       return {'success': false, 'message': message, 'statusCode': status};
     } catch (e) {
-      String errorMessage = _getErrorMessage(e);
-      return {'success': false, 'message': errorMessage};
+      return {'success': false, 'message': e.toString()};
     }
-  }
-
-  // Helper method to provide user-friendly error messages
-  static String _getErrorMessage(dynamic error) {
-    String errorStr = error.toString();
-    
-    if (errorStr.contains('No internet connection')) {
-      return 'No internet connection. Please check your network and try again.';
-    }
-    
-    if (errorStr.contains('Request timed out') || 
-        errorStr.contains('Connection timed out') ||
-        errorStr.contains('TimeoutException')) {
-      return 'Connection timed out. Please check your internet connection and try again.';
-    }
-    
-    if (errorStr.contains('SocketException') ||
-        errorStr.contains('Failed host lookup')) {
-      return 'Unable to connect to server. Please check your internet connection.';
-    }
-    
-    if (errorStr.contains('Connection refused')) {
-      return 'Server is currently unavailable. Please try again later.';
-    }
-    
-    // Return a generic but user-friendly message for other errors
-    return 'Network error occurred. Please check your connection and try again.';
   }
 }

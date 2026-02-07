@@ -63,4 +63,27 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<bool> signInWithGoogle() async {
+    isLoading = true;
+    errorMessage = null;
+    notifyListeners();
+
+    try {
+      final response = await AuthService.signInWithGoogle();
+
+      if (response['success'] == true) {
+        return true;
+      } else {
+        errorMessage = response['message'] ?? 'Google sign-in failed';
+        return false;
+      }
+    } catch (e) {
+      errorMessage = 'Google sign-in error';
+      return false;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
 }

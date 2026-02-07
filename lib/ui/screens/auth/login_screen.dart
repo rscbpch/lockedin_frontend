@@ -111,7 +111,20 @@ class LoginScreen extends StatelessWidget {
                     const SizedBox(height: 24),
                     LongButton(
                       text: "Continue with Google",
-                      onPressed: () {},
+                      onPressed: () async {
+                        final auth = context.read<AuthProvider>();
+                        final success = await auth.signInWithGoogle();
+                        
+                        if (success) {
+                          context.push('/productivity-hub');
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(auth.errorMessage ?? 'Google sign-in failed'),
+                            ),
+                          );
+                        }
+                      },
                       isOutlined: true,
                       icon: Image.asset(
                         "assets/images/google.png",
