@@ -112,8 +112,8 @@ class AuthService {
       // For Google Cloud Console (not Firebase), explicitly specify client ID
       final GoogleSignIn googleSignIn = GoogleSignIn(
         scopes: ['email', 'profile'],
-        clientId:
-            Env.googleClientId, // Explicitly use platform-specific client ID
+        clientId: Env.googleClientId, // Platform-specific client ID
+        serverClientId: Env.googleWebClientId, // Web client ID for backend token verification
       );
 
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();

@@ -12,4 +12,6 @@ class Env {
     }
     return null;
   }
+  
+  static String? get googleWebClientId => dotenv.env['GOOGLE_CLIENT_ID_WEB'];
 }
