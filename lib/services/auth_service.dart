@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
+import 'api_client.dart';
 
 class AuthService {
   static Future<Map<String, dynamic>> register({
@@ -10,8 +11,8 @@ class AuthService {
     required String confirmPassword,
   }) async {
     try {
-      final response = await http.post(
-        Uri.parse(ApiConfig.register),
+      final response = await ApiClient.post(
+        ApiConfig.register,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': email,
@@ -52,8 +53,9 @@ class AuthService {
 
       return {'success': false, 'message': message, 'statusCode': status};
     } catch (e) {
-      // Network or other error (DNS, connection refused, TLS, etc.)
-      return {'success': false, 'message': e.toString()};
+      // Network, timeout, or other error
+      String errorMessage = _getErrorMessage(e);
+      return {'success': false, 'message': errorMessage};
     }
   }
 
@@ -65,8 +67,8 @@ class AuthService {
       final payload = {'email': email, 'username': email, 'password': password};
       // ignore: avoid_print
       print('AuthService.login -> request body: ${jsonEncode(payload)}');
-      final response = await http.post(
-        Uri.parse(ApiConfig.login),
+      final response = await ApiClient.post(
+        ApiConfig.login,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(payload),
       );
@@ -101,14 +103,15 @@ class AuthService {
 
       return {'success': false, 'message': message, 'statusCode': status};
     } catch (e) {
-      return {'success': false, 'message': e.toString()};
+      String errorMessage = _getErrorMessage(e);
+      return {'success': false, 'message': errorMessage};
     }
   }
 
   static Future<Map<String, dynamic>> sendOTP({required String email}) async {
     try {
-      final response = await http.post(
-        Uri.parse(ApiConfig.sendOTP),
+      final response = await ApiClient.post(
+        ApiConfig.sendOTP,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email}),
       );
@@ -143,7 +146,8 @@ class AuthService {
 
       return {'success': false, 'message': message, 'statusCode': status};
     } catch (e) {
-      return {'success': false, 'message': e.toString()};
+      String errorMessage = _getErrorMessage(e);
+      return {'success': false, 'message': errorMessage};
     }
   }
 
@@ -153,8 +157,8 @@ class AuthService {
     required String newPassword,
   }) async {
     try {
-      final response = await http.post(
-        Uri.parse(ApiConfig.resetPasswordWithOTP),
+      final response = await ApiClient.post(
+        ApiConfig.resetPasswordWithOTP,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': email,
@@ -193,7 +197,35 @@ class AuthService {
 
       return {'success': false, 'message': message, 'statusCode': status};
     } catch (e) {
-      return {'success': false, 'message': e.toString()};
+      String errorMessage = _getErrorMessage(e);
+      return {'success': false, 'message': errorMessage};
     }
+  }
+
+  // Helper method to provide user-friendly error messages
+  static String _getErrorMessage(dynamic error) {
+    String errorStr = error.toString();
+    
+    if (errorStr.contains('No internet connection')) {
+      return 'No internet connection. Please check your network and try again.';
+    }
+    
+    if (errorStr.contains('Request timed out') || 
+        errorStr.contains('Connection timed out') ||
+        errorStr.contains('TimeoutException')) {
+      return 'Connection timed out. Please check your internet connection and try again.';
+    }
+    
+    if (errorStr.contains('SocketException') ||
+        errorStr.contains('Failed host lookup')) {
+      return 'Unable to connect to server. Please check your internet connection.';
+    }
+    
+    if (errorStr.contains('Connection refused')) {
+      return 'Server is currently unavailable. Please try again later.';
+    }
+    
+    // Return a generic but user-friendly message for other errors
+    return 'Network error occurred. Please check your connection and try again.';
   }
 }

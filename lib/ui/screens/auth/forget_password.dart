@@ -5,9 +5,65 @@ import 'package:lockedin_frontend/services/auth_service.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/actions/long_button.dart';
 import 'package:lockedin_frontend/ui/widgets/inputs/text_field.dart';
+import 'package:lockedin_frontend/utils/network_helper.dart';
 
 class ForgetPasswordScreen extends StatelessWidget {
   const ForgetPasswordScreen({super.key});
+
+  Future<void> _showNetworkDiagnosis(BuildContext context) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        title: Text('Diagnosing Connection...'),
+        content: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 20),
+            Text('Please wait...'),
+          ],
+        ),
+      ),
+    );
+
+    final diagnosis = await NetworkHelper.getDiagnosis();
+    final message = await NetworkHelper.getConnectionIssueMessage();
+
+    if (context.mounted) {
+      Navigator.of(context).pop(); // Close loading dialog
+      
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Connection Diagnosis'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(message),
+              const SizedBox(height: 16),
+              Text(
+                'Technical Details:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Text('Internet: ${diagnosis['internetConnection'] ? '✓' : '✗'}'),
+              Text('Server: ${diagnosis['serverConnection'] ? '✓' : '✗'}'),
+              Text('API URL: ${diagnosis['apiBaseUrl']}'),
+              if (diagnosis['serverMessage'] != null)
+                Text('Details: ${diagnosis['serverMessage']}'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -91,6 +147,12 @@ class ForgetPasswordScreen extends StatelessWidget {
                               SnackBar(
                                 content: Text(result['message'] ?? 'Failed to send OTP'),
                                 backgroundColor: Colors.red,
+                                action: SnackBarAction(
+                                  label: 'Diagnose',
+                                  onPressed: () async {
+                                    await _showNetworkDiagnosis(context);
+                                  },
+                                ),
                               ),
                             );
                           }
