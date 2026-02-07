@@ -62,6 +62,8 @@ class SignUpScreen extends StatelessWidget {
                           confirmPassword: confirmPassword,
                         );
 
+                        if (!context.mounted) return;
+
                         if (success) {
                           context.push('/productivity-hub');
                         } else {
@@ -226,6 +228,15 @@ class _SignUpFormState extends State<SignUpForm> {
             hint: 'Enter your email',
             controller: emailController,
             keyboardType: TextInputType.emailAddress,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Email is required';
+              }
+              if (!value.contains('@') || !value.contains('.')) {
+                return 'Enter a valid email address';
+              }
+              return null;
+            },
           ),
 
           const SizedBox(height: 10),
@@ -234,6 +245,15 @@ class _SignUpFormState extends State<SignUpForm> {
             label: 'Username',
             hint: 'Enter your username',
             controller: usernameController,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Username is required';
+              }
+              if (value.length < 3) {
+                return 'At least 3 characters';
+              }
+              return null;
+            },
           ),
 
           const SizedBox(height: 10),
@@ -243,6 +263,15 @@ class _SignUpFormState extends State<SignUpForm> {
             hint: 'Enter your password',
             controller: passwordController,
             isPassword: true,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Password is required';
+              }
+              if (value.length < 8) {
+                return 'At least 8 characters';
+              }
+              return null;
+            },
           ),
 
           const SizedBox(height: 10),
@@ -252,6 +281,12 @@ class _SignUpFormState extends State<SignUpForm> {
             hint: 'Enter your password again',
             controller: confirmController,
             isPassword: true,
+            validator: (value) {
+              if (value != passwordController.text) {
+                return 'Passwords do not match';
+              }
+              return null;
+            },
           ),
 
           const SizedBox(height: 10),
