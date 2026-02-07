@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/actions/long_button.dart';
+import 'package:provider/provider.dart';
+import '../../../provider/auth_provider.dart';
+
+
 
 class GettingStartedScreen extends StatelessWidget {
   const GettingStartedScreen({super.key});
@@ -88,7 +92,20 @@ class GettingStartedScreen extends StatelessWidget {
                   const SizedBox(height: 24),
                   LongButton(
                     text: "Continue with Google",
-                    onPressed: () {},
+                    onPressed: () async {
+                        final auth = context.read<AuthProvider>();
+                        final success = await auth.signInWithGoogle();
+                        
+                        if (success) {
+                          context.push('/productivity-hub');
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(auth.errorMessage ?? 'Google sign-in failed'),
+                            ),
+                          );
+                        }
+                      },
                     isOutlined: true,
                     icon: Image.asset(
                       "assets/images/google.png",

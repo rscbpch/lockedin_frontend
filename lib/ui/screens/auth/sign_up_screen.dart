@@ -128,7 +128,20 @@ class SignUpScreen extends StatelessWidget {
                       alignment: Alignment.center,
                       child: LongButton(
                         text: "Continue with Google",
-                        onPressed: () {},
+                        onPressed: () async {
+                          final authProvider = context.read<AuthProvider>();
+                          final success = await authProvider.signInWithGoogle();
+                          
+                          if (success) {
+                            context.push('/productivity-hub');
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(authProvider.errorMessage ?? 'Google sign-in failed'),
+                              ),
+                            );
+                          }
+                        },
                         isOutlined: true,
                         icon: Image.asset(
                           "assets/images/google.png",

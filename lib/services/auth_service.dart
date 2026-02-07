@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:google_sign_in/google_sign_in.dart';
 import '../config/api_config.dart';
+import '../config/env.dart';
 
 class AuthService {
   static Future<Map<String, dynamic>> register({
@@ -93,6 +95,72 @@ class AuthService {
       }
 
       String message = 'Login failed';
+      if (parsed is Map && parsed['message'] != null) {
+        message = parsed['message'].toString();
+      } else if (body.isNotEmpty) {
+        message = body;
+      }
+
+      return {'success': false, 'message': message, 'statusCode': status};
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> signInWithGoogle() async {
+    try {
+      // For Google Cloud Console (not Firebase), explicitly specify client ID
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        scopes: ['email', 'profile'],
+        clientId:
+            Env.googleClientId, // Explicitly use platform-specific client ID
+      );
+
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+
+      if (googleUser == null) {
+        return {'success': false, 'message': 'Google sign-in cancelled'};
+      }
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      final String? idToken = googleAuth.idToken;
+
+      if (idToken == null) {
+        return {'success': false, 'message': 'Failed to get Google ID token'};
+      }
+
+      // Send to backend
+      final response = await http.post(
+        Uri.parse('${Env.apiBaseUrl}/auth/google'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'idToken': idToken,
+        }),
+      );
+
+      final status = response.statusCode;
+      final body = response.body;
+
+      // ignore: avoid_print
+      print('AuthService.signInWithGoogle -> status: $status body: $body');
+
+      dynamic parsed;
+      try {
+        parsed = jsonDecode(body);
+      } catch (_) {
+        parsed = null;
+      }
+
+      if (status >= 200 && status < 300) {
+        if (parsed is Map<String, dynamic>) {
+          if (parsed.containsKey('success')) return parsed;
+          return {'success': true, 'data': parsed};
+        }
+        return {'success': true, 'data': parsed};
+      }
+
+      String message = 'Google sign-in failed';
       if (parsed is Map && parsed['message'] != null) {
         message = parsed['message'].toString();
       } else if (body.isNotEmpty) {
