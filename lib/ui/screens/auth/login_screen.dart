@@ -65,6 +65,8 @@ class LoginScreen extends StatelessWidget {
                           password: password,
                         );
 
+                        if (!context.mounted) return;
+                        
                         if (success) {
                           context.push('/productivity-hub');
                         } else {
