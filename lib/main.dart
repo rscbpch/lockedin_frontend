@@ -9,6 +9,7 @@ import 'package:lockedin_frontend/ui/screens/auth/reset_password.dart';
 import 'package:lockedin_frontend/ui/screens/auth/sign_up_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/productivity_hub_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/todo_list/todo_list_screen.dart';
+import 'package:lockedin_frontend/ui/screens/productivity_hub/pomodoro/pomodoro_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:lockedin_frontend/provider/auth_provider.dart';
 
@@ -55,6 +56,10 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/todo-list',
       builder: (context, state) => const TodoListScreen(),
+    ),
+    GoRoute(
+      path: '/pomodoro',
+      builder: (context, state) => const PomodoroScreen(),
     ),
   ],
 );

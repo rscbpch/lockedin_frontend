@@ -4,6 +4,7 @@ import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/display/lockedin_appbar.dart';
 import 'package:lockedin_frontend/ui/widgets/display/navbar.dart';
+import 'package:go_router/go_router.dart';
 
 class ProductivityHubScreen extends StatefulWidget {
   const ProductivityHubScreen({super.key});
@@ -40,10 +41,10 @@ class _ProductivityHubScreenState extends State<ProductivityHubScreen> {
                 itemCount: 4,
                 itemBuilder: (context, index) {
                   final items = [
-                    FeatureCard(color: const Color(0xFFFFDBDB), label: 'Pomodoro', imagePath: 'assets/images/pomodoro.png'),
-                    FeatureCard(color: const Color(0xFFAEDEFC), label: 'To-do List', imagePath: 'assets/images/todo-list.png'),
-                    FeatureCard(color: const Color(0xFFFFE893), label: 'Flashcards', imagePath: 'assets/images/flashcard.png'),
-                    FeatureCard(color: const Color(0xFFC8E6C9), label: 'Task Breakdown', imagePath: 'assets/images/task-breakdown.png'),
+                    FeatureCard(color: const Color(0xFFFFDBDB), label: 'Pomodoro', imagePath: 'assets/images/pomodoro.png', route: "/pomodoro",),
+                    FeatureCard(color: const Color(0xFFAEDEFC), label: 'To-do List', imagePath: 'assets/images/todo-list.png', route: "/todo-list",),
+                    FeatureCard(color: const Color(0xFFFFE893), label: 'Flashcards', imagePath: 'assets/images/flashcard.png', route: "/pomodoro",),
+                    FeatureCard(color: const Color(0xFFC8E6C9), label: 'Task Breakdown', imagePath: 'assets/images/task-breakdown.png', route: "pomodoro",),
                   ];
                   return items[index];
                 },
@@ -78,43 +79,54 @@ class FeatureCard extends StatelessWidget {
   final Color color;
   final String label;
   final String imagePath;
+  final String route;
 
   const FeatureCard({
     super.key,
     required this.color,
     required this.label,
     required this.imagePath,
+    required this.route,
   });
 
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(Responsive.radius(context, size: 12)),
+    return InkWell(
+      borderRadius: BorderRadius.circular(
+        Responsive.radius(context, size: 12),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Image.asset(
-            imagePath,
-            height: width * 0.16,
-            fit: BoxFit.contain,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Nunito',
-              fontSize: Responsive.text(context, size: 16),
-              fontWeight: FontWeight.w500,
-              color: AppColors.textPrimary,
+      onTap: () {
+        context.go(route);
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius:
+              BorderRadius.circular(Responsive.radius(context, size: 12)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Image.asset(
+              imagePath,
+              height: width * 0.16,
+              fit: BoxFit.contain,
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Nunito',
+                fontSize: Responsive.text(context, size: 16),
+                fontWeight: FontWeight.w500,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
