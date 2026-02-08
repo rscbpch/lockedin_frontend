@@ -16,7 +16,12 @@ class LockedInAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       title: Text(
         'LockedIn',
-        style: TextStyle(color: AppColors.textPrimary, fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 24), fontWeight: FontWeight.bold),
+        style: TextStyle(
+          color: AppColors.textPrimary,
+          fontFamily: 'Nunito',
+          fontSize: Responsive.text(context, size: 24),
+          fontWeight: FontWeight.bold
+        ),
       ),
       centerTitle: false,
       actions: [
