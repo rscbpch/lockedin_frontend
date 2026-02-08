@@ -5,6 +5,7 @@ import 'package:lockedin_frontend/ui/screens/auth/forget_password.dart';
 import 'package:lockedin_frontend/ui/screens/auth/getting_started_screen.dart';
 import 'package:lockedin_frontend/ui/screens/auth/input_otp.dart';
 import 'package:lockedin_frontend/ui/screens/auth/login_screen.dart';
+import 'package:lockedin_frontend/ui/screens/auth/reset_password.dart';
 import 'package:lockedin_frontend/ui/screens/auth/sign_up_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/productivity_hub_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/todo_list/todo_list_screen.dart';
@@ -33,6 +34,14 @@ final GoRouter router = GoRouter(
       builder: (context, state) {
         final email = state.pathParameters['email'] ?? '';
         return OTPScreen(email: email);
+      },
+    ),
+    GoRoute(
+      path: '/reset-password/:email/:otp',
+      builder: (context, state) {
+        final email = state.pathParameters['email'] ?? '';
+        final otp = state.pathParameters['otp'] ?? '';
+        return ResetPasswordScreen(email: email, otp: otp);
       },
     ),
 
