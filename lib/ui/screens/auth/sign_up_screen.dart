@@ -5,7 +5,6 @@ import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/inputs/agreement_box.dart';
 import 'package:lockedin_frontend/ui/widgets/actions/long_button.dart';
 import 'package:lockedin_frontend/ui/widgets/inputs/text_field.dart';
-// import 'package:lockedin_frontend/utils/validator.dart';
 import '../../../provider/auth_provider.dart';
 
 class SignUpScreen extends StatelessWidget {
@@ -65,7 +64,7 @@ class SignUpScreen extends StatelessWidget {
                         if (!context.mounted) return;
 
                         if (success) {
-                          context.push('/productivity-hub');
+                          context.go('/productivity-hub');
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(

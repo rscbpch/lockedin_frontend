@@ -68,7 +68,7 @@ class LoginScreen extends StatelessWidget {
                         if (!context.mounted) return;
                         
                         if (success) {
-                          context.push('/productivity-hub');
+                          context.go('/productivity-hub');
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
