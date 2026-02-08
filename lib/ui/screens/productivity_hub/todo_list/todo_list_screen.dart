@@ -1,17 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lockedin_frontend/models/productivity_tools/todo_list/todo_task.dart';
+import 'package:lockedin_frontend/services/todo_service.dart';
 import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
-
-class TodoTask {
-  final String id;
-  final String title;
-  final String time;
-  final DateTime date;
-  bool isCompleted;
-
-  TodoTask({required this.id, required this.title, required this.time, required this.date, this.isCompleted = false});
-}
+import 'package:lockedin_frontend/ui/widgets/actions/square_button.dart';
 
 class TodoListScreen extends StatefulWidget {
   const TodoListScreen({super.key});
@@ -23,50 +17,50 @@ class TodoListScreen extends StatefulWidget {
 class _TodoListScreenState extends State<TodoListScreen> {
   DateTime _selectedDate = DateTime.now();
   bool _showCompletedTasks = false;
-  late List<TodoTask> _mockTasks;
+  List<TodoTask> _tasks = [];
+  bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _mockTasks = _generateMockTasks();
+    _loadTasks();
   }
 
-  List<TodoTask> _generateMockTasks() {
-    final today = DateTime.now();
-    return [
-      // Today's tasks
-      TodoTask(id: '1', title: 'Grab a cup of coffee', time: '7:30 am', date: DateTime(today.year, today.month, today.day)),
-      TodoTask(id: '2', title: 'Lunch party', time: '12:30 pm', date: DateTime(today.year, today.month, today.day)),
-      TodoTask(id: '3', title: 'Team meeting', time: '3:00 pm', date: DateTime(today.year, today.month, today.day)),
-      // Tomorrow's tasks
-      TodoTask(id: '4', title: 'Morning workout', time: '6:00 am', date: DateTime(today.year, today.month, today.day + 1)),
-      TodoTask(id: '5', title: 'Project review', time: '10:00 am', date: DateTime(today.year, today.month, today.day + 1)),
-      // Yesterday's tasks
-      TodoTask(id: '6', title: 'Read a book', time: '8:00 pm', date: DateTime(today.year, today.month, today.day - 1)),
-      TodoTask(id: '7', title: 'Call mom', time: '5:00 pm', date: DateTime(today.year, today.month, today.day - 1), isCompleted: true),
-      // 2 days ago
-      TodoTask(id: '8', title: 'Grocery shopping', time: '11:00 am', date: DateTime(today.year, today.month, today.day - 2), isCompleted: true),
-      // 3 days later
-      TodoTask(id: '9', title: 'Dentist appointment', time: '2:00 pm', date: DateTime(today.year, today.month, today.day + 3)),
-    ];
+  Future<void> _loadTasks() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final todos = await TodoService.fetchTodos();
+      setState(() {
+        _tasks = todos;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
   }
 
   List<TodoTask> _getPendingTasks() {
-    return _mockTasks.where((task) =>
-      task.date.year == _selectedDate.year &&
-      task.date.month == _selectedDate.month &&
-      task.date.day == _selectedDate.day &&
-      !task.isCompleted
-    ).toList();
+    return _tasks.where((task) {
+      final taskDate = task.dueDate ?? task.dueDateTime;
+      if (taskDate == null) return task.status == Status.pending;
+      return taskDate.year == _selectedDate.year && taskDate.month == _selectedDate.month && taskDate.day == _selectedDate.day && task.status == Status.pending;
+    }).toList();
   }
 
   List<TodoTask> _getCompletedTasks() {
-    return _mockTasks.where((task) =>
-      task.date.year == _selectedDate.year &&
-      task.date.month == _selectedDate.month &&
-      task.date.day == _selectedDate.day &&
-      task.isCompleted
-    ).toList();
+    return _tasks.where((task) {
+      final taskDate = task.dueDate ?? task.dueDateTime;
+      if (taskDate == null) return task.status == Status.completed;
+      return taskDate.year == _selectedDate.year && taskDate.month == _selectedDate.month && taskDate.day == _selectedDate.day && task.status == Status.completed;
+    }).toList();
   }
 
   String _getMonthName(int month) {
@@ -110,11 +104,18 @@ class _TodoListScreenState extends State<TodoListScreen> {
         ),
         centerTitle: true,
         leading: IconButton(
-          onPressed: () => {},
+          onPressed: () => context.go('/productivity-hub'),
           icon: Icon(Icons.arrow_back_ios, size: width * 0.06, color: AppColors.textPrimary),
         ),
         backgroundColor: AppColors.background,
         elevation: 0,
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 16, right: 8),
+        child: SquareButton(
+          icon: Icons.add,
+          onPressed: () {},
+        ),
       ),
       body: SafeArea(
         child: Padding(
@@ -149,6 +150,32 @@ class _TodoListScreenState extends State<TodoListScreen> {
   }
 
   Widget _buildTaskList() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Failed to load tasks',
+              style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 16), color: AppColors.textPrimary.withOpacity(0.5)),
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: _loadTasks,
+              child: Text(
+                'Retry',
+                style: TextStyle(fontFamily: 'Nunito', color: AppColors.textPrimary),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     final pendingTasks = _getPendingTasks();
     final completedTasks = _getCompletedTasks();
 
@@ -164,7 +191,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
     return ListView(
       children: [
         ...pendingTasks.map((task) => _buildTaskItem(task)),
-        if (completedTasks.isNotEmpty) ...[  
+        if (completedTasks.isNotEmpty) ...[
           const SizedBox(height: 8),
           GestureDetector(
             onTap: () {
@@ -174,34 +201,33 @@ class _TodoListScreenState extends State<TodoListScreen> {
             },
             child: Row(
               children: [
-                Icon(
-                  _showCompletedTasks ? FeatherIcons.chevronDown : FeatherIcons.chevronRight,
-                  size: 18,
-                  color: AppColors.textPrimary.withOpacity(0.5),
-                ),
+                Icon(_showCompletedTasks ? FeatherIcons.chevronDown : FeatherIcons.chevronRight, size: 18, color: AppColors.textPrimary.withOpacity(0.5)),
                 const SizedBox(width: 8),
                 Text(
                   '${completedTasks.length} Completed',
-                  style: TextStyle(
-                    fontFamily: 'Nunito',
-                    fontSize: Responsive.text(context, size: 14),
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textPrimary.withOpacity(0.5),
-                  ),
+                  style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 14), fontWeight: FontWeight.w500, color: AppColors.textPrimary.withOpacity(0.5)),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 12),
-          if (_showCompletedTasks)
-            ...completedTasks.map((task) => _buildTaskItem(task)),
+          if (_showCompletedTasks) ...completedTasks.map((task) => _buildTaskItem(task)),
         ],
       ],
     );
   }
 
   Widget _buildTaskItem(TodoTask task) {
-    final double opacity = task.isCompleted ? 0.4 : 1.0;
+    final bool isCompleted = task.status == Status.completed;
+    final double opacity = isCompleted ? 0.4 : 1.0;
+
+    String timeText = '';
+    if (task.dueTime != null) {
+      final hour = task.dueTime!.hourOfPeriod == 0 ? 12 : task.dueTime!.hourOfPeriod;
+      final minute = task.dueTime!.minute.toString().padLeft(2, '0');
+      final period = task.dueTime!.period == DayPeriod.am ? 'am' : 'pm';
+      timeText = '$hour:$minute $period';
+    }
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -211,10 +237,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
           Container(
             width: 4,
             height: 50,
-            decoration: BoxDecoration(
-              color: AppColors.textPrimary.withOpacity(opacity),
-              borderRadius: BorderRadius.circular(2),
-            ),
+            decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(2)),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -228,27 +251,34 @@ class _TodoListScreenState extends State<TodoListScreen> {
                     fontSize: Responsive.text(context, size: 16),
                     fontWeight: FontWeight.w500,
                     color: AppColors.textPrimary.withOpacity(opacity),
-                    decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+                    decoration: isCompleted ? TextDecoration.lineThrough : null,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  task.time,
-                  style: TextStyle(
-                    fontFamily: 'Nunito',
-                    fontSize: Responsive.text(context, size: 14),
-                    color: AppColors.textPrimary.withOpacity(task.isCompleted ? 0.3 : 0.6),
+                if (timeText.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    timeText,
+                    style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 14), color: AppColors.textPrimary.withOpacity(isCompleted ? 0.3 : 0.6)),
                   ),
-                ),
+                ],
               ],
             ),
           ),
           Checkbox(
-            value: task.isCompleted,
-            onChanged: (value) {
+            value: isCompleted,
+            onChanged: (value) async {
+              final newStatus = (value ?? false) ? Status.completed : Status.pending;
               setState(() {
-                task.isCompleted = value ?? false;
+                task.status = newStatus;
               });
+              try {
+                await TodoService.updateTodo(task.id, status: newStatus);
+              } catch (_) {
+                // Revert on failure
+                setState(() {
+                  task.status = isCompleted ? Status.completed : Status.pending;
+                });
+              }
             },
             activeColor: AppColors.textPrimary.withOpacity(opacity),
             side: BorderSide(color: AppColors.textPrimary.withOpacity(opacity), width: 1.5),
@@ -259,10 +289,11 @@ class _TodoListScreenState extends State<TodoListScreen> {
     );
   }
 
+  // row calendar
   Widget _buildWeekCalendar() {
     final List<String> weekDayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-    // Center selected date in the week view (selected date is at index 3)
+    // center the selected day
     final DateTime startOfWeek = _selectedDate.subtract(const Duration(days: 3));
 
     return Row(
@@ -270,8 +301,6 @@ class _TodoListScreenState extends State<TodoListScreen> {
       children: List.generate(7, (index) {
         final DateTime date = startOfWeek.add(Duration(days: index));
         final bool isSelected = date.day == _selectedDate.day && date.month == _selectedDate.month && date.year == _selectedDate.year;
-
-        // Get the correct weekday name (weekday is 1-7, Monday-Sunday)
         final String dayName = weekDayNames[date.weekday - 1];
 
         return GestureDetector(
@@ -280,34 +309,25 @@ class _TodoListScreenState extends State<TodoListScreen> {
               _selectedDate = date;
             });
           },
-          child: AnimatedScale(
-            scale: isSelected ? 1.1 : 1.0,
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOutBack,
-            child: Column(
-              children: [
-                Text(
-                  dayName,
-                  style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 14), fontWeight: FontWeight.w400, color: AppColors.textPrimary),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '${date.day}',
-                  style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 18), fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-                ),
-                const SizedBox(height: 4),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeInOut,
-                  width: isSelected ? 6 : 0,
-                  height: isSelected ? 6 : 0,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                dayName,
+                style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 14), fontWeight: FontWeight.w400, color: AppColors.textPrimary),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '${date.day}',
+                style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 18), fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+              ),
+              const SizedBox(height: 4),
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(shape: BoxShape.circle, color: isSelected ? AppColors.textPrimary : Colors.transparent),
+              ),
+            ],
           ),
         );
       }),
