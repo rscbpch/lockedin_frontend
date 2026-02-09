@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:lockedin_frontend/models/productivity_tools/todo_list/todo_task.dart';
 import 'package:lockedin_frontend/services/todo_service.dart';
 import 'package:lockedin_frontend/ui/responsive/responsive.dart';
+import 'package:lockedin_frontend/ui/screens/productivity_hub/todo_list/todo_task_modal.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/actions/square_button.dart';
+import 'package:lockedin_frontend/ui/widgets/pickers/date_picker.dart';
 
 class TodoListScreen extends StatefulWidget {
   const TodoListScreen({super.key});
@@ -48,19 +50,32 @@ class _TodoListScreenState extends State<TodoListScreen> {
   }
 
   List<TodoTask> _getPendingTasks() {
-    return _tasks.where((task) {
+    final tasks = _tasks.where((task) {
       final taskDate = task.dueDate ?? task.dueDateTime;
       if (taskDate == null) return task.status == Status.pending;
       return taskDate.year == _selectedDate.year && taskDate.month == _selectedDate.month && taskDate.day == _selectedDate.day && task.status == Status.pending;
     }).toList();
+    tasks.sort(_compareTasks);
+    return tasks;
   }
 
   List<TodoTask> _getCompletedTasks() {
-    return _tasks.where((task) {
+    final tasks = _tasks.where((task) {
       final taskDate = task.dueDate ?? task.dueDateTime;
       if (taskDate == null) return task.status == Status.completed;
       return taskDate.year == _selectedDate.year && taskDate.month == _selectedDate.month && taskDate.day == _selectedDate.day && task.status == Status.completed;
     }).toList();
+    tasks.sort(_compareTasks);
+    return tasks;
+  }
+
+  int _compareTasks(TodoTask a, TodoTask b) {
+    final aDate = a.dueDateTime ?? a.dueDate;
+    final bDate = b.dueDateTime ?? b.dueDate;
+    if (aDate == null && bDate == null) return 0;
+    if (aDate == null) return 1;
+    if (bDate == null) return -1;
+    return aDate.compareTo(bDate);
   }
 
   String _getMonthName(int month) {
@@ -69,26 +84,20 @@ class _TodoListScreenState extends State<TodoListScreen> {
   }
 
   Future<void> _showDatePicker(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
+    await showDialog(
       context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(primary: AppColors.textPrimary, onPrimary: AppColors.background, surface: AppColors.background, onSurface: AppColors.textPrimary),
-            textButtonTheme: TextButtonThemeData(style: TextButton.styleFrom(foregroundColor: AppColors.textPrimary)),
-          ),
-          child: child!,
-        );
-      },
+      builder: (_) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16),
+        child: DatePicker(
+          initialDate: _selectedDate,
+          onDateSelected: (date) {
+            setState(() => _selectedDate = date);
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
     );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
-    }
   }
 
   @override
@@ -114,7 +123,9 @@ class _TodoListScreenState extends State<TodoListScreen> {
         padding: const EdgeInsets.only(bottom: 16, right: 8),
         child: SquareButton(
           icon: Icons.add,
-          onPressed: () {},
+          onPressed: () {
+            TodoTaskModal.showCreate(context, selectedDate: _selectedDate, onChanged: _loadTasks);
+          },
         ),
       ),
       body: SafeArea(
@@ -151,7 +162,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
 
   Widget _buildTaskList() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator(color: AppColors.primary));
     }
 
     if (_error != null) {
@@ -161,7 +172,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
           children: [
             Text(
               'Failed to load tasks',
-              style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 16), color: AppColors.textPrimary.withOpacity(0.5)),
+              style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 16), color: AppColors.textPrimary.withOpacity(0.7)),
             ),
             const SizedBox(height: 12),
             TextButton(
@@ -183,7 +194,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
       return Center(
         child: Text(
           'No tasks for this day',
-          style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 16), color: AppColors.textPrimary.withOpacity(0.5)),
+          style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 16), color: AppColors.textPrimary.withOpacity(0.7)),
         ),
       );
     }
@@ -201,11 +212,11 @@ class _TodoListScreenState extends State<TodoListScreen> {
             },
             child: Row(
               children: [
-                Icon(_showCompletedTasks ? FeatherIcons.chevronDown : FeatherIcons.chevronRight, size: 18, color: AppColors.textPrimary.withOpacity(0.5)),
+                Icon(_showCompletedTasks ? FeatherIcons.chevronDown : FeatherIcons.chevronRight, size: 18, color: AppColors.textPrimary.withOpacity(0.7)),
                 const SizedBox(width: 8),
                 Text(
                   '${completedTasks.length} Completed',
-                  style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 14), fontWeight: FontWeight.w500, color: AppColors.textPrimary.withOpacity(0.5)),
+                  style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 14), fontWeight: FontWeight.w500, color: AppColors.textPrimary.withOpacity(0.7)),
                 ),
               ],
             ),
@@ -229,62 +240,71 @@ class _TodoListScreenState extends State<TodoListScreen> {
       timeText = '$hour:$minute $period';
     }
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 4,
-            height: 50,
-            decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(2)),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  task.title,
-                  style: TextStyle(
-                    fontFamily: 'Nunito',
-                    fontSize: Responsive.text(context, size: 16),
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textPrimary.withOpacity(opacity),
-                    decoration: isCompleted ? TextDecoration.lineThrough : null,
-                  ),
-                ),
-                if (timeText.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    timeText,
-                    style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 14), color: AppColors.textPrimary.withOpacity(isCompleted ? 0.3 : 0.6)),
-                  ),
-                ],
-              ],
+    return GestureDetector(
+      onTap: () {
+        TodoTaskModal.showDetail(context, task: task, onChanged: _loadTasks);
+      },
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 4,
+              height: 50,
+              decoration: BoxDecoration(color: isCompleted ? AppColors.secondary : AppColors.primary, borderRadius: BorderRadius.circular(2)),
             ),
-          ),
-          Checkbox(
-            value: isCompleted,
-            onChanged: (value) async {
-              final newStatus = (value ?? false) ? Status.completed : Status.pending;
-              setState(() {
-                task.status = newStatus;
-              });
-              try {
-                await TodoService.updateTodo(task.id, status: newStatus);
-              } catch (_) {
-                // Revert on failure
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    task.title,
+                    style: TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: Responsive.text(context, size: 16),
+                      fontWeight: FontWeight.w500,
+                      color: isCompleted ? AppColors.textPrimary.withOpacity(opacity) : AppColors.textPrimary,
+                      decoration: isCompleted ? TextDecoration.lineThrough : null,
+                    ),
+                  ),
+                  if (timeText.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      timeText,
+                      style: TextStyle(
+                        fontFamily: 'Quicksand',
+                        fontWeight: FontWeight.w500,
+                        fontSize: Responsive.text(context, size: 14),
+                        color: AppColors.textPrimary.withOpacity(opacity),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Checkbox(
+              value: isCompleted,
+              onChanged: (value) async {
+                final newStatus = (value ?? false) ? Status.completed : Status.pending;
                 setState(() {
-                  task.status = isCompleted ? Status.completed : Status.pending;
+                  task.status = newStatus;
                 });
-              }
-            },
-            activeColor: AppColors.textPrimary.withOpacity(opacity),
-            side: BorderSide(color: AppColors.textPrimary.withOpacity(opacity), width: 1.5),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-          ),
-        ],
+                try {
+                  await TodoService.updateTodo(task.id, status: newStatus);
+                } catch (_) {
+                  setState(() {
+                    task.status = isCompleted ? Status.completed : Status.pending;
+                  });
+                }
+              },
+              activeColor: AppColors.primary.withOpacity(opacity),
+              side: BorderSide(color: AppColors.textPrimary.withOpacity(opacity), width: 1.5),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -314,18 +334,28 @@ class _TodoListScreenState extends State<TodoListScreen> {
             children: [
               Text(
                 dayName,
-                style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 14), fontWeight: FontWeight.w400, color: AppColors.textPrimary),
+                style: TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: Responsive.text(context, size: 14),
+                  fontWeight: FontWeight.w400,
+                  color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                ),
               ),
               const SizedBox(height: 6),
               Text(
                 '${date.day}',
-                style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 18), fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                style: TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: Responsive.text(context, size: 16),
+                  fontWeight: FontWeight.w600,
+                  color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                ),
               ),
               const SizedBox(height: 4),
               Container(
                 width: 6,
                 height: 6,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: isSelected ? AppColors.textPrimary : Colors.transparent),
+                decoration: BoxDecoration(shape: BoxShape.circle, color: isSelected ? AppColors.primary : Colors.transparent),
               ),
             ],
           ),

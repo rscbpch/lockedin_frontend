@@ -28,7 +28,10 @@ class TodoService {
 
     final response = await http.get(
       Uri.parse('$_baseUrl/tasks?userId=$userId'),
-      headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'}
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
     );
 
     if (response.statusCode != 200) {
@@ -40,19 +43,31 @@ class TodoService {
   }
 
   /// PATCH /tasks/:id
-  static Future<void> updateTodo(String id, {String? title, String? description, Status? status, DateTime? dueDate}) async {
+  static Future<void> updateTodo(
+    String id, {
+    String? title,
+    String? description,
+    Status? status,
+    DateTime? dueDate,
+  }) async {
     final token = await _getToken();
 
     final body = <String, dynamic>{};
     if (title != null) body['title'] = title;
     if (description != null) body['description'] = description;
     if (status != null) body['status'] = status.name;
-    if (dueDate != null) body['dueDate'] = dueDate.toIso8601String();
+
+    if (dueDate != null) {
+      body['dueDate'] = dueDate.toUtc().toIso8601String();
+    }
 
     final response = await http.patch(
       Uri.parse('$_baseUrl/tasks/$id'),
-      headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
-      body: json.encode(body)
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode(body),
     );
 
     if (response.statusCode != 200) {
@@ -61,21 +76,27 @@ class TodoService {
   }
 
   /// POST /tasks
-  static Future<TodoTask> createTodo({required String title, String description = '', DateTime? dueDate}) async {
+  static Future<TodoTask> createTodo({
+    required String title,
+    String description = '',
+    DateTime? dueDate,
+  }) async {
     final token = await _getToken();
     final userId = await _getUserId();
 
     final response = await http.post(
       Uri.parse('$_baseUrl/tasks'),
-      headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
-      body: json.encode(
-        {
-          'userId': userId,
-          'title': title,
-          'description': description,
-          'dueDate': dueDate?.toIso8601String()
-        }
-      ),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode({
+        'userId': userId,
+        'title': title,
+        'description': description,
+        // ✅ Send UTC to backend
+        'dueDate': dueDate?.toUtc().toIso8601String(),
+      }),
     );
 
     if (response.statusCode != 201) {
@@ -91,7 +112,7 @@ class TodoService {
 
     final response = await http.delete(
       Uri.parse('$_baseUrl/tasks/$id'),
-      headers: {'Authorization': 'Bearer $token'}
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode != 200) {
@@ -101,7 +122,9 @@ class TodoService {
 
   // json mapper
   static TodoTask _fromJson(Map<String, dynamic> j) {
-    final dueDateTime = j['dueDate'] != null ? DateTime.parse(j['dueDate']) : null;
+    final dueDateTime = j['dueDate'] != null
+        ? DateTime.parse(j['dueDate']).toLocal()
+        : null;
 
     return TodoTask(
       id: j['_id'],
