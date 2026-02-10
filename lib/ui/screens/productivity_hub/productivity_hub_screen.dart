@@ -5,6 +5,7 @@ import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/display/lockedin_appbar.dart';
 import 'package:lockedin_frontend/ui/widgets/display/navbar.dart';
+import 'package:go_router/go_router.dart';
 
 class ProductivityHubScreen extends StatefulWidget {
   const ProductivityHubScreen({super.key});

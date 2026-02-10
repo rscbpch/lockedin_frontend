@@ -27,7 +27,41 @@ Future<void> _saveCredentials(String token) async {
 }
 
 class AuthService {
-  static Future<Map<String, dynamic>> register({required String email, required String username, required String password, required String confirmPassword}) async {
+  // Use a class-level storage instance for the methods below
+  static const _storage = FlutterSecureStorage();
+
+  static Future<String?> getToken() async {
+    // Tries 'auth_token' first (set by _saveToken), falls back to 'token' (set by _saveCredentials)
+    String? token = await _storage.read(key: 'auth_token');
+    if (token == null) {
+      token = await _storage.read(key: 'token');
+    }
+    return token;
+  }
+
+  static Future<void> _saveToken(dynamic responseData) async {
+    if (responseData is Map) {
+      String? token;
+      if (responseData['token'] != null) {
+        token = responseData['token'];
+      } else if (responseData['data'] != null && 
+                 responseData['data'] is Map && 
+                 responseData['data']['token'] != null) {
+        token = responseData['data']['token'];
+      }
+      
+      if (token != null) {
+        await _storage.write(key: 'auth_token', value: token);
+      }
+    }
+  }
+
+  static Future<Map<String, dynamic>> register({
+    required String email,
+    required String username,
+    required String password,
+    required String confirmPassword,
+  }) async {
     try {
       final response = await http.post(
         Uri.parse(ApiConfig.register),
@@ -51,6 +85,7 @@ class AuthService {
 
       if (status >= 200 && status < 300) {
         if (parsed is Map<String, dynamic>) {
+          await _saveToken(parsed);
           if (parsed.containsKey('success')) return parsed;
           return {'success': true, 'data': parsed};
         }
@@ -99,6 +134,7 @@ class AuthService {
         }
 
         if (parsed is Map<String, dynamic>) {
+          await _saveToken(parsed);
           if (parsed.containsKey('success')) return parsed;
           return {'success': true, 'data': parsed};
         }
@@ -164,6 +200,7 @@ class AuthService {
         }
 
         if (parsed is Map<String, dynamic>) {
+          await _saveToken(parsed);
           if (parsed.containsKey('success')) return parsed;
           return {'success': true, 'data': parsed};
         }
