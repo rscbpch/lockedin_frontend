@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/display/lockedin_appbar.dart';
@@ -41,10 +42,10 @@ class _ProductivityHubScreenState extends State<ProductivityHubScreen> {
                 itemCount: 4,
                 itemBuilder: (context, index) {
                   final items = [
-                    FeatureCard(color: const Color(0xFFFFDBDB), label: 'Pomodoro', imagePath: 'assets/images/pomodoro.png', route: "/pomodoro",),
-                    FeatureCard(color: const Color(0xFFAEDEFC), label: 'To-do List', imagePath: 'assets/images/todo-list.png', route: "/todo-list",),
-                    FeatureCard(color: const Color(0xFFFFE893), label: 'Flashcards', imagePath: 'assets/images/flashcard.png', route: "/pomodoro",),
-                    FeatureCard(color: const Color(0xFFC8E6C9), label: 'Task Breakdown', imagePath: 'assets/images/task-breakdown.png', route: "pomodoro",),
+                    FeatureCard(color: const Color(0xFFFFDBDB), label: 'Pomodoro', imagePath: 'assets/images/pomodoro.png', onTap: () => context.go('/pomodoro')),
+                    FeatureCard(color: const Color(0xFFAEDEFC), label: 'To-do List', imagePath: 'assets/images/todo-list.png', onTap: () => context.go('/todo-list')),
+                    FeatureCard(color: const Color(0xFFFFE893), label: 'Flashcards', imagePath: 'assets/images/flashcard.png', onTap: () => context.go('/flashcard')),
+                    FeatureCard(color: const Color(0xFFC8E6C9), label: 'Task Breakdown', imagePath: 'assets/images/task-breakdown.png', onTap: () => context.go('/task-breakdown')),
                   ];
                   return items[index];
                 },
@@ -79,33 +80,27 @@ class FeatureCard extends StatelessWidget {
   final Color color;
   final String label;
   final String imagePath;
-  final String route;
+  final VoidCallback onTap;
 
   const FeatureCard({
     super.key,
     required this.color,
     required this.label,
     required this.imagePath,
-    required this.route,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(
-        Responsive.radius(context, size: 12),
-      ),
-      onTap: () {
-        context.go(route);
-      },
+    return GestureDetector(
+      onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: color,
-          borderRadius:
-              BorderRadius.circular(Responsive.radius(context, size: 12)),
+          borderRadius: BorderRadius.circular(Responsive.radius(context, size: 12)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

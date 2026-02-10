@@ -116,7 +116,7 @@ class LoginScreen extends StatelessWidget {
                         final success = await auth.signInWithGoogle();
                         
                         if (success) {
-                          context.push('/productivity-hub');
+                          context.go('/productivity-hub');
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(

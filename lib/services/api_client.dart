@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 
@@ -66,7 +65,7 @@ class ApiClient {
       throw Exception(
         'No internet connection. Please check your network and try again. (${e.message})',
       );
-    } on TimeoutException catch (e) {
+    } on TimeoutException {
       if (retryCount < maxRetries) {
         // ignore: avoid_print
         print('TimeoutException occurred, retrying... (${retryCount + 1}/$maxRetries)');
@@ -131,7 +130,7 @@ class ApiClient {
       throw Exception(
         'No internet connection. Please check your network and try again. (${e.message})',
       );
-    } on TimeoutException catch (e) {
+    } on TimeoutException {
       if (retryCount < maxRetries) {
         // ignore: avoid_print
         print('TimeoutException occurred, retrying... (${retryCount + 1}/$maxRetries)');
