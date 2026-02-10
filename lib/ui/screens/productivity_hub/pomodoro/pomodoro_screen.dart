@@ -2,7 +2,10 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
+import '../../../theme/app_theme.dart';
+import '../../../../services/pomodoro_service.dart';
 
 class TimerPainter extends CustomPainter {
   final double progress;
@@ -84,7 +87,6 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
 
   void _initializeVideo() async {
     try {
-      print('Starting video initialization...');
       _videoController = VideoPlayerController.asset(
         'assets/images/coffee.mp4',
       );
@@ -208,6 +210,14 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
   void _onTimerComplete() async {
     _stopTimer();
 
+    if (_mode == TimerMode.pomodoro) {
+      // Save focus session
+      await PomodoroService.createSession(
+        durationSeconds: _totalSeconds,
+        type: 'focus',
+      );
+    }
+
     // Vibrate when timer completes
     HapticFeedback.heavyImpact();
 
@@ -326,8 +336,23 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
     return Scaffold(
-      appBar: AppBar(title: const Text('Pomodoro'), centerTitle: true),
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('Pomodoro'),
+        centerTitle: true,
+        leading: IconButton(
+          onPressed: () => context.go("/productivity-hub"),
+          icon: Icon(
+            Icons.arrow_back_ios,
+            size: width * 0.06,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        backgroundColor: AppColors.background,
+        elevation: 0,
+      ),
       body: Column(
         children: [
           const SizedBox(height: 20),
@@ -337,7 +362,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.brown.withOpacity(0.1),
+                color: AppColors.secondary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -345,7 +370,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: Colors.brown,
+                  color: AppColors.secondary,
                 ),
               ),
             ),
@@ -361,16 +386,20 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                 label: Text(
                   _label(mode),
                   style: TextStyle(
-                    color: isSelected ? Colors.white : Colors.black,
+                    color: isSelected
+                        ? AppColors.background
+                        : AppColors.primary,
                     fontWeight: isSelected
                         ? FontWeight.bold
                         : FontWeight.normal,
                   ),
                 ),
                 selected: isSelected,
+                backgroundColor: isSelected
+                    ? AppColors.primary
+                    : AppColors.background,
                 onSelected: (_) => _switchMode(mode),
-                selectedColor: Colors.brown,
-                backgroundColor: Colors.grey[200],
+                selectedColor: AppColors.secondary,
                 showCheckmark: false, // Remove default checkmark icon
               );
             }).toList(),
@@ -522,6 +551,9 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
 
           ElevatedButton(
             onPressed: _isRunning ? _stopTimer : () => _startTimer(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.background,
+            ),
             child: Text(_isRunning ? 'Stop' : 'Start'),
           ),
         ],

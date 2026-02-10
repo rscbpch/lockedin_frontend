@@ -1,10 +1,34 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../config/api_config.dart';
 import '../config/env.dart';
 
 class AuthService {
+  static const _storage = FlutterSecureStorage();
+
+  static Future<String?> getToken() async {
+    return await _storage.read(key: 'auth_token');
+  }
+
+  static Future<void> _saveToken(dynamic responseData) async {
+    if (responseData is Map) {
+      String? token;
+      if (responseData['token'] != null) {
+        token = responseData['token'];
+      } else if (responseData['data'] != null && 
+                 responseData['data'] is Map && 
+                 responseData['data']['token'] != null) {
+        token = responseData['data']['token'];
+      }
+      
+      if (token != null) {
+        await _storage.write(key: 'auth_token', value: token);
+      }
+    }
+  }
+
   static Future<Map<String, dynamic>> register({
     required String email,
     required String username,
@@ -39,6 +63,7 @@ class AuthService {
 
       if (status >= 200 && status < 300) {
         if (parsed is Map<String, dynamic>) {
+          await _saveToken(parsed);
           if (parsed.containsKey('success')) return parsed;
           return {'success': true, 'data': parsed};
         }
@@ -88,6 +113,7 @@ class AuthService {
 
       if (status >= 200 && status < 300) {
         if (parsed is Map<String, dynamic>) {
+          await _saveToken(parsed);
           if (parsed.containsKey('success')) return parsed;
           return {'success': true, 'data': parsed};
         }
@@ -153,6 +179,7 @@ class AuthService {
 
       if (status >= 200 && status < 300) {
         if (parsed is Map<String, dynamic>) {
+          await _saveToken(parsed);
           if (parsed.containsKey('success')) return parsed;
           return {'success': true, 'data': parsed};
         }

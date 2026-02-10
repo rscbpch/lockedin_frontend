@@ -6,4 +6,5 @@ class ApiConfig {
   static String forgotPassword = '${Env.apiBaseUrl}/auth/forgot-password';
   static String sendOTP = '${Env.apiBaseUrl}/password/forgot';
   static String resetPasswordWithOTP = '${Env.apiBaseUrl}/password/reset';
+  static String pomodoro = '${Env.apiBaseUrl}/pomodoro/session';
 }
