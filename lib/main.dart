@@ -7,6 +7,7 @@ import 'package:lockedin_frontend/ui/screens/auth/input_otp.dart';
 import 'package:lockedin_frontend/ui/screens/auth/login_screen.dart';
 import 'package:lockedin_frontend/ui/screens/auth/reset_password.dart';
 import 'package:lockedin_frontend/ui/screens/auth/sign_up_screen.dart';
+import 'package:lockedin_frontend/ui/screens/productivity_hub/flashcard/flashcard_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/productivity_hub_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/todo_list/todo_list_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/pomodoro/pomodoro_screen.dart';
@@ -19,7 +20,7 @@ final GoRouter router = GoRouter(
     // auth
     GoRoute(
       path: '/',
-      builder: (context, state) => const GettingStartedScreen(),
+      builder: (context, state) => const FlashcardScreen(),
     ),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(
