@@ -139,7 +139,7 @@ class ForgetPasswordScreen extends StatelessWidget {
                                 backgroundColor: Colors.green,
                               ),
                             );
-                            context.push('/OTP/${Uri.encodeComponent(email)}');
+                            context.go('/OTP/${Uri.encodeComponent(email)}');
                           }
                         } else {
                           if (context.mounted) {

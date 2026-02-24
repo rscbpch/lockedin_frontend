@@ -111,7 +111,7 @@ class SignUpScreen extends StatelessWidget {
                         ),
                         GestureDetector(
                           onTap: () {
-                            context.push('/login');
+                            context.go('/login');
                           },
                           child: Text(
                             " Login",
@@ -134,7 +134,7 @@ class SignUpScreen extends StatelessWidget {
                           final success = await authProvider.signInWithGoogle();
                           
                           if (success) {
-                            context.push('/productivity-hub');
+                            context.go('/productivity-hub');
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(

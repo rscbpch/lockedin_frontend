@@ -131,7 +131,7 @@ class OTPScreen extends StatelessWidget {
                     OTPForm(
                       email: email,
                       onSubmit: (otp) {
-                        context.push(
+                        context.go(
                           '/reset-password/${Uri.encodeComponent(email)}/${Uri.encodeComponent(otp)}',
                         );
                       },

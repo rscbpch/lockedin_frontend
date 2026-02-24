@@ -51,14 +51,14 @@ class GettingStartedScreen extends StatelessWidget {
                   LongButton(
                     text: "Login",
                     onPressed: () {
-                      context.push('/login');
+                      context.go('/login');
                     },
                   ),
                   const SizedBox(height: 16),
                   LongButton(
                     text: "Sign up",
                     onPressed: () {
-                      context.push('/register');
+                      context.go('/register');
                     },
                   ),
                   const SizedBox(height: 24),
@@ -97,7 +97,7 @@ class GettingStartedScreen extends StatelessWidget {
                         final success = await auth.signInWithGoogle();
                         
                         if (success) {
-                          context.push('/productivity-hub');
+                          context.go('/productivity-hub');
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(

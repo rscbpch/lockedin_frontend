@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lockedin_frontend/ui/screens/auth/forget_password.dart';
-import 'package:lockedin_frontend/ui/screens/auth/getting_started_screen.dart';
 import 'package:lockedin_frontend/ui/screens/auth/input_otp.dart';
 import 'package:lockedin_frontend/ui/screens/auth/login_screen.dart';
 import 'package:lockedin_frontend/ui/screens/auth/reset_password.dart';
@@ -61,6 +60,10 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/pomodoro',
       builder: (context, state) => const PomodoroScreen(),
+    ),
+    GoRoute(
+      path: '/flashcard',
+      builder: (context, state) => const FlashcardScreen(),
     ),
   ],
 );
