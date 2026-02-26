@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lockedin_frontend/ui/screens/auth/forget_password.dart';
+import 'package:lockedin_frontend/ui/screens/auth/getting_started_screen.dart';
 import 'package:lockedin_frontend/ui/screens/auth/input_otp.dart';
 import 'package:lockedin_frontend/ui/screens/auth/login_screen.dart';
 import 'package:lockedin_frontend/ui/screens/auth/reset_password.dart';
 import 'package:lockedin_frontend/ui/screens/auth/sign_up_screen.dart';
+import 'package:lockedin_frontend/ui/screens/productivity_hub/flashcard/create_flashcard_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/flashcard/flashcard_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/productivity_hub_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/todo_list/todo_list_screen.dart';
@@ -19,51 +21,76 @@ final GoRouter router = GoRouter(
     // auth
     GoRoute(
       path: '/',
-      builder: (context, state) => const FlashcardScreen(),
+      pageBuilder: (context, state) => const NoTransitionPage(child: GettingStartedScreen()),
     ),
-    GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+    GoRoute(
+      path: '/login',
+      pageBuilder: (context, state) => const NoTransitionPage(child: LoginScreen()),
+    ),
     GoRoute(
       path: '/register',
-      builder: (context, state) => const SignUpScreen(),
+      pageBuilder: (context, state) => const NoTransitionPage(child: SignUpScreen()),
     ),
     GoRoute(
       path: '/forget-password',
-      builder: (context, state) => const ForgetPasswordScreen(),
+      pageBuilder: (context, state) => const NoTransitionPage(child: ForgetPasswordScreen()),
     ),
     GoRoute(
       path: '/OTP/:email',
-      builder: (context, state) {
+      pageBuilder: (context, state) {
         final email = state.pathParameters['email'] ?? '';
-        return OTPScreen(email: email);
+
+        return CustomTransitionPage(
+          key: state.pageKey,
+          transitionDuration: const Duration(milliseconds: 200),
+          child: OTPScreen(email: email),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        );
       },
     ),
     GoRoute(
       path: '/reset-password/:email/:otp',
-      builder: (context, state) {
+      pageBuilder: (context, state) {
         final email = state.pathParameters['email'] ?? '';
         final otp = state.pathParameters['otp'] ?? '';
-        return ResetPasswordScreen(email: email, otp: otp);
+
+        return CustomTransitionPage(
+          key: state.pageKey,
+          transitionDuration: const Duration(milliseconds: 200),
+          child: ResetPasswordScreen(email: email, otp: otp),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        );
       },
     ),
 
     // main tabs
     GoRoute(
       path: '/productivity-hub',
-      builder: (context, state) => const ProductivityHubScreen(),
+      pageBuilder: (context, state) => const NoTransitionPage(child: ProductivityHubScreen()),
     ),
 
     // productivity tools
     GoRoute(
       path: '/todo-list',
-      builder: (context, state) => const TodoListScreen(),
+      pageBuilder: (context, state) => const NoTransitionPage(child: TodoListScreen()),
     ),
+
     GoRoute(
       path: '/pomodoro',
-      builder: (context, state) => const PomodoroScreen(),
+      pageBuilder: (context, state) => const NoTransitionPage(child: PomodoroScreen()),
     ),
+    
     GoRoute(
       path: '/flashcard',
-      builder: (context, state) => const FlashcardScreen(),
+      pageBuilder: (context, state) => const NoTransitionPage(child: FlashcardScreen()),
+    ),
+    GoRoute(
+      path: '/flashcard/create',
+      pageBuilder: (context, state) => const NoTransitionPage(child: CreateFlashcardScreen()),
     ),
   ],
 );
@@ -74,9 +101,7 @@ void main() async {
 
   runApp(
     MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-      ],
+      providers: [ChangeNotifierProvider(create: (_) => AuthProvider())],
       child: const MyApp(),
     ),
   );
@@ -87,9 +112,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      routerConfig: router,
-      debugShowCheckedModeBanner: false,
-    );
+    return MaterialApp.router(routerConfig: router, debugShowCheckedModeBanner: false);
   }
 }

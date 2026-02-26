@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:lockedin_frontend/provider/flashcard_provider.dart';
 import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
-import '../../../../services/flashcard_service.dart';
+import 'package:lockedin_frontend/ui/widgets/actions/square_button.dart';
 
 class FlashcardScreen extends StatefulWidget {
   const FlashcardScreen({super.key});
@@ -12,45 +14,28 @@ class FlashcardScreen extends StatefulWidget {
 }
 
 class _FlashcardState extends State<FlashcardScreen> {
-  List<FlashcardSet> _sets = [];
-  bool _loading = true;
-  String? _error;
-
   @override
   void initState() {
     super.initState();
-    _loadSets();
+    Future.microtask(() => context.read<FlashcardProvider>().loadSets());
   }
 
-  Future<void> _loadSets() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-
-    try {
-      final sets = await FlashcardService.getFlashcardSets();
-      setState(() {
-        _sets = sets;
-        _loading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _loading = false;
-      });
-    }
-  }
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
+    final provider = context.watch<FlashcardProvider>();
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
           'Flashcard',
-          style: TextStyle(color:  AppColors.textPrimary, fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 24), fontWeight: FontWeight.w500)
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontFamily: 'Nunito',
+            fontSize: Responsive.text(context, size: 24),
+            fontWeight: FontWeight.w500
+          )
         ),
         centerTitle: true,
         leading: IconButton(
@@ -60,24 +45,31 @@ class _FlashcardState extends State<FlashcardScreen> {
         backgroundColor: AppColors.background,
         elevation: 0,
       ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 16, right: 8),
+        child: SquareButton(
+          icon: Icons.add,
+          onPressed: () => context.go('/flashcard/create'),
+        ),
+      ),
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 16),
           child: Column(
             children: [
-              if (_loading)
+              if (provider.loading)
                 Expanded(child: Center(child: CircularProgressIndicator()))
-              else if (_error != null)
-                Expanded(child: Center(child: Text(_error ?? 'An error occurred', style: TextStyle(color: AppColors.textPrimary))))
-              else if (_sets.isEmpty)
+              else if (provider.error != null)
+                Expanded(child: Center(child: Text(provider.error ?? 'An error occurred', style: TextStyle(color: AppColors.textPrimary))))
+              else if (provider.sets.isEmpty)
                 Expanded(child: Center(child: Text('No flashcard sets found', style: TextStyle(color: AppColors.textPrimary))))
               else
                 Expanded(
                   child: ListView.separated(
-                    itemCount: _sets.length,
+                    itemCount: provider.sets.length,
                     separatorBuilder: (_, __) => SizedBox(height: 12),
                     itemBuilder: (context, i) {
-                      final s = _sets[i];
+                      final s = provider.sets[i];
                       return FlashcardTiles(flashcardTitle: s.title, cardsNumber: s.cardCount);
                     },
                   ),
