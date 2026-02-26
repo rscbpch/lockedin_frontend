@@ -26,6 +26,9 @@ class User {
   final String displayName;
   final String avatar;
   final String authProvider;
+  final int follower;
+  final int following;
+  final int postNumber;
 
   User({
     required this.username,
@@ -33,6 +36,9 @@ class User {
     required this.displayName,
     required this.avatar,
     required this.authProvider,
+    this.follower = 0,
+    this.following = 0,
+    this.postNumber = 0,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -42,6 +48,9 @@ class User {
       displayName: json['displayName'] ?? '',
       avatar: json['avatar'] ?? '',
       authProvider: json['authProvider'] ?? '',
+      follower: json['followersCount'] ?? 0,
+      following: json['followingCount'] ?? 0,
+      postNumber: json['postNumber'] ?? 0,
     );
   }
 
@@ -52,6 +61,31 @@ class User {
       'displayName': displayName,
       'avatar': avatar,
       'authProvider': authProvider,
+      'follower': follower,
+      'following': following,
+      'postNumber': postNumber,
     };
+  }
+
+  User copyWith({
+    String? username,
+    String? bio,
+    String? displayName,
+    String? avatar,
+    String? authProvider,
+    int? follower,
+    int? following,
+    int? postNumber,
+  }) {
+    return User(
+      username: username ?? this.username,
+      bio: bio ?? this.bio,
+      displayName: displayName ?? this.displayName,
+      avatar: avatar ?? this.avatar,
+      authProvider: authProvider ?? this.authProvider,
+      follower: follower ?? this.follower,
+      following: following ?? this.following,
+      postNumber: postNumber ?? this.postNumber,
+    );
   }
 }
