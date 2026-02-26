@@ -48,7 +48,8 @@ dependencies:
   provider: ^6.1.5+1
   google_sign_in: ^6.2.2
   video_player: ^2.8.2
-
+  fl_chart: ^0.68.0
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
