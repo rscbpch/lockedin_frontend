@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 import '../../../theme/app_theme.dart';
 import '../../../../services/pomodoro_service.dart';
-import 'package:fl_chart/fl_chart.dart';
 
 /// ================= TIMER PAINTER =================
 class TimerPainter extends CustomPainter {
