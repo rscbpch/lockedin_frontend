@@ -70,7 +70,7 @@ class _FlashcardState extends State<FlashcardScreen> {
                     separatorBuilder: (_, __) => SizedBox(height: 12),
                     itemBuilder: (context, i) {
                       final s = provider.sets[i];
-                      return FlashcardTiles(flashcardTitle: s.title, cardsNumber: s.cardCount);
+                      return FlashcardTiles(flashcardId: s.id, flashcardTitle: s.title, cardsNumber: s.cardCount);
                     },
                   ),
                 ),
@@ -83,11 +83,13 @@ class _FlashcardState extends State<FlashcardScreen> {
 }
 
 class FlashcardTiles extends StatelessWidget {
+  final String flashcardId;
   final String flashcardTitle;
   final int cardsNumber;
 
   const FlashcardTiles({
     super.key,
+    required this.flashcardId,
     required this.flashcardTitle,
     required this.cardsNumber,
   });
@@ -97,7 +99,7 @@ class FlashcardTiles extends StatelessWidget {
     final cardText = cardsNumber == 1 ? 'card' : 'cards';
 
     return GestureDetector(
-      onTap: () {},
+      onTap: () => context.go('/flashcard/$flashcardId'),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),

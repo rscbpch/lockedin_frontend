@@ -39,13 +39,16 @@ class FlashcardSet {
   );
 
   factory FlashcardSet.fromDetailJson(Map<String, dynamic> json) {
-    final rawCards = json['cards'] as List<dynamic>? ?? [];
-    return FlashcardSet(
-      id: json['_id']?.toString() ?? '',
-      title: json['title'] ?? '',
-      cards: rawCards.map((c) => FlashcardCard.fromJson(c as Map<String, dynamic>)).toList()
-    );
-  }
+  final rawCards = json['cards'] as List<dynamic>? ?? [];
+
+  return FlashcardSet(
+    id: json['_id']?.toString() ?? '',
+    title: json['title'] ?? '',
+    cardCount: (json['cardCount'] as num?)?.toInt() ?? rawCards.length,
+    updatedAt: json['updatedAt'] != null ? DateTime.tryParse(json['updatedAt']) : null,
+    cards: rawCards.map((c) => FlashcardCard.fromJson(c as Map<String, dynamic>)).toList(),
+  );
+}
 }
 
 class FlashcardTestResult {
