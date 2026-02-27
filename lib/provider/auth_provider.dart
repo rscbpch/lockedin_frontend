@@ -107,6 +107,20 @@ class AuthProvider extends ChangeNotifier {
   User? get currentUser => _currentUser;
   bool get isAuthenticated => _token != null;
 
+  // ---------- INITIALIZE (restore session on app launch) ----------
+  Future<void> initialize() async {
+    _token = await AuthService.getToken();
+    notifyListeners();
+  }
+
+  // ---------- LOGOUT ----------
+  Future<void> logout() async {
+    await AuthService.clearToken();
+    _token = null;
+    _currentUser = null;
+    notifyListeners();
+  }
+
   // ---------- LOGIN ----------
   Future<bool> login({required String email, required String password}) async {
     isLoading = true;

@@ -39,17 +39,23 @@ class AuthService {
     return token;
   }
 
+  static Future<void> clearToken() async {
+    await _storage.delete(key: 'auth_token');
+    await _storage.delete(key: 'token');
+    await _storage.delete(key: 'userId');
+  }
+
   static Future<void> _saveToken(dynamic responseData) async {
     if (responseData is Map) {
       String? token;
       if (responseData['token'] != null) {
         token = responseData['token'];
-      } else if (responseData['data'] != null && 
-                responseData['data'] is Map && 
-                responseData['data']['token'] != null) {
+      } else if (responseData['data'] != null &&
+          responseData['data'] is Map &&
+          responseData['data']['token'] != null) {
         token = responseData['data']['token'];
       }
-      
+
       if (token != null) {
         await _storage.write(key: 'auth_token', value: token);
       }
@@ -66,7 +72,12 @@ class AuthService {
       final response = await http.post(
         Uri.parse(ApiConfig.register),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'username': username, 'password': password, 'confirmPassword': confirmPassword}),
+        body: jsonEncode({
+          'email': email,
+          'username': username,
+          'password': password,
+          'confirmPassword': confirmPassword,
+        }),
       );
 
       final status = response.statusCode;
@@ -106,12 +117,19 @@ class AuthService {
     }
   }
 
-  static Future<Map<String, dynamic>> login({required String email, required String password}) async {
+  static Future<Map<String, dynamic>> login({
+    required String email,
+    required String password,
+  }) async {
     try {
       final payload = {'email': email, 'username': email, 'password': password};
       // ignore: avoid_print
       print('AuthService.login -> request body: ${jsonEncode(payload)}');
-      final response = await http.post(Uri.parse(ApiConfig.login), headers: {'Content-Type': 'application/json'}, body: jsonEncode(payload));
+      final response = await http.post(
+        Uri.parse(ApiConfig.login),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(payload),
+      );
 
       final status = response.statusCode;
       final body = response.body;
@@ -128,7 +146,9 @@ class AuthService {
 
       if (status >= 200 && status < 300) {
         // Persist token + userId
-        final token = (parsed is Map<String, dynamic>) ? (parsed['token'] ?? parsed['data']?['token']) : null;
+        final token = (parsed is Map<String, dynamic>)
+            ? (parsed['token'] ?? parsed['data']?['token'])
+            : null;
         if (token != null) {
           await _saveCredentials(token as String);
         }
@@ -160,7 +180,8 @@ class AuthService {
       final GoogleSignIn googleSignIn = GoogleSignIn(
         scopes: ['email', 'profile'],
         clientId: Env.googleClientId, // Platform-specific client ID
-        serverClientId: Env.googleWebClientId, // Web client ID for backend token verification
+        serverClientId: Env
+            .googleWebClientId, // Web client ID for backend token verification
       );
 
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
@@ -169,7 +190,8 @@ class AuthService {
         return {'success': false, 'message': 'Google sign-in cancelled'};
       }
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
       final String? idToken = googleAuth.idToken;
 
       if (idToken == null) {
@@ -177,7 +199,11 @@ class AuthService {
       }
 
       // Send to backend
-      final response = await http.post(Uri.parse('${Env.apiBaseUrl}/auth/google'), headers: {'Content-Type': 'application/json'}, body: jsonEncode({'idToken': idToken}));
+      final response = await http.post(
+        Uri.parse('${Env.apiBaseUrl}/auth/google'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'idToken': idToken}),
+      );
 
       final status = response.statusCode;
       final body = response.body;
@@ -194,7 +220,9 @@ class AuthService {
 
       if (status >= 200 && status < 300) {
         // Persist token + userId
-        final token = (parsed is Map<String, dynamic>) ? (parsed['token'] ?? parsed['data']?['token']) : null;
+        final token = (parsed is Map<String, dynamic>)
+            ? (parsed['token'] ?? parsed['data']?['token'])
+            : null;
         if (token != null) {
           await _saveCredentials(token as String);
         }
@@ -222,7 +250,11 @@ class AuthService {
 
   static Future<Map<String, dynamic>> sendOTP({required String email}) async {
     try {
-      final response = await http.post(Uri.parse(ApiConfig.sendOTP), headers: {'Content-Type': 'application/json'}, body: jsonEncode({'email': email}));
+      final response = await http.post(
+        Uri.parse(ApiConfig.sendOTP),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email}),
+      );
 
       final status = response.statusCode;
       final body = response.body;
@@ -240,7 +272,10 @@ class AuthService {
       if (status >= 200 && status < 300) {
         if (parsed is Map<String, dynamic>) {
           if (parsed.containsKey('success')) return parsed;
-          return {'success': true, 'message': parsed['message'] ?? 'OTP sent successfully'};
+          return {
+            'success': true,
+            'message': parsed['message'] ?? 'OTP sent successfully',
+          };
         }
         return {'success': true, 'message': 'OTP sent successfully'};
       }
@@ -258,12 +293,20 @@ class AuthService {
     }
   }
 
-  static Future<Map<String, dynamic>> resetPasswordWithOTP({required String email, required String otp, required String newPassword}) async {
+  static Future<Map<String, dynamic>> resetPasswordWithOTP({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
     try {
       final response = await http.post(
         Uri.parse(ApiConfig.resetPasswordWithOTP),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'otp': otp, 'newPassword': newPassword}),
+        body: jsonEncode({
+          'email': email,
+          'otp': otp,
+          'newPassword': newPassword,
+        }),
       );
 
       final status = response.statusCode;
@@ -282,7 +325,10 @@ class AuthService {
       if (status >= 200 && status < 300) {
         if (parsed is Map<String, dynamic>) {
           if (parsed.containsKey('success')) return parsed;
-          return {'success': true, 'message': parsed['message'] ?? 'Password reset successfully'};
+          return {
+            'success': true,
+            'message': parsed['message'] ?? 'Password reset successfully',
+          };
         }
         return {'success': true, 'message': 'Password reset successfully'};
       }
