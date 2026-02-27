@@ -17,7 +17,11 @@ class _ProductivityHubScreenState extends State<ProductivityHubScreen> {
   int _currentIndex = 2;
 
   void _onTap(int index) {
-    setState(() => _currentIndex = index);
+    if (index == 4) {
+      context.go('/profile');
+    } else {
+      setState(() => _currentIndex = index);
+    }
   }
 
   @override
@@ -41,10 +45,30 @@ class _ProductivityHubScreenState extends State<ProductivityHubScreen> {
                 itemCount: 4,
                 itemBuilder: (context, index) {
                   final items = [
-                    FeatureCard(color: const Color(0xFFFFDBDB), label: 'Pomodoro', imagePath: 'assets/images/pomodoro.png', onTap: () => context.go('/pomodoro')),
-                    FeatureCard(color: const Color(0xFFAEDEFC), label: 'To-do List', imagePath: 'assets/images/todo-list.png', onTap: () => context.go('/todo-list')),
-                    FeatureCard(color: const Color(0xFFFFE893), label: 'Flashcards', imagePath: 'assets/images/flashcard.png', onTap: () => context.go('/flashcard')),
-                    FeatureCard(color: const Color(0xFFC8E6C9), label: 'Task Breakdown', imagePath: 'assets/images/task-breakdown.png', onTap: () => context.go('/task-breakdown')),
+                    FeatureCard(
+                      color: const Color(0xFFFFDBDB),
+                      label: 'Pomodoro',
+                      imagePath: 'assets/images/pomodoro.png',
+                      onTap: () => context.go('/pomodoro'),
+                    ),
+                    FeatureCard(
+                      color: const Color(0xFFAEDEFC),
+                      label: 'To-do List',
+                      imagePath: 'assets/images/todo-list.png',
+                      onTap: () => context.go('/todo-list'),
+                    ),
+                    FeatureCard(
+                      color: const Color(0xFFFFE893),
+                      label: 'Flashcards',
+                      imagePath: 'assets/images/flashcard.png',
+                      onTap: () => context.go('/flashcard'),
+                    ),
+                    FeatureCard(
+                      color: const Color(0xFFC8E6C9),
+                      label: 'Task Breakdown',
+                      imagePath: 'assets/images/task-breakdown.png',
+                      onTap: () => context.go('/task-breakdown'),
+                    ),
                   ];
                   return items[index];
                 },
@@ -62,15 +86,12 @@ class _ProductivityHubScreenState extends State<ProductivityHubScreen> {
                   ),
                 ),
               ),
-              Expanded(
-                child: ProductivityStatsCard(),
-              ),
+              Expanded(child: ProductivityStatsCard()),
             ],
           ),
         ),
       ),
-      bottomNavigationBar:
-          Navbar(currentIndex: _currentIndex, onTap: _onTap),
+      bottomNavigationBar: Navbar(currentIndex: _currentIndex, onTap: _onTap),
     );
   }
 }
@@ -99,16 +120,14 @@ class FeatureCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(Responsive.radius(context, size: 12)),
+          borderRadius: BorderRadius.circular(
+            Responsive.radius(context, size: 12),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Image.asset(
-              imagePath,
-              height: width * 0.16,
-              fit: BoxFit.contain,
-            ),
+            Image.asset(imagePath, height: width * 0.16, fit: BoxFit.contain),
             const SizedBox(height: 8),
             Text(
               label,
@@ -144,10 +163,7 @@ class ProductivityStatsCard extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Image.asset(
-            'assets/images/streak.png',
-            height: width * 0.40,
-          ),
+          Image.asset('assets/images/streak.png', height: width * 0.40),
           const SizedBox(height: 2),
           Text(
             '67',
@@ -181,7 +197,7 @@ class ProductivityStatsCard extends StatelessWidget {
                 DayCheck(label: 'Sat', active: false),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
@@ -192,11 +208,7 @@ class DayCheck extends StatelessWidget {
   final String label;
   final bool active;
 
-  const DayCheck({
-    super.key,
-    required this.label,
-    required this.active,
-  });
+  const DayCheck({super.key, required this.label, required this.active});
 
   @override
   Widget build(BuildContext context) {
@@ -207,11 +219,7 @@ class DayCheck extends StatelessWidget {
         CircleAvatar(
           radius: width * 0.04,
           backgroundColor: active ? AppColors.primary : AppColors.grey,
-          child: Icon(
-            Icons.check,
-            size: width * 0.04,
-            color: Colors.white,
-          ),
+          child: Icon(Icons.check, size: width * 0.04, color: Colors.white),
         ),
         const SizedBox(height: 4),
         Text(

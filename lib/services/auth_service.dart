@@ -45,8 +45,8 @@ class AuthService {
       if (responseData['token'] != null) {
         token = responseData['token'];
       } else if (responseData['data'] != null && 
-                 responseData['data'] is Map && 
-                 responseData['data']['token'] != null) {
+                responseData['data'] is Map && 
+                responseData['data']['token'] != null) {
         token = responseData['data']['token'];
       }
       

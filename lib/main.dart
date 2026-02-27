@@ -9,9 +9,11 @@ import 'package:lockedin_frontend/ui/screens/auth/reset_password.dart';
 import 'package:lockedin_frontend/ui/screens/auth/sign_up_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/flashcard/flashcard_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/flashcard/flashcard_view_screen.dart';
+import 'package:lockedin_frontend/ui/screens/productivity_hub/ai_breakdown/ai_breakdown_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/productivity_hub_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/todo_list/todo_list_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/pomodoro/pomodoro_screen.dart';
+import 'package:lockedin_frontend/ui/screens/profile/user_own_profile_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:lockedin_frontend/provider/auth_provider.dart';
 import 'package:lockedin_frontend/provider/flashcard_provider.dart';
@@ -96,6 +98,14 @@ final GoRouter router = GoRouter(
         return NoTransitionPage(child: FlashcardViewScreen(setId: id));
       },
     ),
+    GoRoute(
+      path: '/task-breakdown',
+      builder: (context, state) => const AiBreakdownScreen(),
+    ),
+    GoRoute(
+      path: '/profile',
+      builder: (context, state) => const UserOwnProfileScreen(),
+    )
   ],
 );
 
