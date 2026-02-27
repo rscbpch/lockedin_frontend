@@ -4,13 +4,14 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:lockedin_frontend/config/env.dart';
 import 'package:lockedin_frontend/models/productivity_tools/todo_list/todo_task.dart';
+import 'package:lockedin_frontend/services/auth_service.dart';
 
 class TodoService {
   static String get _baseUrl => '${Env.apiBaseUrl}/todo';
   static final _storage = FlutterSecureStorage();
 
   static Future<String> _getToken() async {
-    final token = await _storage.read(key: 'token');
+    final token = await AuthService.getToken();
     if (token == null) throw Exception('No auth token');
     return token;
   }

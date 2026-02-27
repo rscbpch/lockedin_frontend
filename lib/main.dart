@@ -7,6 +7,8 @@ import 'package:lockedin_frontend/ui/screens/auth/input_otp.dart';
 import 'package:lockedin_frontend/ui/screens/auth/login_screen.dart';
 import 'package:lockedin_frontend/ui/screens/auth/reset_password.dart';
 import 'package:lockedin_frontend/ui/screens/auth/sign_up_screen.dart';
+import 'package:lockedin_frontend/ui/screens/productivity_hub/flashcard/flashcard_screen.dart';
+import 'package:lockedin_frontend/ui/screens/productivity_hub/flashcard/flashcard_view_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/ai_breakdown/ai_breakdown_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/productivity_hub_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/todo_list/todo_list_screen.dart';
@@ -14,6 +16,7 @@ import 'package:lockedin_frontend/ui/screens/productivity_hub/pomodoro/pomodoro_
 import 'package:lockedin_frontend/ui/screens/profile/user_own_profile_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:lockedin_frontend/provider/auth_provider.dart';
+import 'package:lockedin_frontend/provider/flashcard_provider.dart';
 
 final GoRouter router = GoRouter(
   initialLocation: '/',
@@ -21,47 +24,79 @@ final GoRouter router = GoRouter(
     // auth
     GoRoute(
       path: '/',
-      builder: (context, state) => const GettingStartedScreen(),
+      pageBuilder: (context, state) => const NoTransitionPage(child: GettingStartedScreen()),
     ),
-    GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+    GoRoute(
+      path: '/login',
+      pageBuilder: (context, state) => const NoTransitionPage(child: LoginScreen()),
+    ),
     GoRoute(
       path: '/register',
-      builder: (context, state) => const SignUpScreen(),
+      pageBuilder: (context, state) => const NoTransitionPage(child: SignUpScreen()),
     ),
     GoRoute(
       path: '/forget-password',
-      builder: (context, state) => const ForgetPasswordScreen(),
+      pageBuilder: (context, state) => const NoTransitionPage(child: ForgetPasswordScreen()),
     ),
     GoRoute(
       path: '/OTP/:email',
-      builder: (context, state) {
+      pageBuilder: (context, state) {
         final email = state.pathParameters['email'] ?? '';
-        return OTPScreen(email: email);
+
+        return CustomTransitionPage(
+          key: state.pageKey,
+          transitionDuration: const Duration(milliseconds: 200),
+          child: OTPScreen(email: email),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        );
       },
     ),
     GoRoute(
       path: '/reset-password/:email/:otp',
-      builder: (context, state) {
+      pageBuilder: (context, state) {
         final email = state.pathParameters['email'] ?? '';
         final otp = state.pathParameters['otp'] ?? '';
-        return ResetPasswordScreen(email: email, otp: otp);
+
+        return CustomTransitionPage(
+          key: state.pageKey,
+          transitionDuration: const Duration(milliseconds: 200),
+          child: ResetPasswordScreen(email: email, otp: otp),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        );
       },
     ),
 
     // main tabs
     GoRoute(
       path: '/productivity-hub',
-      builder: (context, state) => const ProductivityHubScreen(),
+      pageBuilder: (context, state) => const NoTransitionPage(child: ProductivityHubScreen()),
     ),
 
     // productivity tools
     GoRoute(
       path: '/todo-list',
-      builder: (context, state) => const TodoListScreen(),
+      pageBuilder: (context, state) => const NoTransitionPage(child: TodoListScreen()),
     ),
+
     GoRoute(
       path: '/pomodoro',
-      builder: (context, state) => const PomodoroScreen(),
+      pageBuilder: (context, state) => const NoTransitionPage(child: PomodoroScreen()),
+    ),
+
+    GoRoute(
+      path: '/flashcard',
+      pageBuilder: (context, state) => const NoTransitionPage(child: FlashcardScreen()),
+    ),
+    GoRoute(
+      path: '/flashcard/:id',
+      pageBuilder: (context, state) {
+        final id = state.pathParameters['id'] ?? '';
+        return NoTransitionPage(child: FlashcardViewScreen(setId: id));
+      },
     ),
     GoRoute(
       path: '/task-breakdown',
@@ -82,6 +117,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => FlashcardProvider()),
       ],
       child: const MyApp(),
     ),
@@ -93,9 +129,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      routerConfig: router,
-      debugShowCheckedModeBanner: false,
-    );
+    return MaterialApp.router(routerConfig: router, debugShowCheckedModeBanner: false);
   }
 }
