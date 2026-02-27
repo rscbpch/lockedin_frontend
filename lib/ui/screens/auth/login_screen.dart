@@ -142,7 +142,7 @@ class LoginScreen extends StatelessWidget {
                         ),
                         GestureDetector(
                           onTap: () {
-                            context.push('/register');
+                            context.go('/register');
                           },
                           child: Text(
                             " Sign up",
@@ -250,7 +250,7 @@ class _LoginFormState extends State<LoginForm> {
               TextButton(
                 onPressed: () {
                   // Handle forget password
-                  context.push('/forget-password');
+                  context.go('/forget-password');
                 },
                 child: const Text(
                   'Forget Password?',
