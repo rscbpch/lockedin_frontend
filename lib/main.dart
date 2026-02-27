@@ -15,86 +15,132 @@ import 'package:lockedin_frontend/ui/screens/profile/user_own_profile_screen.dar
 import 'package:provider/provider.dart';
 import 'package:lockedin_frontend/provider/auth_provider.dart';
 
-final GoRouter router = GoRouter(
-  initialLocation: '/',
-  routes: [
-    // auth
-    GoRoute(
-      path: '/',
-      builder: (context, state) => const GettingStartedScreen(),
-    ),
-    GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
-    GoRoute(
-      path: '/register',
-      builder: (context, state) => const SignUpScreen(),
-    ),
-    GoRoute(
-      path: '/forget-password',
-      builder: (context, state) => const ForgetPasswordScreen(),
-    ),
-    GoRoute(
-      path: '/OTP/:email',
-      builder: (context, state) {
-        final email = state.pathParameters['email'] ?? '';
-        return OTPScreen(email: email);
-      },
-    ),
-    GoRoute(
-      path: '/reset-password/:email/:otp',
-      builder: (context, state) {
-        final email = state.pathParameters['email'] ?? '';
-        final otp = state.pathParameters['otp'] ?? '';
-        return ResetPasswordScreen(email: email, otp: otp);
-      },
-    ),
-
-    // main tabs
-    GoRoute(
-      path: '/productivity-hub',
-      builder: (context, state) => const ProductivityHubScreen(),
-    ),
-
-    // productivity tools
-    GoRoute(
-      path: '/todo-list',
-      builder: (context, state) => const TodoListScreen(),
-    ),
-    GoRoute(
-      path: '/pomodoro',
-      builder: (context, state) => const PomodoroScreen(),
-    ),
-    GoRoute(
-      path: '/task-breakdown',
-      builder: (context, state) => const AiBreakdownScreen(),
-    ),
-    GoRoute(
-      path: '/profile',
-      builder: (context, state) => const UserOwnProfileScreen(),
-    )
-  ],
-);
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
 
+  // Restore persisted session before showing any UI.
+  final authProvider = AuthProvider();
+  await authProvider.initialize();
+
   runApp(
     MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-      ],
-      child: const MyApp(),
+      providers: [ChangeNotifierProvider.value(value: authProvider)],
+      child: MyApp(authProvider: authProvider),
     ),
   );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MyApp extends StatefulWidget {
+  final AuthProvider authProvider;
+  const MyApp({super.key, required this.authProvider});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late final GoRouter _router;
+
+  // Auth-only paths that logged-in users should skip.
+  static const _authPaths = {'/', '/login', '/register', '/forget-password'};
+
+  // Protected paths that require a valid token.
+  static const _protectedPaths = {
+    '/productivity-hub',
+    '/todo-list',
+    '/pomodoro',
+    '/task-breakdown',
+    '/profile',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _router = GoRouter(
+      initialLocation: '/',
+      refreshListenable: widget.authProvider,
+      redirect: (context, state) {
+        final isAuth = widget.authProvider.isAuthenticated;
+        final path = state.matchedLocation;
+
+        // Logged-in user trying to view an auth screen → send to main app.
+        if (isAuth && _authPaths.contains(path)) {
+          return '/productivity-hub';
+        }
+
+        // Guest trying to view a protected screen → send to landing.
+        if (!isAuth && _protectedPaths.contains(path)) {
+          return '/';
+        }
+
+        return null; // no redirect needed
+      },
+      routes: [
+        // auth
+        GoRoute(
+          path: '/',
+          builder: (context, state) => const GettingStartedScreen(),
+        ),
+        GoRoute(
+          path: '/login',
+          builder: (context, state) => const LoginScreen(),
+        ),
+        GoRoute(
+          path: '/register',
+          builder: (context, state) => const SignUpScreen(),
+        ),
+        GoRoute(
+          path: '/forget-password',
+          builder: (context, state) => const ForgetPasswordScreen(),
+        ),
+        GoRoute(
+          path: '/OTP/:email',
+          builder: (context, state) {
+            final email = state.pathParameters['email'] ?? '';
+            return OTPScreen(email: email);
+          },
+        ),
+        GoRoute(
+          path: '/reset-password/:email/:otp',
+          builder: (context, state) {
+            final email = state.pathParameters['email'] ?? '';
+            final otp = state.pathParameters['otp'] ?? '';
+            return ResetPasswordScreen(email: email, otp: otp);
+          },
+        ),
+
+        // main tabs
+        GoRoute(
+          path: '/productivity-hub',
+          builder: (context, state) => const ProductivityHubScreen(),
+        ),
+
+        // productivity tools
+        GoRoute(
+          path: '/todo-list',
+          builder: (context, state) => const TodoListScreen(),
+        ),
+        GoRoute(
+          path: '/pomodoro',
+          builder: (context, state) => const PomodoroScreen(),
+        ),
+        GoRoute(
+          path: '/task-breakdown',
+          builder: (context, state) => const AiBreakdownScreen(),
+        ),
+        GoRoute(
+          path: '/profile',
+          builder: (context, state) => const UserOwnProfileScreen(),
+        ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      routerConfig: router,
+      routerConfig: _router,
       debugShowCheckedModeBanner: false,
     );
   }
