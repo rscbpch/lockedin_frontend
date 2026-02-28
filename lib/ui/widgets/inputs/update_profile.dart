@@ -6,6 +6,8 @@ import 'package:lockedin_frontend/provider/auth_provider.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 
 class UpdateProfilePage extends StatefulWidget {
+  const UpdateProfilePage({super.key});
+
   @override
   State<UpdateProfilePage> createState() => _UpdateProfilePageState();
 }
@@ -270,7 +272,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
                                       width: 100,
                                       height: 100,
                                       fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) =>
+                                      errorBuilder: (_, _, _) =>
                                           _avatarFallback(),
                                     ),
                                   )

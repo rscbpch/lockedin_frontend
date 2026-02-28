@@ -7,6 +7,7 @@ import 'package:lockedin_frontend/ui/screens/auth/input_otp.dart';
 import 'package:lockedin_frontend/ui/screens/auth/login_screen.dart';
 import 'package:lockedin_frontend/ui/screens/auth/reset_password.dart';
 import 'package:lockedin_frontend/ui/screens/auth/sign_up_screen.dart';
+import 'package:lockedin_frontend/ui/screens/productivity_hub/flashcard/create_flashcard_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/flashcard/flashcard_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/flashcard/flashcard_view_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/ai_breakdown/ai_breakdown_screen.dart';
@@ -75,6 +76,10 @@ final GoRouter router = GoRouter(
       path: '/productivity-hub',
       pageBuilder: (context, state) => const NoTransitionPage(child: ProductivityHubScreen()),
     ),
+    GoRoute(
+      path: '/profile',
+      pageBuilder: (context, state) => const NoTransitionPage(child: UserOwnProfileScreen()),
+    ),
 
     // productivity tools
     GoRoute(
@@ -92,6 +97,10 @@ final GoRouter router = GoRouter(
       pageBuilder: (context, state) => const NoTransitionPage(child: FlashcardScreen()),
     ),
     GoRoute(
+      path: '/flashcard/create',
+      pageBuilder: (context, state) => const NoTransitionPage(child: CreateFlashcardScreen()),
+    ),
+    GoRoute(
       path: '/flashcard/:id',
       pageBuilder: (context, state) {
         final id = state.pathParameters['id'] ?? '';
@@ -100,12 +109,8 @@ final GoRouter router = GoRouter(
     ),
     GoRoute(
       path: '/task-breakdown',
-      builder: (context, state) => const AiBreakdownScreen(),
+      pageBuilder: (context, state) => const NoTransitionPage(child: AiBreakdownScreen()),
     ),
-    GoRoute(
-      path: '/profile',
-      builder: (context, state) => const UserOwnProfileScreen(),
-    )
   ],
 );
 
@@ -143,13 +148,7 @@ class _MyAppState extends State<MyApp> {
   static const _authPaths = {'/', '/login', '/register', '/forget-password'};
 
   // Protected paths that require a valid token.
-  static const _protectedPaths = {
-    '/productivity-hub',
-    '/todo-list',
-    '/pomodoro',
-    '/task-breakdown',
-    '/profile',
-  };
+  static const _protectedPaths = {'/productivity-hub', '/todo-list', '/pomodoro', '/task-breakdown', '/profile'};
 
   @override
   void initState() {
@@ -175,22 +174,10 @@ class _MyAppState extends State<MyApp> {
       },
       routes: [
         // auth
-        GoRoute(
-          path: '/',
-          builder: (context, state) => const GettingStartedScreen(),
-        ),
-        GoRoute(
-          path: '/login',
-          builder: (context, state) => const LoginScreen(),
-        ),
-        GoRoute(
-          path: '/register',
-          builder: (context, state) => const SignUpScreen(),
-        ),
-        GoRoute(
-          path: '/forget-password',
-          builder: (context, state) => const ForgetPasswordScreen(),
-        ),
+        GoRoute(path: '/', builder: (context, state) => const GettingStartedScreen()),
+        GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+        GoRoute(path: '/register', builder: (context, state) => const SignUpScreen()),
+        GoRoute(path: '/forget-password', builder: (context, state) => const ForgetPasswordScreen()),
         GoRoute(
           path: '/OTP/:email',
           builder: (context, state) {
@@ -208,37 +195,28 @@ class _MyAppState extends State<MyApp> {
         ),
 
         // main tabs
-        GoRoute(
-          path: '/productivity-hub',
-          builder: (context, state) => const ProductivityHubScreen(),
-        ),
+        GoRoute(path: '/productivity-hub', builder: (context, state) => const ProductivityHubScreen()),
 
         // productivity tools
+        GoRoute(path: '/todo-list', builder: (context, state) => const TodoListScreen()),
+        GoRoute(path: '/pomodoro', builder: (context, state) => const PomodoroScreen()),
+        GoRoute(path: '/flashcard', builder: (context, state) => const FlashcardScreen()),
+        GoRoute(path: '/flashcard/create', builder: (context, state) => const CreateFlashcardScreen()),
         GoRoute(
-          path: '/todo-list',
-          builder: (context, state) => const TodoListScreen(),
+          path: '/flashcard/:id',
+          builder: (context, state) {
+            final id = state.pathParameters['id'] ?? '';
+            return FlashcardViewScreen(setId: id);
+          },
         ),
-        GoRoute(
-          path: '/pomodoro',
-          builder: (context, state) => const PomodoroScreen(),
-        ),
-        GoRoute(
-          path: '/task-breakdown',
-          builder: (context, state) => const AiBreakdownScreen(),
-        ),
-        GoRoute(
-          path: '/profile',
-          builder: (context, state) => const UserOwnProfileScreen(),
-        ),
+        GoRoute(path: '/task-breakdown', builder: (context, state) => const AiBreakdownScreen()),
+        GoRoute(path: '/profile', builder: (context, state) => const UserOwnProfileScreen()),
       ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      routerConfig: _router,
-      debugShowCheckedModeBanner: false,
-    );
+    return MaterialApp.router(routerConfig: _router, debugShowCheckedModeBanner: false);
   }
 }

@@ -33,9 +33,7 @@ class AuthService {
   static Future<String?> getToken() async {
     // Tries 'auth_token' first (set by _saveToken), falls back to 'token' (set by _saveCredentials)
     String? token = await _storage.read(key: 'auth_token');
-    if (token == null) {
-      token = await _storage.read(key: 'token');
-    }
+    token ??= await _storage.read(key: 'token');
     return token;
   }
 

@@ -131,8 +131,9 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
   }
 
   void _updateVideoPlaybackSpeed() {
-    if (_videoController == null || !_videoController!.value.isInitialized)
+    if (_videoController == null || !_videoController!.value.isInitialized) {
       return;
+    }
 
     final videoDuration = _videoController!.value.duration.inSeconds;
     if (videoDuration == 0) return;
@@ -568,7 +569,7 @@ Widget _statCard(
               : ListView.separated(
                   padding: const EdgeInsets.only(bottom: 16),
                   itemCount: _ranking.length,
-                  separatorBuilder: (_, __) =>
+                  separatorBuilder: (_, _) =>
                       Divider(color: Colors.grey.shade100, height: 1),
                   itemBuilder: (_, i) {
                     final u = _ranking[i];

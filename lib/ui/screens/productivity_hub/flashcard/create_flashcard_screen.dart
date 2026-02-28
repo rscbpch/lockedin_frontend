@@ -2,10 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:lockedin_frontend/provider/flashcard_provider.dart';
+import 'package:lockedin_frontend/services/flashcard_service.dart';
 import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/actions/long_button.dart';
 import 'package:lockedin_frontend/ui/widgets/inputs/text_field.dart';
+
+class CardEntry {
+  static int _nextId = 0;
+  final int id;
+  final TextEditingController questionController = TextEditingController();
+  final TextEditingController definitionController = TextEditingController();
+
+  CardEntry() : id = _nextId++;
+
+  void dispose() {
+    questionController.dispose();
+    definitionController.dispose();
+  }
+}
 
 class CreateFlashcardScreen extends StatefulWidget {
   const CreateFlashcardScreen({super.key});
@@ -16,45 +31,161 @@ class CreateFlashcardScreen extends StatefulWidget {
 
 class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
   final _formKey = GlobalKey<FormState>();
+  final TextEditingController _titleController = TextEditingController();
+  List<CardEntry> _cards = [CardEntry()];
+
+  bool _saving = false;
+  String? _saveError;
+
+  // ── edit mode state ──
+  String? _editSetId;
+  bool get _isEditing => _editSetId != null;
+  List<String?> _originalCardIds = [];
+  List<String> _deletedCardIds = [];
+  bool _formLoading = false;
 
   @override
-  void initState() {
-    super.initState();
-    Future.microtask(() => context.read<FlashcardProvider>().resetCreateForm());
+  void dispose() {
+    _titleController.dispose();
+    for (final c in _cards) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  void _addCard() {
+    setState(() {
+      _cards.add(CardEntry());
+      _originalCardIds.add(null);
+    });
+  }
+
+  void _removeCard(int index) {
+    if (_cards.length > 1) {
+      if (index < _originalCardIds.length && _originalCardIds[index] != null) {
+        _deletedCardIds.add(_originalCardIds[index]!);
+        _originalCardIds.removeAt(index);
+      } else if (index < _originalCardIds.length) {
+        _originalCardIds.removeAt(index);
+      }
+      _cards[index].dispose();
+      setState(() {
+        _cards.removeAt(index);
+      });
+    }
+  }
+
+  Future<void> _loadForEdit(String id) async {
+    setState(() {
+      _formLoading = true;
+      _saving = false;
+      _saveError = null;
+      _editSetId = id;
+      _deletedCardIds = [];
+    });
+
+    try {
+      final set = await FlashcardService.getFlashcardSet(id);
+      if (!mounted) return;
+
+      _titleController.text = set.title;
+
+      for (final c in _cards) {
+        c.dispose();
+      }
+
+      final newCards = set.cards.map((c) {
+        final entry = CardEntry();
+        entry.questionController.text = c.front;
+        entry.definitionController.text = c.back;
+        return entry;
+      }).toList();
+
+      setState(() {
+        _cards = newCards.isEmpty ? [CardEntry()] : newCards;
+        _originalCardIds = newCards.isEmpty ? [null] : set.cards.map((c) => c.id).toList();
+        _formLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _saveError = e.toString();
+        _formLoading = false;
+      });
+    }
   }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final provider = context.read<FlashcardProvider>();
-    final success = await provider.saveFlashcardSet();
+    setState(() {
+      _saving = true;
+      _saveError = null;
+    });
+
+    final title = _titleController.text.trim();
+    Map<String, dynamic> result;
+
+    if (_isEditing) {
+      final updateCards = <Map<String, String>>[];
+      final addCards = <Map<String, String>>[];
+
+      for (var i = 0; i < _cards.length; i++) {
+        final front = _cards[i].questionController.text.trim();
+        final back = _cards[i].definitionController.text.trim();
+        if (front.isEmpty && back.isEmpty) continue;
+
+        final id = (i < _originalCardIds.length) ? _originalCardIds[i] : null;
+
+        if (id != null && id.isNotEmpty) {
+          updateCards.add({'_id': id, 'front': front, 'back': back});
+        } else {
+          addCards.add({'front': front, 'back': back});
+        }
+      }
+
+      result = await FlashcardService.updateFlashcardSet(
+        _editSetId!,
+        title: title,
+        addCards: addCards.isNotEmpty ? addCards : null,
+        updateCards: updateCards.isNotEmpty ? updateCards : null,
+        deleteCardIds: _deletedCardIds.isNotEmpty ? _deletedCardIds : null,
+      );
+    } else {
+      final cardMaps = _cards
+          .map((c) => {'front': c.questionController.text.trim(), 'back': c.definitionController.text.trim()})
+          .where((c) => c['front']!.isNotEmpty || c['back']!.isNotEmpty)
+          .toList();
+
+      result = await FlashcardService.createFlashcardSet(title: title, cards: cardMaps);
+    }
 
     if (!mounted) return;
-    if (success) {
+
+    if (result['success'] == true) {
+      // Refresh the shared set list before navigating back.
+      await context.read<FlashcardProvider>().loadSets();
+      if (!mounted) return;
       context.go('/flashcard');
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(provider.saveError ?? 'Failed to create flashcard set.')),
-      );
+      setState(() {
+        _saving = false;
+        _saveError = result['message'] ?? 'Failed to save flashcard set.';
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(_saveError ?? 'Failed to save flashcard set.')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    final provider = context.watch<FlashcardProvider>();
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-          'Create Flashcard Set',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontFamily: 'Nunito',
-            fontSize: Responsive.text(context, size: 22),
-            fontWeight: FontWeight.w500,
-          ),
+          _isEditing ? 'Edit Flashcard Set' : 'Create Flashcard Set',
+          style: TextStyle(color: AppColors.textPrimary, fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 22), fontWeight: FontWeight.w500),
         ),
         centerTitle: true,
         leading: IconButton(
@@ -62,15 +193,11 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
           icon: Icon(Icons.arrow_back_ios, size: width * 0.06, color: AppColors.textPrimary),
         ),
         actions: [
-          provider.saving
+          _saving
               ? const Padding(
                   padding: EdgeInsets.only(right: 16),
                   child: Center(
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.textPrimary),
-                    ),
+                    child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.textPrimary)),
                   ),
                 )
               : IconButton(
@@ -81,40 +208,34 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
         backgroundColor: AppColors.background,
         elevation: 0,
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          children: [
-            AppTextField(
-              label: 'Title',
-              hint: 'Enter title',
-              controller: provider.titleController,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) return 'Title is required';
-                return null;
-              },
-            ),
-            const SizedBox(height: 20),
-            ...provider.cards.asMap().entries.map((entry) => Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: _FlashcardEntryCard(
-                    entry: entry.value,
-                    index: entry.key + 1,
-                    onRemove: provider.cards.length > 1
-                        ? () => provider.removeCard(entry.key)
-                        : null,
+      body: _formLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                children: [
+                  AppTextField(
+                    label: 'Title',
+                    hint: 'Enter title',
+                    controller: _titleController,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) return 'Title is required';
+                      return null;
+                    },
                   ),
-                )),
-            LongButton(
-              text: 'Add card',
-              isOutlined: true,
-              onPressed: provider.addCard,
+                  const SizedBox(height: 20),
+                  ..._cards.asMap().entries.map(
+                    (entry) => Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: _FlashcardEntryCard(entry: entry.value, index: entry.key + 1, onRemove: _cards.length > 1 ? () => _removeCard(entry.key) : null),
+                    ),
+                  ),
+                  LongButton(text: 'Add card', isOutlined: true, onPressed: _addCard),
+                  const SizedBox(height: 32),
+                ],
+              ),
             ),
-            const SizedBox(height: 32),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -129,10 +250,7 @@ class _FlashcardEntryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: BoxDecoration(
-        color: AppColors.accent,
-        borderRadius: BorderRadius.circular(16),
-      ),
+      decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(16)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -141,12 +259,7 @@ class _FlashcardEntryCard extends StatelessWidget {
             children: [
               Text(
                 'Card $index',
-                style: const TextStyle(
-                  fontFamily: 'Nunito',
-                  fontWeight: FontWeight.w500,
-                  fontSize: 18,
-                  color: AppColors.textPrimary,
-                ),
+                style: const TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w500, fontSize: 18, color: AppColors.textPrimary),
               ),
               if (onRemove != null)
                 GestureDetector(

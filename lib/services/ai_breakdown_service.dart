@@ -38,7 +38,7 @@ class AiBreakdownService {
   }) async {
     final uri = Uri.parse('$_baseUrl/task-breakdown/chat');
 
-    final body = {'message': message, if (chatId != null) 'chatId': chatId};
+    final body = {'message': message, 'chatId': ?chatId};
 
     final response = await http.post(
       uri,
