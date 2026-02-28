@@ -26,7 +26,7 @@ class PlannedResponseCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 14),
-          ...steps.map((s) => _StepItem(step: s)).toList(),
+          ...steps.map((s) => _StepItem(step: s)),
         ],
       ),
     );

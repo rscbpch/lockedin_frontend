@@ -53,6 +53,7 @@ class _FlashcardState extends State<FlashcardScreen> {
         ),
       ),
       body: SafeArea(
+        bottom: false,
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 16),
           child: Column(
@@ -67,7 +68,7 @@ class _FlashcardState extends State<FlashcardScreen> {
                 Expanded(
                   child: ListView.separated(
                     itemCount: provider.sets.length,
-                    separatorBuilder: (_, __) => SizedBox(height: 12),
+                    separatorBuilder: (_, _) => SizedBox(height: 12),
                     itemBuilder: (context, i) {
                       final s = provider.sets[i];
                       return FlashcardTiles(flashcardId: s.id, flashcardTitle: s.title, cardsNumber: s.cardCount);

@@ -71,7 +71,6 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
   int _remainingSeconds = 25 * 60;
   bool _isRunning = false;
   int _pomodoroCount = 0;
-  bool _isAutoTransition = false;
 
   /// ===== TRACKING PANEL STATE =====
   bool _showTracking = false;
@@ -131,8 +130,9 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
   }
 
   void _updateVideoPlaybackSpeed() {
-    if (_videoController == null || !_videoController!.value.isInitialized)
+    if (_videoController == null || !_videoController!.value.isInitialized) {
       return;
+    }
 
     final videoDuration = _videoController!.value.duration.inSeconds;
     if (videoDuration == 0) return;
@@ -146,7 +146,6 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
 
     setState(() {
       _isRunning = true;
-      _isAutoTransition = autoStart;
     });
 
     _videoController?.seekTo(Duration.zero);
@@ -568,7 +567,7 @@ Widget _statCard(
               : ListView.separated(
                   padding: const EdgeInsets.only(bottom: 16),
                   itemCount: _ranking.length,
-                  separatorBuilder: (_, __) =>
+                  separatorBuilder: (_, _) =>
                       Divider(color: Colors.grey.shade100, height: 1),
                   itemBuilder: (_, i) {
                     final u = _ranking[i];
@@ -650,7 +649,6 @@ Widget _statCard(
     setState(() {
       _mode = mode;
       _initializeTimer();
-      _isAutoTransition = false;
     });
 
     // Reset video and update speed for new timer duration

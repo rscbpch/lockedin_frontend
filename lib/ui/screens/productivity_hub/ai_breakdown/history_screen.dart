@@ -130,7 +130,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         return ListView.separated(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           itemCount: chats.length,
-          separatorBuilder: (_, __) => const Divider(height: 1),
+          separatorBuilder: (_, _) => const Divider(height: 1),
           itemBuilder: (context, index) {
             final chat = chats[index];
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
-import 'package:lockedin_frontend/provider/flashcard_provider.dart';
+import 'package:lockedin_frontend/services/flashcard_service.dart';
 import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/actions/long_button.dart';
@@ -15,26 +14,79 @@ class FlashcardViewScreen extends StatefulWidget {
 }
 
 class _FlashcardViewScreenState extends State<FlashcardViewScreen> {
+  FlashcardSet? _viewSet;
+  bool _viewLoading = true;
+  String? _viewError;
+  int _currentCardIndex = 0;
+  bool _showingFront = true;
+
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => context.read<FlashcardProvider>().loadFlashcardSet(widget.setId));
+    _loadSet();
+  }
+
+  Future<void> _loadSet() async {
+    setState(() {
+      _viewLoading = true;
+      _viewError = null;
+      _viewSet = null;
+      _currentCardIndex = 0;
+      _showingFront = true;
+    });
+
+    try {
+      final set = await FlashcardService.getFlashcardSet(widget.setId);
+      if (!mounted) return;
+      setState(() {
+        _viewSet = set;
+        _viewLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _viewError = e.toString();
+        _viewLoading = false;
+      });
+    }
+  }
+
+  void _nextCard() {
+    if (_viewSet != null && _currentCardIndex < _viewSet!.cards.length - 1) {
+      setState(() {
+        _currentCardIndex++;
+        _showingFront = true;
+      });
+    }
+  }
+
+  void _previousCard() {
+    if (_currentCardIndex > 0) {
+      setState(() {
+        _currentCardIndex--;
+        _showingFront = true;
+      });
+    }
+  }
+
+  void _flipCard() {
+    setState(() {
+      _showingFront = !_showingFront;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    final provider = context.watch<FlashcardProvider>();
-    final set = provider.viewSet;
-    final cards = set?.cards ?? [];
+    final cards = _viewSet?.cards ?? [];
     final total = cards.length;
-    final index = provider.currentCardIndex;
+    final index = _currentCardIndex;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-          set?.title ?? '',
+          _viewSet?.title ?? '',
           overflow: TextOverflow.ellipsis,
           style: TextStyle(color: AppColors.textPrimary, fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 22), fontWeight: FontWeight.w500),
         ),
@@ -46,11 +98,11 @@ class _FlashcardViewScreenState extends State<FlashcardViewScreen> {
         backgroundColor: AppColors.background,
         elevation: 0,
       ),
-      body: provider.viewLoading
+      body: _viewLoading
           ? const Center(child: CircularProgressIndicator())
-          : provider.viewError != null
+          : _viewError != null
           ? Center(
-              child: Text(provider.viewError!, style: const TextStyle(color: AppColors.textPrimary)),
+              child: Text(_viewError!, style: const TextStyle(color: AppColors.textPrimary)),
             )
           : cards.isEmpty
           ? const Center(
@@ -63,14 +115,14 @@ class _FlashcardViewScreenState extends State<FlashcardViewScreen> {
                   const SizedBox(height: 24),
                   Expanded(
                     child: GestureDetector(
-                      onTap: provider.flipCard,
+                      onTap: _flipCard,
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(20)),
                         child: Center(
                           child: Text(
-                            provider.showingFront ? cards[index].front : cards[index].back,
+                            _showingFront ? cards[index].front : cards[index].back,
                             textAlign: TextAlign.center,
                             style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 20), fontWeight: FontWeight.w500, color: AppColors.textPrimary),
                           ),
@@ -83,7 +135,7 @@ class _FlashcardViewScreenState extends State<FlashcardViewScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       IconButton(
-                        onPressed: index > 0 ? provider.previousCard : null,
+                        onPressed: index > 0 ? _previousCard : null,
                         icon: Icon(Icons.chevron_left, color: index > 0 ? AppColors.textPrimary : AppColors.grey, size: 28),
                       ),
                       Text(
@@ -91,13 +143,13 @@ class _FlashcardViewScreenState extends State<FlashcardViewScreen> {
                         style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 16), color: AppColors.textPrimary),
                       ),
                       IconButton(
-                        onPressed: index < total - 1 ? provider.nextCard : null,
+                        onPressed: index < total - 1 ? _nextCard : null,
                         icon: Icon(Icons.chevron_right, color: index < total - 1 ? AppColors.textPrimary : AppColors.grey, size: 28),
                       ),
                     ],
                   ),
                   const SizedBox(height: 24),
-                  LongButton(text: 'Edit', isOutlined: true, onPressed: () => context.go('')),
+                  LongButton(text: 'Edit', isOutlined: true, onPressed: () => context.go('/flashcard/edit/${widget.setId}')),
                   const SizedBox(height: 12),
                   LongButton(text: 'Take a test', onPressed: () {}),
                   const SizedBox(height: 32),
