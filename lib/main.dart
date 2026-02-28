@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lockedin_frontend/ui/screens/auth/forget_password.dart';
 import 'package:lockedin_frontend/ui/screens/auth/getting_started_screen.dart';
@@ -7,7 +8,9 @@ import 'package:lockedin_frontend/ui/screens/auth/input_otp.dart';
 import 'package:lockedin_frontend/ui/screens/auth/login_screen.dart';
 import 'package:lockedin_frontend/ui/screens/auth/reset_password.dart';
 import 'package:lockedin_frontend/ui/screens/auth/sign_up_screen.dart';
-import 'package:lockedin_frontend/ui/screens/productivity_hub/flashcard/create_flashcard_screen.dart';
+import 'package:lockedin_frontend/ui/widgets/display/main_shell.dart';
+import 'package:lockedin_frontend/ui/widgets/display/placeholder_screen.dart';
+import 'package:lockedin_frontend/ui/screens/productivity_hub/flashcard/manage_flashcard_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/flashcard/flashcard_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/flashcard/flashcard_view_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/ai_breakdown/ai_breakdown_screen.dart';
@@ -15,119 +18,21 @@ import 'package:lockedin_frontend/ui/screens/productivity_hub/productivity_hub_s
 import 'package:lockedin_frontend/ui/screens/productivity_hub/todo_list/todo_list_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/pomodoro/pomodoro_screen.dart';
 import 'package:lockedin_frontend/ui/screens/profile/user_own_profile_screen.dart';
+import 'package:lockedin_frontend/ui/widgets/display/no_transition_builder.dart';
 import 'package:provider/provider.dart';
 import 'package:lockedin_frontend/provider/auth_provider.dart';
 import 'package:lockedin_frontend/provider/flashcard_provider.dart';
-
-final GoRouter router = GoRouter(
-  initialLocation: '/',
-  routes: [
-    // auth
-    GoRoute(
-      path: '/',
-      pageBuilder: (context, state) => const NoTransitionPage(child: GettingStartedScreen()),
-    ),
-    GoRoute(
-      path: '/login',
-      pageBuilder: (context, state) => const NoTransitionPage(child: LoginScreen()),
-    ),
-    GoRoute(
-      path: '/register',
-      pageBuilder: (context, state) => const NoTransitionPage(child: SignUpScreen()),
-    ),
-    GoRoute(
-      path: '/forget-password',
-      pageBuilder: (context, state) => const NoTransitionPage(child: ForgetPasswordScreen()),
-    ),
-    GoRoute(
-      path: '/OTP/:email',
-      pageBuilder: (context, state) {
-        final email = state.pathParameters['email'] ?? '';
-
-        return CustomTransitionPage(
-          key: state.pageKey,
-          transitionDuration: const Duration(milliseconds: 200),
-          child: OTPScreen(email: email),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-        );
-      },
-    ),
-    GoRoute(
-      path: '/reset-password/:email/:otp',
-      pageBuilder: (context, state) {
-        final email = state.pathParameters['email'] ?? '';
-        final otp = state.pathParameters['otp'] ?? '';
-
-        return CustomTransitionPage(
-          key: state.pageKey,
-          transitionDuration: const Duration(milliseconds: 200),
-          child: ResetPasswordScreen(email: email, otp: otp),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-        );
-      },
-    ),
-
-    // main tabs
-    GoRoute(
-      path: '/productivity-hub',
-      pageBuilder: (context, state) => const NoTransitionPage(child: ProductivityHubScreen()),
-    ),
-    GoRoute(
-      path: '/profile',
-      pageBuilder: (context, state) => const NoTransitionPage(child: UserOwnProfileScreen()),
-    ),
-
-    // productivity tools
-    GoRoute(
-      path: '/todo-list',
-      pageBuilder: (context, state) => const NoTransitionPage(child: TodoListScreen()),
-    ),
-
-    GoRoute(
-      path: '/pomodoro',
-      pageBuilder: (context, state) => const NoTransitionPage(child: PomodoroScreen()),
-    ),
-
-    GoRoute(
-      path: '/flashcard',
-      pageBuilder: (context, state) => const NoTransitionPage(child: FlashcardScreen()),
-    ),
-    GoRoute(
-      path: '/flashcard/create',
-      pageBuilder: (context, state) => const NoTransitionPage(child: CreateFlashcardScreen()),
-    ),
-    GoRoute(
-      path: '/flashcard/:id',
-      pageBuilder: (context, state) {
-        final id = state.pathParameters['id'] ?? '';
-        return NoTransitionPage(child: FlashcardViewScreen(setId: id));
-      },
-    ),
-    GoRoute(
-      path: '/task-breakdown',
-      pageBuilder: (context, state) => const NoTransitionPage(child: AiBreakdownScreen()),
-    ),
-  ],
-);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
 
-  // Restore persisted session before showing any UI.
   final authProvider = AuthProvider();
   await authProvider.initialize();
 
   runApp(
     MultiProvider(
-      providers: [
-        ChangeNotifierProvider.value(value: authProvider),
-        ChangeNotifierProvider(create: (_) => FlashcardProvider()),
-      ],
+      providers: [ChangeNotifierProvider.value(value: authProvider)],
       child: MyApp(authProvider: authProvider),
     ),
   );
@@ -144,11 +49,9 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   late final GoRouter _router;
 
-  // Auth-only paths that logged-in users should skip.
   static const _authPaths = {'/', '/login', '/register', '/forget-password'};
 
-  // Protected paths that require a valid token.
-  static const _protectedPaths = {'/productivity-hub', '/todo-list', '/pomodoro', '/task-breakdown', '/profile'};
+  static const _protectedPaths = {'/home', '/social', '/productivity-hub', '/books', '/profile', '/todo-list', '/pomodoro', '/flashcard', '/task-breakdown'};
 
   @override
   void initState() {
@@ -160,91 +63,138 @@ class _MyAppState extends State<MyApp> {
         final isAuth = widget.authProvider.isAuthenticated;
         final path = state.matchedLocation;
 
-        // Logged-in user trying to view an auth screen → send to main app.
         if (isAuth && _authPaths.contains(path)) {
           return '/productivity-hub';
         }
-
-        // Guest trying to view a protected screen → send to landing.
         if (!isAuth && _protectedPaths.contains(path)) {
           return '/';
         }
-
-        return null; // no redirect needed
+        return null;
       },
+
       routes: [
-        // auth
+        // ── Auth routes ──────────────────────────────
         GoRoute(
           path: '/',
-          pageBuilder: (context, state) => const NoTransitionPage(child: GettingStartedScreen()),
+          pageBuilder: (_, s) => const NoTransitionPage(child: GettingStartedScreen()),
         ),
         GoRoute(
           path: '/login',
-          pageBuilder: (context, state) => const NoTransitionPage(child: LoginScreen()),
+          pageBuilder: (_, s) => const NoTransitionPage(child: LoginScreen()),
         ),
         GoRoute(
           path: '/register',
-          pageBuilder: (context, state) => const NoTransitionPage(child: SignUpScreen()),
+          pageBuilder: (_, s) => const NoTransitionPage(child: SignUpScreen()),
         ),
         GoRoute(
           path: '/forget-password',
-          pageBuilder: (context, state) => const NoTransitionPage(child: ForgetPasswordScreen()),
+          pageBuilder: (_, s) => const NoTransitionPage(child: ForgetPasswordScreen()),
         ),
         GoRoute(
           path: '/OTP/:email',
-          pageBuilder: (context, state) {
-            final email = state.pathParameters['email'] ?? '';
+          pageBuilder: (_, s) {
+            final email = s.pathParameters['email'] ?? '';
             return NoTransitionPage(child: OTPScreen(email: email));
           },
         ),
         GoRoute(
           path: '/reset-password/:email/:otp',
-          pageBuilder: (context, state) {
-            final email = state.pathParameters['email'] ?? '';
-            final otp = state.pathParameters['otp'] ?? '';
+          pageBuilder: (_, s) {
+            final email = s.pathParameters['email'] ?? '';
+            final otp = s.pathParameters['otp'] ?? '';
             return NoTransitionPage(
               child: ResetPasswordScreen(email: email, otp: otp),
             );
           },
         ),
 
-        // main tabs
-        GoRoute(
-          path: '/productivity-hub',
-          pageBuilder: (context, state) => const NoTransitionPage(child: ProductivityHubScreen()),
+        // ── Main tabs with navbar ──────────────────────
+        ShellRoute(
+          builder: (context, state, child) {
+            return MainShell(state: state, child: child);
+          },
+          routes: [
+            GoRoute(
+              path: '/home',
+              pageBuilder: (_, s) => const NoTransitionPage(
+                child: PlaceholderScreen(title: 'Home', icon: FeatherIcons.home),
+              ),
+            ),
+            GoRoute(
+              path: '/social',
+              pageBuilder: (_, s) => const NoTransitionPage(
+                child: PlaceholderScreen(title: 'Social', icon: FeatherIcons.users),
+              ),
+            ),
+            GoRoute(
+              path: '/productivity-hub',
+              pageBuilder: (_, s) => const NoTransitionPage(child: ProductivityHubScreen()),
+            ),
+            GoRoute(
+              path: '/books',
+              pageBuilder: (_, s) => const NoTransitionPage(
+                child: PlaceholderScreen(title: 'Books', icon: FeatherIcons.bookOpen),
+              ),
+            ),
+            GoRoute(
+              path: '/profile',
+              pageBuilder: (_, s) => const NoTransitionPage(child: UserOwnProfileScreen()),
+            ),
+          ],
         ),
 
-        // productivity tools
+        // ── Productivity tools routes ──────────────────────────────
         GoRoute(
           path: '/todo-list',
-          pageBuilder: (context, state) => const NoTransitionPage(child: TodoListScreen()),
+          pageBuilder: (_, s) => const NoTransitionPage(child: TodoListScreen()),
         ),
         GoRoute(
           path: '/pomodoro',
-          pageBuilder: (context, state) => const NoTransitionPage(child: PomodoroScreen()),
+          pageBuilder: (_, s) => const NoTransitionPage(child: PomodoroScreen()),
         ),
-        GoRoute(
-          path: '/flashcard',
-          pageBuilder: (context, state) => const NoTransitionPage(child: FlashcardScreen()),
-        ),
-        GoRoute(
-          path: '/flashcard/create',
-          pageBuilder: (context, state) => const NoTransitionPage(child: CreateFlashcardScreen()),
-        ),
-        GoRoute(
-          path: '/flashcard/:id',
-          pageBuilder: (context, state) {
-            final id = state.pathParameters['id'] ?? '';
-            return NoTransitionPage(child: FlashcardViewScreen(setId: id));
+        ShellRoute(
+          pageBuilder: (context, state, child) {
+            return NoTransitionPage(
+              child: ChangeNotifierProvider(
+                create: (_) => FlashcardProvider(),
+                child: child,
+              ),
+            );
           },
+          routes: [
+            GoRoute(
+              path: '/flashcard',
+              pageBuilder: (_, s) =>
+                  const NoTransitionPage(child: FlashcardScreen()),
+            ),
+            GoRoute(
+              path: '/flashcard/create',
+              pageBuilder: (_, s) =>
+                  const NoTransitionPage(child: ManageFlashcardScreen()),
+            ),
+            GoRoute(
+              path: '/flashcard/edit/:id',
+              pageBuilder: (_, s) {
+                final id = s.pathParameters['id'] ?? '';
+                return NoTransitionPage(
+                  child: ManageFlashcardScreen(editSetId: id),
+                );
+              },
+            ),
+            GoRoute(
+              path: '/flashcard/:id',
+              pageBuilder: (_, s) {
+                final id = s.pathParameters['id'] ?? '';
+                return NoTransitionPage(
+                  child: FlashcardViewScreen(setId: id),
+                );
+              },
+            ),
+          ],
         ),
         GoRoute(
           path: '/task-breakdown',
-          pageBuilder: (context, state) => const NoTransitionPage(child: AiBreakdownScreen()),
-        ),
-        GoRoute(
-          path: '/profile',
-          pageBuilder: (context, state) => const NoTransitionPage(child: UserOwnProfileScreen()),
+          pageBuilder: (_, s) => const NoTransitionPage(child: AiBreakdownScreen()),
         ),
       ],
     );
@@ -252,6 +202,20 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(routerConfig: _router, debugShowCheckedModeBanner: false);
+    return MaterialApp.router(
+      routerConfig: _router,
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        pageTransitionsTheme: PageTransitionsTheme(
+          builders: {
+            TargetPlatform.android: NoTransitionsBuilder(),
+            TargetPlatform.iOS: NoTransitionsBuilder(),
+            TargetPlatform.macOS: NoTransitionsBuilder(),
+            TargetPlatform.windows: NoTransitionsBuilder(),
+            TargetPlatform.linux: NoTransitionsBuilder(),
+          },
+        ),
+      ),
+    );
   }
 }

@@ -149,7 +149,7 @@ class _FlashcardViewScreenState extends State<FlashcardViewScreen> {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  LongButton(text: 'Edit', isOutlined: true, onPressed: () => context.go('')),
+                  LongButton(text: 'Edit', isOutlined: true, onPressed: () => context.go('/flashcard/edit/${widget.setId}')),
                   const SizedBox(height: 12),
                   LongButton(text: 'Take a test', onPressed: () {}),
                   const SizedBox(height: 32),

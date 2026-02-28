@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lockedin_frontend/provider/auth_provider.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
-import 'package:lockedin_frontend/ui/widgets/display/navbar.dart';
 import 'package:lockedin_frontend/ui/widgets/inputs/update_profile.dart';
 import 'package:provider/provider.dart';
 
@@ -14,22 +13,12 @@ class UserOwnProfileScreen extends StatefulWidget {
 }
 
 class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
-  int _currentIndex = 4;
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AuthProvider>().fetchMyProfile();
     });
-  }
-
-  void _onTap(int index) {
-    if (index == 2) {
-      context.go('/productivity-hub');
-    } else if (index != 4) {
-      setState(() => _currentIndex = index);
-    }
   }
 
   @override
@@ -198,7 +187,6 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: Navbar(currentIndex: _currentIndex, onTap: _onTap),
     );
   }
 

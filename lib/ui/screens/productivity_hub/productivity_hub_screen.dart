@@ -4,25 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/display/lockedin_appbar.dart';
-import 'package:lockedin_frontend/ui/widgets/display/navbar.dart';
 
-class ProductivityHubScreen extends StatefulWidget {
+class ProductivityHubScreen extends StatelessWidget {
   const ProductivityHubScreen({super.key});
-
-  @override
-  State<ProductivityHubScreen> createState() => _ProductivityHubScreenState();
-}
-
-class _ProductivityHubScreenState extends State<ProductivityHubScreen> {
-  int _currentIndex = 2;
-
-  void _onTap(int index) {
-    if (index == 4) {
-      context.go('/profile');
-    } else {
-      setState(() => _currentIndex = index);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,30 +29,10 @@ class _ProductivityHubScreenState extends State<ProductivityHubScreen> {
                 itemCount: 4,
                 itemBuilder: (context, index) {
                   final items = [
-                    FeatureCard(
-                      color: const Color(0xFFFFDBDB),
-                      label: 'Pomodoro',
-                      imagePath: 'assets/images/pomodoro.png',
-                      onTap: () => context.go('/pomodoro'),
-                    ),
-                    FeatureCard(
-                      color: const Color(0xFFAEDEFC),
-                      label: 'To-do List',
-                      imagePath: 'assets/images/todo-list.png',
-                      onTap: () => context.go('/todo-list'),
-                    ),
-                    FeatureCard(
-                      color: const Color(0xFFFFE893),
-                      label: 'Flashcards',
-                      imagePath: 'assets/images/flashcard.png',
-                      onTap: () => context.go('/flashcard'),
-                    ),
-                    FeatureCard(
-                      color: const Color(0xFFC8E6C9),
-                      label: 'Task Breakdown',
-                      imagePath: 'assets/images/task-breakdown.png',
-                      onTap: () => context.go('/task-breakdown'),
-                    ),
+                    FeatureCard(color: const Color(0xFFFFDBDB), label: 'Pomodoro', imagePath: 'assets/images/pomodoro.png', onTap: () => context.go('/pomodoro')),
+                    FeatureCard(color: const Color(0xFFAEDEFC), label: 'To-do List', imagePath: 'assets/images/todo-list.png', onTap: () => context.go('/todo-list')),
+                    FeatureCard(color: const Color(0xFFFFE893), label: 'Flashcards', imagePath: 'assets/images/flashcard.png', onTap: () => context.go('/flashcard')),
+                    FeatureCard(color: const Color(0xFFC8E6C9), label: 'Task Breakdown', imagePath: 'assets/images/task-breakdown.png', onTap: () => context.go('/task-breakdown')),
                   ];
                   return items[index];
                 },
@@ -78,12 +42,7 @@ class _ProductivityHubScreenState extends State<ProductivityHubScreen> {
                 padding: const EdgeInsets.only(top: 24, bottom: 12),
                 child: Text(
                   'Productivity Stats',
-                  style: TextStyle(
-                    fontFamily: 'Nunito',
-                    fontSize: Responsive.text(context, size: 18),
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
+                  style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 18), fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                 ),
               ),
               Expanded(child: ProductivityStatsCard()),
@@ -91,7 +50,6 @@ class _ProductivityHubScreenState extends State<ProductivityHubScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: Navbar(currentIndex: _currentIndex, onTap: _onTap),
     );
   }
 }
@@ -102,13 +60,7 @@ class FeatureCard extends StatelessWidget {
   final String imagePath;
   final VoidCallback onTap;
 
-  const FeatureCard({
-    super.key,
-    required this.color,
-    required this.label,
-    required this.imagePath,
-    required this.onTap,
-  });
+  const FeatureCard({super.key, required this.color, required this.label, required this.imagePath, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -118,12 +70,7 @@ class FeatureCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(
-            Responsive.radius(context, size: 12),
-          ),
-        ),
+        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(Responsive.radius(context, size: 12))),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -131,12 +78,7 @@ class FeatureCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               label,
-              style: TextStyle(
-                fontFamily: 'Nunito',
-                fontSize: Responsive.text(context, size: 16),
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
-              ),
+              style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 16), fontWeight: FontWeight.w500, color: AppColors.textPrimary),
             ),
           ],
         ),
@@ -167,20 +109,11 @@ class ProductivityStatsCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             '67',
-            style: TextStyle(
-              fontSize: Responsive.text(context, size: 36),
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-            ),
+            style: TextStyle(fontSize: Responsive.text(context, size: 36), fontFamily: 'Nunito', fontWeight: FontWeight.bold, color: AppColors.textPrimary),
           ),
           const Text(
             'Current streak',
-            style: TextStyle(
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.w500,
-              color: AppColors.textPrimary,
-            ),
+            style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w500, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 16),
           Padding(
@@ -224,12 +157,7 @@ class DayCheck extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           label,
-          style: TextStyle(
-            fontSize: Responsive.text(context, size: 12),
-            fontFamily: 'Quicksand',
-            fontWeight: FontWeight.w500,
-            color: AppColors.textPrimary,
-          ),
+          style: TextStyle(fontSize: Responsive.text(context, size: 12), fontFamily: 'Quicksand', fontWeight: FontWeight.w500, color: AppColors.textPrimary),
         ),
       ],
     );

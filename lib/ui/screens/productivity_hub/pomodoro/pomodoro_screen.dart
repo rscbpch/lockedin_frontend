@@ -71,7 +71,6 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
   int _remainingSeconds = 25 * 60;
   bool _isRunning = false;
   int _pomodoroCount = 0;
-  bool _isAutoTransition = false;
 
   /// ===== TRACKING PANEL STATE =====
   bool _showTracking = false;
@@ -147,7 +146,6 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
 
     setState(() {
       _isRunning = true;
-      _isAutoTransition = autoStart;
     });
 
     _videoController?.seekTo(Duration.zero);
@@ -651,7 +649,6 @@ Widget _statCard(
     setState(() {
       _mode = mode;
       _initializeTimer();
-      _isAutoTransition = false;
     });
 
     // Reset video and update speed for new timer duration

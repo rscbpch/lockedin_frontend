@@ -53,6 +53,7 @@ class _FlashcardState extends State<FlashcardScreen> {
         ),
       ),
       body: SafeArea(
+        bottom: false,
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 16),
           child: Column(

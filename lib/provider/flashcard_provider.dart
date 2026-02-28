@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/flashcard_service.dart';
 
-/// Slim provider – only manages the shared flashcard-set list.
-/// View and form state live in local StatefulWidgets.
 class FlashcardProvider extends ChangeNotifier {
   List<FlashcardSet> _sets = [];
   List<FlashcardSet> get sets => _sets;

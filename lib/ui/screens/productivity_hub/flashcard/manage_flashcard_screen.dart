@@ -22,14 +22,15 @@ class CardEntry {
   }
 }
 
-class CreateFlashcardScreen extends StatefulWidget {
-  const CreateFlashcardScreen({super.key});
+class ManageFlashcardScreen extends StatefulWidget {
+  final String? editSetId;
+  const ManageFlashcardScreen({super.key, this.editSetId});
 
   @override
-  State<CreateFlashcardScreen> createState() => _CreateFlashcardScreenState();
+  State<ManageFlashcardScreen> createState() => _CreateFlashcardScreenState();
 }
 
-class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
+class _CreateFlashcardScreenState extends State<ManageFlashcardScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _titleController = TextEditingController();
   List<CardEntry> _cards = [CardEntry()];
@@ -43,6 +44,16 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
   List<String?> _originalCardIds = [];
   List<String> _deletedCardIds = [];
   bool _formLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.editSetId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadForEdit(widget.editSetId!);
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -103,7 +114,7 @@ class _CreateFlashcardScreenState extends State<CreateFlashcardScreen> {
 
       setState(() {
         _cards = newCards.isEmpty ? [CardEntry()] : newCards;
-        _originalCardIds = newCards.isEmpty ? [null] : set.cards.map((c) => c.id).toList();
+        _originalCardIds = newCards.isEmpty ? <String?>[null] : set.cards.map<String?>((c) => c.id).toList();
         _formLoading = false;
       });
     } catch (e) {
