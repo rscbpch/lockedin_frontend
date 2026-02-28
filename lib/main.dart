@@ -174,43 +174,78 @@ class _MyAppState extends State<MyApp> {
       },
       routes: [
         // auth
-        GoRoute(path: '/', builder: (context, state) => const GettingStartedScreen()),
-        GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
-        GoRoute(path: '/register', builder: (context, state) => const SignUpScreen()),
-        GoRoute(path: '/forget-password', builder: (context, state) => const ForgetPasswordScreen()),
+        GoRoute(
+          path: '/',
+          pageBuilder: (context, state) => const NoTransitionPage(child: GettingStartedScreen()),
+        ),
+        GoRoute(
+          path: '/login',
+          pageBuilder: (context, state) => const NoTransitionPage(child: LoginScreen()),
+        ),
+        GoRoute(
+          path: '/register',
+          pageBuilder: (context, state) => const NoTransitionPage(child: SignUpScreen()),
+        ),
+        GoRoute(
+          path: '/forget-password',
+          pageBuilder: (context, state) => const NoTransitionPage(child: ForgetPasswordScreen()),
+        ),
         GoRoute(
           path: '/OTP/:email',
-          builder: (context, state) {
+          pageBuilder: (context, state) {
             final email = state.pathParameters['email'] ?? '';
-            return OTPScreen(email: email);
+            return NoTransitionPage(child: OTPScreen(email: email));
           },
         ),
         GoRoute(
           path: '/reset-password/:email/:otp',
-          builder: (context, state) {
+          pageBuilder: (context, state) {
             final email = state.pathParameters['email'] ?? '';
             final otp = state.pathParameters['otp'] ?? '';
-            return ResetPasswordScreen(email: email, otp: otp);
+            return NoTransitionPage(
+              child: ResetPasswordScreen(email: email, otp: otp),
+            );
           },
         ),
 
         // main tabs
-        GoRoute(path: '/productivity-hub', builder: (context, state) => const ProductivityHubScreen()),
+        GoRoute(
+          path: '/productivity-hub',
+          pageBuilder: (context, state) => const NoTransitionPage(child: ProductivityHubScreen()),
+        ),
 
         // productivity tools
-        GoRoute(path: '/todo-list', builder: (context, state) => const TodoListScreen()),
-        GoRoute(path: '/pomodoro', builder: (context, state) => const PomodoroScreen()),
-        GoRoute(path: '/flashcard', builder: (context, state) => const FlashcardScreen()),
-        GoRoute(path: '/flashcard/create', builder: (context, state) => const CreateFlashcardScreen()),
+        GoRoute(
+          path: '/todo-list',
+          pageBuilder: (context, state) => const NoTransitionPage(child: TodoListScreen()),
+        ),
+        GoRoute(
+          path: '/pomodoro',
+          pageBuilder: (context, state) => const NoTransitionPage(child: PomodoroScreen()),
+        ),
+        GoRoute(
+          path: '/flashcard',
+          pageBuilder: (context, state) => const NoTransitionPage(child: FlashcardScreen()),
+        ),
+        GoRoute(
+          path: '/flashcard/create',
+          pageBuilder: (context, state) => const NoTransitionPage(child: CreateFlashcardScreen()),
+        ),
         GoRoute(
           path: '/flashcard/:id',
-          builder: (context, state) {
+          pageBuilder: (context, state) {
             final id = state.pathParameters['id'] ?? '';
-            return FlashcardViewScreen(setId: id);
+            return NoTransitionPage(child: FlashcardViewScreen(setId: id));
           },
         ),
-        GoRoute(path: '/task-breakdown', builder: (context, state) => const AiBreakdownScreen()),
-        GoRoute(path: '/profile', builder: (context, state) => const UserOwnProfileScreen()),
+        GoRoute(
+          path: '/task-breakdown',
+          pageBuilder: (context, state) => const NoTransitionPage(child: AiBreakdownScreen()),
+        ),
+        GoRoute(
+          path: '/profile',
+          pageBuilder: (context, state) => const NoTransitionPage(child: UserOwnProfileScreen()),
+        ),
       ],
     );
   }

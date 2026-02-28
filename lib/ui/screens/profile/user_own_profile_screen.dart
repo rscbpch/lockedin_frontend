@@ -40,9 +40,7 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
     if (auth.isLoading) {
       return const Scaffold(
         backgroundColor: AppColors.background,
-        body: Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
-        ),
+        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
       );
     }
 
@@ -89,27 +87,15 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
 
                     // Display name
                     Text(
-                      user.displayName.isNotEmpty
-                          ? user.displayName
-                          : user.username,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontFamily: 'Quicksand',
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
+                      user.displayName.isNotEmpty ? user.displayName : user.username,
+                      style: const TextStyle(fontSize: 18, fontFamily: 'Quicksand', fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                     ),
                     const SizedBox(height: 3),
 
                     // @username
                     Text(
                       '@${user.username}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontFamily: 'Quicksand',
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.grey,
-                      ),
+                      style: const TextStyle(fontSize: 12, fontFamily: 'Quicksand', fontWeight: FontWeight.w500, color: AppColors.grey),
                     ),
                     const SizedBox(height: 10),
 
@@ -118,12 +104,7 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
                       Text(
                         user.bio,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontFamily: 'Quicksand',
-                          color: AppColors.textPrimary,
-                          
-                        ),
+                        style: const TextStyle(fontSize: 14, fontFamily: 'Quicksand', color: AppColors.textPrimary),
                       ),
                     const SizedBox(height: 10),
 
@@ -132,11 +113,7 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
                     const SizedBox(height: 10),
 
                     // Stats row
-                    _buildStatsRow(
-                      user.postNumber,
-                      user.follower,
-                      user.following,
-                    ),
+                    _buildStatsRow(user.postNumber, user.follower, user.following),
                     const SizedBox(height: 10),
 
                     // Edit Profile button
@@ -150,9 +127,7 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
                             isDismissible: false,
                             enableDrag: false,
                             backgroundColor: Colors.white,
-                            shape: const RoundedRectangleBorder(
-                              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                            ),
+                            shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
                             builder: (_) => ChangeNotifierProvider.value(
                               // Pass the SAME AuthProvider instance
                               value: context.read<AuthProvider>(),
@@ -164,22 +139,39 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                           elevation: 0,
                         ),
                         child: const Text(
                           'Edit profile',
-                          style: TextStyle(
-                            fontFamily: 'Quicksand',
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: TextStyle(fontFamily: 'Quicksand', fontSize: 12, fontWeight: FontWeight.w600),
                         ),
                       ),
                     ),
-                    const SizedBox(height:10),
+                    const SizedBox(height: 10),
+
+                    // Logout button
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: () async {
+                          await context.read<AuthProvider>().logout();
+                          if (context.mounted) context.go('/');
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          side: const BorderSide(color: Colors.red),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Log out',
+                          style: TextStyle(fontFamily: 'Quicksand', fontSize: 12, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
 
                     // Posts divider
                     const Divider(color: AppColors.grey, thickness: 0.5),
@@ -196,16 +188,9 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.grid_on,
-                      size: 48,
-                      color: AppColors.grey.withOpacity(0.5),
-                    ),
+                    Icon(Icons.grid_on, size: 48, color: AppColors.grey.withOpacity(0.5)),
                     const SizedBox(height: 12),
-                    const Text(
-                      'No posts yet',
-                      style: TextStyle(color: AppColors.grey, fontSize: 15),
-                    ),
+                    const Text('No posts yet', style: TextStyle(color: AppColors.grey, fontSize: 15)),
                   ],
                 ),
               ),
@@ -223,13 +208,7 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
       backgroundColor: const Color(0xFFF5E6D8),
       child: avatarUrl.isNotEmpty
           ? ClipOval(
-              child: Image.network(
-                avatarUrl,
-                width: 100,
-                height: 100,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => _avatarFallback(),
-              ),
+              child: Image.network(avatarUrl, width: 100, height: 100, fit: BoxFit.cover, errorBuilder: (_, _, _) => _avatarFallback()),
             )
           : _avatarFallback(),
     );
@@ -242,18 +221,10 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
   Widget _buildStreakBadge(int streakDays) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFBF2C0),
-        borderRadius: BorderRadius.circular(30),
-      ),
+      decoration: BoxDecoration(color: const Color(0xFFFBF2C0), borderRadius: BorderRadius.circular(30)),
       child: Text(
         '🔥 $streakDays Days Streak',
-        style: const TextStyle(
-          fontSize: 14,
-          fontFamily: 'Quicksand',
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
-        ),
+        style: const TextStyle(fontSize: 14, fontFamily: 'Quicksand', fontWeight: FontWeight.w600, color: AppColors.textPrimary),
       ),
     );
   }
@@ -284,26 +255,15 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
       children: [
         Text(
           count,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
         ),
         const SizedBox(height: 2),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 13, color: AppColors.grey),
-        ),
+        Text(label, style: const TextStyle(fontSize: 13, color: AppColors.grey)),
       ],
     );
   }
 
   Widget _dividerLine() {
-    return Container(
-      width: 1,
-      height: 30,
-      color: AppColors.grey.withOpacity(0.4),
-    );
+    return Container(width: 1, height: 30, color: AppColors.grey.withOpacity(0.4));
   }
 }
