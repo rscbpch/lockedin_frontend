@@ -4,6 +4,7 @@ import 'package:lockedin_frontend/services/flashcard_service.dart';
 import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/actions/long_button.dart';
+import 'package:lockedin_frontend/ui/screens/productivity_hub/flashcard/widgets/flip_card.dart';
 
 class FlashcardViewScreen extends StatefulWidget {
   final String setId;
@@ -18,7 +19,7 @@ class _FlashcardViewScreenState extends State<FlashcardViewScreen> {
   bool _viewLoading = true;
   String? _viewError;
   int _currentCardIndex = 0;
-  bool _showingFront = true;
+  int _slideDirection = 1;
 
   @override
   void initState() {
@@ -32,7 +33,6 @@ class _FlashcardViewScreenState extends State<FlashcardViewScreen> {
       _viewError = null;
       _viewSet = null;
       _currentCardIndex = 0;
-      _showingFront = true;
     });
 
     try {
@@ -54,8 +54,8 @@ class _FlashcardViewScreenState extends State<FlashcardViewScreen> {
   void _nextCard() {
     if (_viewSet != null && _currentCardIndex < _viewSet!.cards.length - 1) {
       setState(() {
+        _slideDirection = 1;
         _currentCardIndex++;
-        _showingFront = true;
       });
     }
   }
@@ -63,16 +63,10 @@ class _FlashcardViewScreenState extends State<FlashcardViewScreen> {
   void _previousCard() {
     if (_currentCardIndex > 0) {
       setState(() {
+        _slideDirection = -1;
         _currentCardIndex--;
-        _showingFront = true;
       });
     }
-  }
-
-  void _flipCard() {
-    setState(() {
-      _showingFront = !_showingFront;
-    });
   }
 
   @override
@@ -88,7 +82,12 @@ class _FlashcardViewScreenState extends State<FlashcardViewScreen> {
         title: Text(
           _viewSet?.title ?? '',
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(color: AppColors.textPrimary, fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 22), fontWeight: FontWeight.w500),
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontFamily: 'Nunito',
+            fontSize: Responsive.text(context, size: 22),
+            fontWeight: FontWeight.w500,
+          ),
         ),
         centerTitle: true,
         leading: IconButton(
@@ -101,61 +100,70 @@ class _FlashcardViewScreenState extends State<FlashcardViewScreen> {
       body: _viewLoading
           ? const Center(child: CircularProgressIndicator())
           : _viewError != null
-          ? Center(
-              child: Text(_viewError!, style: const TextStyle(color: AppColors.textPrimary)),
-            )
-          : cards.isEmpty
-          ? const Center(
-              child: Text('No cards in this set', style: TextStyle(color: AppColors.textPrimary)),
-            )
-          : Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                children: [
-                  const SizedBox(height: 24),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: _flipCard,
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(20)),
-                        child: Center(
-                          child: Text(
-                            _showingFront ? cards[index].front : cards[index].back,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 20), fontWeight: FontWeight.w500, color: AppColors.textPrimary),
+              ? Center(child: Text(_viewError!, style: const TextStyle(color: AppColors.textPrimary)))
+              : cards.isEmpty
+                  ? const Center(child: Text('No cards in this set', style: TextStyle(color: AppColors.textPrimary)))
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 24),
+                          Expanded(
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 300),
+                              transitionBuilder: (child, animation) {
+                                final offsetAnimation = Tween<Offset>(
+                                  begin: Offset(_slideDirection.toDouble(), 0),
+                                  end: Offset.zero,
+                                ).animate(animation);
+                                return SlideTransition(position: offsetAnimation, child: child);
+                              },
+                              child: FlipCard(
+                                key: ValueKey(index),
+                                frontText: cards[index].front,
+                                backText: cards[index].back,
+                              ),
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              IconButton(
+                                onPressed: index > 0 ? _previousCard : null,
+                                icon: Icon(Icons.chevron_left,
+                                    color: index > 0 ? AppColors.textPrimary : AppColors.grey, size: 28),
+                              ),
+                              Text(
+                                '${index + 1}/$total',
+                                style: TextStyle(
+                                  fontFamily: 'Nunito',
+                                  fontSize: Responsive.text(context, size: 16),
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: index < total - 1 ? _nextCard : null,
+                                icon: Icon(Icons.chevron_right,
+                                    color: index < total - 1 ? AppColors.textPrimary : AppColors.grey, size: 28),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          LongButton(
+                            text: 'Edit',
+                            isOutlined: true,
+                            onPressed: () => context.go('/flashcard/edit/${widget.setId}'),
+                          ),
+                          const SizedBox(height: 12),
+                          LongButton(
+                            text: 'Take a test',
+                            onPressed: () => context.go('/flashcard/${widget.setId}/test'),
+                          ),
+                          const SizedBox(height: 32),
+                        ],
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton(
-                        onPressed: index > 0 ? _previousCard : null,
-                        icon: Icon(Icons.chevron_left, color: index > 0 ? AppColors.textPrimary : AppColors.grey, size: 28),
-                      ),
-                      Text(
-                        '${index + 1}/$total',
-                        style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 16), color: AppColors.textPrimary),
-                      ),
-                      IconButton(
-                        onPressed: index < total - 1 ? _nextCard : null,
-                        icon: Icon(Icons.chevron_right, color: index < total - 1 ? AppColors.textPrimary : AppColors.grey, size: 28),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  LongButton(text: 'Edit', isOutlined: true, onPressed: () => context.go('/flashcard/edit/${widget.setId}')),
-                  const SizedBox(height: 12),
-                  LongButton(text: 'Take a test', onPressed: () {}),
-                  const SizedBox(height: 32),
-                ],
-              ),
-            ),
     );
   }
 }

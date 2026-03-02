@@ -85,6 +85,7 @@ flutter:
     - assets/images/forgetPass.png
     - assets/images/otp.png
     - assets/images/coffee.mp4
+    - assets/images/badge.png
 
   fonts:
     - family: Nunito

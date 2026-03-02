@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
-import 'package:lockedin_frontend/provider/flashcard_provider.dart';
+import 'package:lockedin_frontend/services/flashcard_service.dart';
 import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/actions/square_button.dart';
@@ -14,16 +13,36 @@ class FlashcardScreen extends StatefulWidget {
 }
 
 class _FlashcardState extends State<FlashcardScreen> {
+  List<FlashcardSet> _sets = [];
+  bool _loading = false;
+  String? _error;
+
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => context.read<FlashcardProvider>().loadSets());
+    _loadSets();
+  }
+
+  Future<void> _loadSets() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final sets = await FlashcardService.getFlashcardSets();
+      if (!mounted) return;
+      setState(() => _sets = sets);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    final provider = context.watch<FlashcardProvider>();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -58,19 +77,19 @@ class _FlashcardState extends State<FlashcardScreen> {
           padding: EdgeInsets.symmetric(horizontal: 16),
           child: Column(
             children: [
-              if (provider.loading)
+              if (_loading)
                 Expanded(child: Center(child: CircularProgressIndicator()))
-              else if (provider.error != null)
-                Expanded(child: Center(child: Text(provider.error ?? 'An error occurred', style: TextStyle(color: AppColors.textPrimary))))
-              else if (provider.sets.isEmpty)
+              else if (_error != null)
+                Expanded(child: Center(child: Text(_error ?? 'An error occurred', style: TextStyle(color: AppColors.textPrimary))))
+              else if (_sets.isEmpty)
                 Expanded(child: Center(child: Text('No flashcard sets found', style: TextStyle(color: AppColors.textPrimary))))
               else
                 Expanded(
                   child: ListView.separated(
-                    itemCount: provider.sets.length,
+                    itemCount: _sets.length,
                     separatorBuilder: (_, _) => SizedBox(height: 12),
                     itemBuilder: (context, i) {
-                      final s = provider.sets[i];
+                      final s = _sets[i];
                       return FlashcardTiles(flashcardId: s.id, flashcardTitle: s.title, cardsNumber: s.cardCount);
                     },
                   ),
