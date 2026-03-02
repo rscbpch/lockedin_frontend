@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
-import 'package:lockedin_frontend/provider/flashcard_provider.dart';
 import 'package:lockedin_frontend/services/flashcard_service.dart';
 import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
@@ -174,8 +172,6 @@ class _CreateFlashcardScreenState extends State<ManageFlashcardScreen> {
     if (!mounted) return;
 
     if (result['success'] == true) {
-      // Refresh the shared set list before navigating back.
-      await context.read<FlashcardProvider>().loadSets();
       if (!mounted) return;
       context.go('/flashcard');
     } else {

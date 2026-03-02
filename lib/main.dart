@@ -13,6 +13,9 @@ import 'package:lockedin_frontend/ui/widgets/display/placeholder_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/flashcard/manage_flashcard_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/flashcard/flashcard_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/flashcard/flashcard_view_screen.dart';
+import 'package:lockedin_frontend/ui/screens/productivity_hub/flashcard/flashcard_test_screen.dart';
+import 'package:lockedin_frontend/ui/screens/productivity_hub/flashcard/flashcard_test_result_screen.dart';
+import 'package:lockedin_frontend/services/flashcard_service.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/ai_breakdown/ai_breakdown_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/productivity_hub_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/todo_list/todo_list_screen.dart';
@@ -21,7 +24,6 @@ import 'package:lockedin_frontend/ui/screens/profile/user_own_profile_screen.dar
 import 'package:lockedin_frontend/ui/widgets/display/no_transition_builder.dart';
 import 'package:provider/provider.dart';
 import 'package:lockedin_frontend/provider/auth_provider.dart';
-import 'package:lockedin_frontend/provider/flashcard_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -152,45 +154,51 @@ class _MyAppState extends State<MyApp> {
           path: '/pomodoro',
           pageBuilder: (_, s) => const NoTransitionPage(child: PomodoroScreen()),
         ),
-        ShellRoute(
-          pageBuilder: (context, state, child) {
+        GoRoute(
+          path: '/flashcard',
+          pageBuilder: (_, s) => const NoTransitionPage(child: FlashcardScreen()),
+        ),
+        GoRoute(
+          path: '/flashcard/create',
+          pageBuilder: (_, s) => const NoTransitionPage(child: ManageFlashcardScreen()),
+        ),
+        GoRoute(
+          path: '/flashcard/edit/:id',
+          pageBuilder: (_, s) {
+            final id = s.pathParameters['id'] ?? '';
+            return NoTransitionPage(child: ManageFlashcardScreen(editSetId: id));
+          },
+        ),
+        GoRoute(
+          path: '/flashcard/:id',
+          pageBuilder: (_, s) {
+            final id = s.pathParameters['id'] ?? '';
+            return NoTransitionPage(child: FlashcardViewScreen(setId: id));
+          },
+        ),
+        GoRoute(
+          path: '/flashcard/:id/test',
+          pageBuilder: (_, s) {
+            final id = s.pathParameters['id'] ?? '';
+            return NoTransitionPage(child: FlashcardTestScreen(setId: id));
+          },
+        ),
+        GoRoute(
+          path: '/flashcard/:id/test/result',
+          pageBuilder: (_, s) {
+            final id = s.pathParameters['id'] ?? '';
+            final extra = s.extra as Map<String, dynamic>? ?? {};
             return NoTransitionPage(
-              child: ChangeNotifierProvider(
-                create: (_) => FlashcardProvider(),
-                child: child,
+              child: FlashcardTestResultScreen(
+                setId: id,
+                correctCount: extra['correctCount'] as int? ?? 0,
+                wrongCount: extra['wrongCount'] as int? ?? 0,
+                totalCards: extra['totalCards'] as int? ?? 0,
+                cards: extra['cards'] as List<FlashcardCard>? ?? [],
+                results: extra['results'] as List<bool>? ?? [],
               ),
             );
           },
-          routes: [
-            GoRoute(
-              path: '/flashcard',
-              pageBuilder: (_, s) =>
-                  const NoTransitionPage(child: FlashcardScreen()),
-            ),
-            GoRoute(
-              path: '/flashcard/create',
-              pageBuilder: (_, s) =>
-                  const NoTransitionPage(child: ManageFlashcardScreen()),
-            ),
-            GoRoute(
-              path: '/flashcard/edit/:id',
-              pageBuilder: (_, s) {
-                final id = s.pathParameters['id'] ?? '';
-                return NoTransitionPage(
-                  child: ManageFlashcardScreen(editSetId: id),
-                );
-              },
-            ),
-            GoRoute(
-              path: '/flashcard/:id',
-              pageBuilder: (_, s) {
-                final id = s.pathParameters['id'] ?? '';
-                return NoTransitionPage(
-                  child: FlashcardViewScreen(setId: id),
-                );
-              },
-            ),
-          ],
         ),
         GoRoute(
           path: '/task-breakdown',
