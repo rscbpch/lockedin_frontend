@@ -48,6 +48,9 @@ dependencies:
   google_sign_in: ^6.2.2
   video_player: ^2.8.2
   fl_chart: ^0.68.0
+  stream_chat_flutter: ^9.0.0
+  flutter_localizations:
+    sdk: flutter
   
 dev_dependencies:
   flutter_test:

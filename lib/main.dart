@@ -12,8 +12,19 @@ import 'package:lockedin_frontend/ui/screens/productivity_hub/productivity_hub_s
 import 'package:lockedin_frontend/ui/screens/productivity_hub/todo_list/todo_list_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/pomodoro/pomodoro_screen.dart';
 import 'package:lockedin_frontend/ui/screens/profile/user_own_profile_screen.dart';
-import 'package:provider/provider.dart';
 import 'package:lockedin_frontend/provider/auth_provider.dart';
+import 'package:lockedin_frontend/provider/chat_provider.dart';
+import 'package:lockedin_frontend/services/chat_service.dart';
+import 'package:provider/provider.dart';
+import 'package:stream_chat_flutter/stream_chat_flutter.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'ui/screens/chat/chat_list_screen.dart';
+
+
+final StreamChatClient streamClient = StreamChatClient(
+  dotenv.env['STREAM_API_KEY'] ?? '',
+  logLevel: Level.OFF,
+);
 
 final GoRouter router = GoRouter(
   initialLocation: '/',
@@ -70,7 +81,12 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/profile',
       builder: (context, state) => const UserOwnProfileScreen(),
-    )
+    ),
+    GoRoute(
+      path: '/chat',
+      builder: (context, state) => const ChannelListScreen(),
+    ),
+    
   ],
 );
 
@@ -78,10 +94,20 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
 
+  final authProvider = AuthProvider();
+
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider.value(value: authProvider),
+        ChangeNotifierProvider(
+          create: (_) => ChatProvider(
+            streamClient: streamClient,
+            chatService: ChatService(
+              getAuthToken: () async => authProvider.token,
+            ),
+          ),
+        ),
       ],
       child: const MyApp(),
     ),
@@ -94,8 +120,25 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      routerConfig: router,
       debugShowCheckedModeBanner: false,
+      routerConfig: router,
+
+      // REQUIRED for stream_chat_flutter
+      localizationsDelegates: const[
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en'),
+      ],
+
+      builder: (context, child) {
+        return StreamChat(
+          client: streamClient,
+          child: child!,
+        );
+      },
     );
   }
 }
