@@ -24,6 +24,17 @@ import 'package:lockedin_frontend/ui/screens/profile/user_own_profile_screen.dar
 import 'package:lockedin_frontend/ui/widgets/display/no_transition_builder.dart';
 import 'package:provider/provider.dart';
 import 'package:lockedin_frontend/provider/auth_provider.dart';
+import 'package:lockedin_frontend/provider/chat_provider.dart';
+import 'package:lockedin_frontend/services/chat_service.dart';
+import 'package:stream_chat_flutter/stream_chat_flutter.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'ui/screens/chat/chat_list_screen.dart';
+
+
+final StreamChatClient streamClient = StreamChatClient(
+  dotenv.env['STREAM_API_KEY'] ?? '',
+  logLevel: Level.OFF,
+);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,7 +45,17 @@ void main() async {
 
   runApp(
     MultiProvider(
-      providers: [ChangeNotifierProvider.value(value: authProvider)],
+      providers: [
+        ChangeNotifierProvider.value(value: authProvider),
+        ChangeNotifierProvider(
+          create: (_) => ChatProvider(
+            streamClient: streamClient,
+            chatService: ChatService(
+              getAuthToken: () async => authProvider.token,
+            ),
+          ),
+        ),
+      ],
       child: MyApp(authProvider: authProvider),
     ),
   );
@@ -53,7 +74,18 @@ class _MyAppState extends State<MyApp> {
 
   static const _authPaths = {'/', '/login', '/register', '/forget-password'};
 
-  static const _protectedPaths = {'/home', '/social', '/productivity-hub', '/books', '/profile', '/todo-list', '/pomodoro', '/flashcard', '/task-breakdown'};
+  static const _protectedPaths = {
+    '/home',
+    '/social',
+    '/productivity-hub',
+    '/books',
+    '/profile',
+    '/todo-list',
+    '/pomodoro',
+    '/flashcard',
+    '/task-breakdown',
+    '/chat',
+  };
 
   @override
   void initState() {
@@ -145,6 +177,12 @@ class _MyAppState extends State<MyApp> {
           ],
         ),
 
+        // ── Chat route ──────────────────────────────
+        GoRoute(
+          path: '/chat',
+          pageBuilder: (_, s) => const NoTransitionPage(child: ChannelListScreen()),
+        ),
+
         // ── Productivity tools routes ──────────────────────────────
         GoRoute(
           path: '/todo-list',
@@ -213,6 +251,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp.router(
       routerConfig: _router,
       debugShowCheckedModeBanner: false,
+
       theme: ThemeData(
         pageTransitionsTheme: PageTransitionsTheme(
           builders: {
@@ -224,6 +263,22 @@ class _MyAppState extends State<MyApp> {
           },
         ),
       ),
+
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en'),
+      ],
+
+      builder: (context, child) {
+        return StreamChat(
+          client: streamClient,
+          child: child!,
+        );
+      },
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -31,7 +32,7 @@ class LockedInAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
         IconButton(
           icon: Icon(PhosphorIconsBold.chatsCircle, size: width * 0.06, color: AppColors.textPrimary),
-          onPressed: onChatPressed ?? () {},
+          onPressed: onChatPressed ?? () => context.go('/chat'),
         ),
       ],
       backgroundColor: AppColors.background,
