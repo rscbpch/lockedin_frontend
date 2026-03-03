@@ -10,13 +10,13 @@ class MainShell extends StatelessWidget {
 
   const MainShell({super.key, required this.state, required this.child});
 
-  static const _tabs = ['/home', '/social', '/productivity-hub', '/books', '/profile'];
+  static const _tabs = ['/productivity-hub', '/study-room', '/books', '/profile'];
 
   int _indexFromPath(String location) {
     for (var i = 0; i < _tabs.length; i++) {
       if (location.startsWith(_tabs[i])) return i;
     }
-    return 2; // default to productivity-hub
+    return 0; // default to productivity-hub
   }
 
   @override
