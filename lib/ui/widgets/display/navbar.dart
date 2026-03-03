@@ -21,11 +21,11 @@ class _NavbarState extends State<Navbar> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _navItem(FeatherIcons.home, 0),
+          // _navItem(FeatherIcons.home, 0),
+          _navItem(FeatherIcons.layers, 0),
           _navItem(FeatherIcons.users, 1),
-          _navItem(FeatherIcons.layers, 2),
-          _navItem(FeatherIcons.bookOpen, 3),
-          _navItem(FeatherIcons.user, 4),
+          _navItem(FeatherIcons.bookOpen, 2),
+          _navItem(FeatherIcons.user, 3),
         ],
       ),
     );

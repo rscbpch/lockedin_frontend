@@ -53,7 +53,7 @@ class _MyAppState extends State<MyApp> {
 
   static const _authPaths = {'/', '/login', '/register', '/forget-password'};
 
-  static const _protectedPaths = {'/home', '/social', '/productivity-hub', '/books', '/profile', '/todo-list', '/pomodoro', '/flashcard', '/task-breakdown'};
+  static const _protectedPaths = {'/productivity-hub', '/study-room', '/books', '/profile', '/todo-list', '/pomodoro', '/flashcard', '/task-breakdown'};
 
   @override
   void initState() {
@@ -123,9 +123,9 @@ class _MyAppState extends State<MyApp> {
               ),
             ),
             GoRoute(
-              path: '/social',
+              path: '/study-room',
               pageBuilder: (_, s) => const NoTransitionPage(
-                child: PlaceholderScreen(title: 'Social', icon: FeatherIcons.users),
+                child: PlaceholderScreen(title: 'Study room', icon: FeatherIcons.users),
               ),
             ),
             GoRoute(
