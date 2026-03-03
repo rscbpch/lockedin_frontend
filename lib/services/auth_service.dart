@@ -16,6 +16,20 @@ Map<String, dynamic> _decodeJwtPayload(String token) {
   return jsonDecode(utf8.decode(base64Url.decode(normalized)));
 }
 
+/// Check whether a JWT has expired by inspecting its `exp` claim.
+bool isTokenExpired(String token) {
+  try {
+    final payload = _decodeJwtPayload(token);
+    final exp = payload['exp'];
+    if (exp == null) return true;
+    final expiry = DateTime.fromMillisecondsSinceEpoch(exp * 1000);
+    // Consider expired if less than 30 seconds remaining
+    return DateTime.now().isAfter(expiry.subtract(const Duration(seconds: 30)));
+  } catch (_) {
+    return true;
+  }
+}
+
 /// Persist token + userId into secure storage.
 Future<void> _saveCredentials(String token) async {
   await _storage.write(key: 'token', value: token);
@@ -33,10 +47,14 @@ class AuthService {
   static Future<String?> getToken() async {
     // Tries 'auth_token' first (set by _saveToken), falls back to 'token' (set by _saveCredentials)
     String? token = await _storage.read(key: 'auth_token');
-    if (token == null) {
-      token = await _storage.read(key: 'token');
-    }
+    token ??= await _storage.read(key: 'token');
     return token;
+  }
+
+  static Future<void> clearToken() async {
+    await _storage.delete(key: 'auth_token');
+    await _storage.delete(key: 'token');
+    await _storage.delete(key: 'userId');
   }
 
   static Future<void> _saveToken(dynamic responseData) async {
@@ -44,24 +62,17 @@ class AuthService {
       String? token;
       if (responseData['token'] != null) {
         token = responseData['token'];
-      } else if (responseData['data'] != null && 
-                 responseData['data'] is Map && 
-                 responseData['data']['token'] != null) {
+      } else if (responseData['data'] != null && responseData['data'] is Map && responseData['data']['token'] != null) {
         token = responseData['data']['token'];
       }
-      
+
       if (token != null) {
         await _storage.write(key: 'auth_token', value: token);
       }
     }
   }
 
-  static Future<Map<String, dynamic>> register({
-    required String email,
-    required String username,
-    required String password,
-    required String confirmPassword,
-  }) async {
+  static Future<Map<String, dynamic>> register({required String email, required String username, required String password, required String confirmPassword}) async {
     try {
       final response = await http.post(
         Uri.parse(ApiConfig.register),

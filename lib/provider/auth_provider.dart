@@ -90,6 +90,7 @@
 //   }
 // }
 
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:lockedin_frontend/models/user/user.dart';
 import '../services/auth_service.dart';
@@ -106,6 +107,28 @@ class AuthProvider extends ChangeNotifier {
   User? get currentUser => _currentUser;
   bool get isAuthenticated => _token != null;
 
+  // ---------- INITIALIZE (restore session on app launch) ----------
+  Future<void> initialize() async {
+    final savedToken = await AuthService.getToken();
+    if (savedToken != null && !isTokenExpired(savedToken)) {
+      _token = savedToken;
+    } else if (savedToken != null) {
+      // Token exists but is expired — clear it
+      debugPrint('[AuthProvider] initialize: token expired, clearing session');
+      await AuthService.clearToken();
+      _token = null;
+    }
+    notifyListeners();
+  }
+
+  // ---------- LOGOUT ----------
+  Future<void> logout() async {
+    await AuthService.clearToken();
+    _token = null;
+    _currentUser = null;
+    notifyListeners();
+  }
+
   // ---------- LOGIN ----------
   Future<bool> login({required String email, required String password}) async {
     isLoading = true;
@@ -113,25 +136,11 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await AuthService.login(
-        email: email,
-        password: password,
-      );
+      final response = await AuthService.login(email: email, password: password);
 
       if (response['success'] == true) {
         _token = response['token'] ?? response['data']?['token'];
-        if (_token != null) {
-          try {
-            _currentUser = await UserProfileService.fetchMyProfile(_token!);
-          } catch (profileError) {
-            debugPrint('Failed to fetch profile after login: $profileError');
-            // Fallback: build user from the login response data
-            final userData = response['data']?['user'] ?? response['user'];
-            if (userData is Map<String, dynamic>) {
-              _currentUser = User.fromJson(userData);
-            }
-          }
-        }
+        _token ??= await AuthService.getToken();
         return true;
       } else {
         errorMessage = response['message'] ?? 'Login failed';
@@ -147,23 +156,13 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // ---------- REGISTER ----------
-  Future<bool> register({
-    required String email,
-    required String username,
-    required String password,
-    required String confirmPassword,
-  }) async {
+  Future<bool> register({required String email, required String username, required String password, required String confirmPassword}) async {
     isLoading = true;
     errorMessage = null;
     notifyListeners();
 
     try {
-      final response = await AuthService.register(
-        email: email,
-        username: username,
-        password: password,
-        confirmPassword: confirmPassword,
-      );
+      final response = await AuthService.register(email: email, username: username, password: password, confirmPassword: confirmPassword);
 
       if (response['success'] == true) {
         return true;
@@ -191,23 +190,8 @@ class AuthProvider extends ChangeNotifier {
 
       if (response['success'] == true) {
         _token = response['token'] ?? response['data']?['token'];
-
-        // Try to fetch profile, but don't block sign-in if it fails
-        if (_token != null) {
-          try {
-            _currentUser = await UserProfileService.fetchMyProfile(_token!);
-          } catch (profileError) {
-            debugPrint(
-              'Failed to fetch profile after Google sign-in: $profileError',
-            );
-            // Fallback: build user from the sign-in response data
-            final userData = response['data']?['user'] ?? response['user'];
-            if (userData is Map<String, dynamic>) {
-              _currentUser = User.fromJson(userData);
-            }
-          }
-        }
-
+        // Fallback: read from secure storage if token wasn't in the response map
+        _token ??= await AuthService.getToken();
         return true;
       } else {
         errorMessage = response['message'] ?? 'Google sign-in failed';
@@ -222,17 +206,34 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // ----------Get User Profile----------
+  // ---------- GET USER PROFILE ----------
   Future<void> fetchMyProfile() async {
-    if (_token == null) return;
+    // If _token is not in memory (e.g. after hot restart), read from secure storage
+    _token ??= await AuthService.getToken();
+
+    if (_token == null) {
+      debugPrint('[AuthProvider] fetchMyProfile: no token found anywhere');
+      errorMessage = 'Not authenticated';
+      notifyListeners();
+      return;
+    }
+    debugPrint('[AuthProvider] fetchMyProfile calling with token: ${_token!.substring(0, 20)}...');
 
     isLoading = true;
+    errorMessage = null;
     notifyListeners();
 
     try {
       _currentUser = await UserProfileService.fetchMyProfile(_token!);
+      debugPrint('[AuthProvider] fetchMyProfile success: ${_currentUser?.username}');
+    } on UnauthorizedException catch (e) {
+      debugPrint('[AuthProvider] fetchMyProfile unauthorized: $e');
+      // Token is expired or invalid — clear session so router redirects to login
+      await logout();
+      return;
     } catch (e) {
-      errorMessage = 'Failed to load profile';
+      debugPrint('[AuthProvider] fetchMyProfile error: $e');
+      errorMessage = 'Failed to load profile: $e';
     } finally {
       isLoading = false;
       notifyListeners();
@@ -240,27 +241,53 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // ---------- UPDATE PROFILE ----------
-  Future<void> updateProfile({
-    required String username,
-    required String bio,
-    required String displayName,
-    required String avatar,
-  }) async {
-    if (_token == null) return;
+  Future<void> updateProfile({required String username, required String bio, required String displayName, File? avatarFile}) async {
+    // Ensure we have a token — try storage if not in memory.
+    _token ??= await AuthService.getToken();
+    if (_token == null) {
+      errorMessage = 'Not authenticated';
+      notifyListeners();
+      return;
+    }
 
     isLoading = true;
+    errorMessage = null;
     notifyListeners();
 
     try {
-      _currentUser = await UserProfileService.updateMyProfile(
+      // 1. Upload avatar if a new image was picked.
+      //    uploadAvatar persists the avatar on the server via its own endpoint.
+      String? newAvatarUrl;
+      if (avatarFile != null) {
+        newAvatarUrl = await UserProfileService.uploadAvatar(token: _token!, imageFile: avatarFile);
+        debugPrint('[AuthProvider] avatar uploaded: $newAvatarUrl');
+      }
+
+      // 2. Update all fields in one call. If a new image was picked,
+      //    include the Cloudinary URL so the server saves everything together.
+      await UserProfileService.updateMyProfile(
         token: _token!,
         username: username,
         bio: bio,
         displayName: displayName,
-        avatar: avatar,
+        avatar: newAvatarUrl, // null = don't touch avatar on server
       );
+
+      // 3. Update _currentUser in memory immediately so the UI reflects
+      //    the saved values the moment the modal closes.
+      //    No background re-fetch — that races against the write and can
+      //    return stale data, overwriting what we just saved.
+      _currentUser = _currentUser?.copyWith(
+        username: username,
+        bio: bio,
+        displayName: displayName,
+        avatar: newAvatarUrl, // null = keep existing avatar
+      );
+
+      debugPrint('[AuthProvider] updateProfile success: ${_currentUser?.username}');
     } catch (e) {
-      errorMessage = 'Failed to update profile';
+      debugPrint('[AuthProvider] updateProfile error: $e');
+      errorMessage = 'Failed to update profile: $e';
     } finally {
       isLoading = false;
       notifyListeners();
