@@ -37,7 +37,7 @@ class UserProfileService {
     required String username,
     required String bio,
     required String displayName,
-    String? avatar, // Cloudinary URL — only set when a new image was uploaded
+    String? avatar,
   }) async {
     final url = '${Env.apiBaseUrl}/setting/profile';
     final body = <String, dynamic>{'username': username, 'bio': bio, 'displayName': displayName};
@@ -46,7 +46,14 @@ class UserProfileService {
     final response = await http.patch(Uri.parse(url), headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'}, body: jsonEncode(body));
     debugPrint('[UserProfileService] update status: ${response.statusCode} body: ${response.body}');
     if (response.statusCode != 200) {
-      throw Exception('Failed to update profile (${response.statusCode}): ${response.body}');
+      try {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final message = data['message'] ?? data['error'] ?? 'Failed to update profile';
+        throw Exception(message);
+      } catch (e) {
+        if (e is Exception) rethrow;
+        throw Exception('Failed to update profile (${response.statusCode})');
+      }
     }
   }
 

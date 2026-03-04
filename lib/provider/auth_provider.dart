@@ -136,7 +136,10 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await AuthService.login(email: email, password: password);
+      final response = await AuthService.login(
+        email: email,
+        password: password,
+      );
 
       if (response['success'] == true) {
         _token = response['token'] ?? response['data']?['token'];
@@ -156,13 +159,23 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // ---------- REGISTER ----------
-  Future<bool> register({required String email, required String username, required String password, required String confirmPassword}) async {
+  Future<bool> register({
+    required String email,
+    required String username,
+    required String password,
+    required String confirmPassword,
+  }) async {
     isLoading = true;
     errorMessage = null;
     notifyListeners();
 
     try {
-      final response = await AuthService.register(email: email, username: username, password: password, confirmPassword: confirmPassword);
+      final response = await AuthService.register(
+        email: email,
+        username: username,
+        password: password,
+        confirmPassword: confirmPassword,
+      );
 
       if (response['success'] == true) {
         return true;
@@ -217,7 +230,9 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    debugPrint('[AuthProvider] fetchMyProfile calling with token: ${_token!.substring(0, 20)}...');
+    debugPrint(
+      '[AuthProvider] fetchMyProfile calling with token: ${_token!.substring(0, 20)}...',
+    );
 
     isLoading = true;
     errorMessage = null;
@@ -225,7 +240,9 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       _currentUser = await UserProfileService.fetchMyProfile(_token!);
-      debugPrint('[AuthProvider] fetchMyProfile success: ${_currentUser?.username}');
+      debugPrint(
+        '[AuthProvider] fetchMyProfile success: ${_currentUser?.username}',
+      );
     } on UnauthorizedException catch (e) {
       debugPrint('[AuthProvider] fetchMyProfile unauthorized: $e');
       // Token is expired or invalid — clear session so router redirects to login
@@ -241,7 +258,12 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // ---------- UPDATE PROFILE ----------
-  Future<void> updateProfile({required String username, required String bio, required String displayName, File? avatarFile}) async {
+  Future<void> updateProfile({
+    required String username,
+    required String bio,
+    required String displayName,
+    File? avatarFile,
+  }) async {
     // Ensure we have a token — try storage if not in memory.
     _token ??= await AuthService.getToken();
     if (_token == null) {
@@ -259,7 +281,10 @@ class AuthProvider extends ChangeNotifier {
       //    uploadAvatar persists the avatar on the server via its own endpoint.
       String? newAvatarUrl;
       if (avatarFile != null) {
-        newAvatarUrl = await UserProfileService.uploadAvatar(token: _token!, imageFile: avatarFile);
+        newAvatarUrl = await UserProfileService.uploadAvatar(
+          token: _token!,
+          imageFile: avatarFile,
+        );
         debugPrint('[AuthProvider] avatar uploaded: $newAvatarUrl');
       }
 
@@ -284,10 +309,13 @@ class AuthProvider extends ChangeNotifier {
         avatar: newAvatarUrl, // null = keep existing avatar
       );
 
-      debugPrint('[AuthProvider] updateProfile success: ${_currentUser?.username}');
+      debugPrint(
+        '[AuthProvider] updateProfile success: ${_currentUser?.username}',
+      );
     } catch (e) {
-      debugPrint('[AuthProvider] updateProfile error: $e');
-      errorMessage = 'Failed to update profile: $e';
+      // Strip "Exception: " prefix so only the clean message remains
+      errorMessage = e.toString().replaceFirst('Exception: ', '');
+      notifyListeners();
     } finally {
       isLoading = false;
       notifyListeners();
