@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart';
-import 'package:go_router/go_router.dart';
+
 class ChannelScreen extends StatelessWidget {
   const ChannelScreen({super.key});
 

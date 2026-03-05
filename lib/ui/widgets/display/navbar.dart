@@ -16,7 +16,7 @@ class _NavbarState extends State<Navbar> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 30),
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 30),
       color: AppColors.background,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
