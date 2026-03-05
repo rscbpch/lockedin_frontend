@@ -25,6 +25,7 @@ import 'package:lockedin_frontend/ui/widgets/display/no_transition_builder.dart'
 import 'package:provider/provider.dart';
 import 'package:lockedin_frontend/provider/auth_provider.dart';
 import 'package:lockedin_frontend/provider/chat_provider.dart';
+import 'package:lockedin_frontend/provider/pomodoro_timer_provider.dart';
 import 'package:lockedin_frontend/services/chat_service.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -35,6 +36,9 @@ final StreamChatClient streamClient = StreamChatClient(
   dotenv.env['STREAM_API_KEY'] ?? '',
   logLevel: Level.OFF,
 );
+
+final GlobalKey<NavigatorState> appRootNavigatorKey =
+    GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -55,6 +59,7 @@ void main() async {
             ),
           ),
         ),
+        ChangeNotifierProvider(create: (_) => PomodoroTimerProvider()),
       ],
       child: MyApp(authProvider: authProvider),
     ),
@@ -90,6 +95,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _router = GoRouter(
+      navigatorKey: appRootNavigatorKey,
       initialLocation: '/',
       refreshListenable: widget.authProvider,
       redirect: (context, state) {
@@ -269,9 +275,116 @@ class _MyAppState extends State<MyApp> {
       builder: (context, child) {
         return StreamChat(
           client: streamClient,
-          child: child!,
+          child: _PomodoroPromptHost(child: child!),
         );
       },
     );
+  }
+}
+
+class _PomodoroPromptHost extends StatefulWidget {
+  const _PomodoroPromptHost({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_PomodoroPromptHost> createState() => _PomodoroPromptHostState();
+}
+
+class _PomodoroPromptHostState extends State<_PomodoroPromptHost> {
+  int _lastHandledPromptId = 0;
+  bool _isDialogOpen = false;
+  PomodoroTimerProvider? _provider;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final nextProvider = context.read<PomodoroTimerProvider>();
+    if (identical(_provider, nextProvider)) {
+      return;
+    }
+
+    _provider?.removeListener(_onProviderChanged);
+    _provider = nextProvider;
+    _provider!.addListener(_onProviderChanged);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _onProviderChanged();
+      }
+    });
+  }
+
+  void _onProviderChanged() {
+    final provider = _provider;
+    if (provider == null || _isDialogOpen) return;
+
+    final prompt = provider.pendingPrompt;
+    if (prompt == null || prompt.id == _lastHandledPromptId) return;
+
+    _showPrompt(context, provider, prompt);
+  }
+
+  void _showPrompt(
+    BuildContext context,
+    PomodoroTimerProvider provider,
+    PomodoroCompletionPrompt prompt,
+  ) {
+    final rootContext = appRootNavigatorKey.currentContext;
+    if (rootContext == null) {
+      _isDialogOpen = false;
+      return;
+    }
+
+    _isDialogOpen = true;
+    _lastHandledPromptId = prompt.id;
+
+    showDialog<void>(
+      context: rootContext,
+      useRootNavigator: true,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text(prompt.title),
+          content: Text(prompt.message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                provider.dismissPendingPrompt();
+                Navigator.of(ctx).pop();
+              },
+              child: const Text('Later'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                provider.acceptPendingPromptAndStart();
+                Navigator.of(ctx).pop();
+                GoRouter.of(context).go('/pomodoro');
+              },
+              child: const Text('Continue'),
+            ),
+          ],
+        );
+      },
+    ).whenComplete(() {
+      if (mounted) {
+        setState(() {
+          _isDialogOpen = false;
+        });
+      } else {
+        _isDialogOpen = false;
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
+  }
+
+  @override
+  void dispose() {
+    _provider?.removeListener(_onProviderChanged);
+    super.dispose();
   }
 }

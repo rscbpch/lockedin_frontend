@@ -5,7 +5,7 @@ class Env {
   /// Returns the correct API base URL for the current platform.
   ///
   /// - iOS simulator shares the host network → uses `localhost`.
-  /// - Android emulator uses `10.0.2.2` to reach the host loopback.
+  /// - Android emulator is configured to use `localhost`.
   /// - Falls back to the raw .env value for physical devices / other cases.
   static String get apiBaseUrl {
     final raw = dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000/api';
@@ -17,8 +17,7 @@ class Env {
     final path = uri.path; // e.g. /api
 
     if (Platform.isAndroid) {
-      // 10.0.2.2 is the Android emulator alias for the host machine's loopback
-      return 'http://10.0.2.2:$port$path';
+      return 'http://localhost:$port$path';
     } else if (Platform.isIOS) {
       // iOS simulator shares the Mac network stack
       return 'http://localhost:$port$path';

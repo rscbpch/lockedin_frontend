@@ -119,6 +119,7 @@ class AuthService {
 
   static Future<Map<String, dynamic>> login({required String email, required String password}) async {
     try {
+      print("${ApiConfig.login}");
       final payload = {'email': email, 'username': email, 'password': password};
       // ignore: avoid_print
       print('AuthService.login -> request body: ${jsonEncode(payload)}');
@@ -126,6 +127,7 @@ class AuthService {
 
       final status = response.statusCode;
       final body = response.body;
+      
       // Log for debugging
       // ignore: avoid_print
       print('AuthService.login -> status: $status body: $body');
