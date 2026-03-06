@@ -7,8 +7,8 @@ import 'package:lockedin_frontend/ui/widgets/display/lockedin_appbar.dart';
 import 'package:lockedin_frontend/ui/screens/book_summary/widgets/book_search_bar.dart';
 import 'package:lockedin_frontend/ui/screens/book_summary/widgets/category_chips.dart';
 import 'package:lockedin_frontend/ui/screens/book_summary/widgets/book_card.dart';
+import 'package:lockedin_frontend/ui/screens/book_summary/book_summary_preview_screen.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class BookSummaryScreen extends StatefulWidget {
   const BookSummaryScreen({super.key});
@@ -24,9 +24,11 @@ class _BookSummaryScreenState extends State<BookSummaryScreen> {
   @override
   void initState() {
     super.initState();
-    final provider = context.read<BookProvider>();
-    provider.loadBooks();
-    provider.loadFavorites();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = context.read<BookProvider>();
+      provider.loadBooks();
+      provider.loadFavorites();
+    });
   }
 
   @override
@@ -59,18 +61,15 @@ class _BookSummaryScreenState extends State<BookSummaryScreen> {
     }
   }
 
-  Future<void> _onReadNow(Book book) async {
-    final url = book.formats['text/html'] ?? book.formats['text/plain; charset=utf-8'];
-    if (url != null) {
-      final uri = Uri.parse(url);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No readable format available for this book')));
-      }
-    }
+  void _onReadNow(Book book) {
+    Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute(
+        builder: (_) => BookSummaryPreviewScreen(
+          book: book,
+          averageRating: context.read<BookProvider>().bookRatings[book.id],
+        ),
+      ),
+    );
   }
 
   @override
