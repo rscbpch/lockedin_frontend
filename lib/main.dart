@@ -30,6 +30,7 @@ import 'package:lockedin_frontend/services/chat_service.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'ui/screens/chat/chat_list_screen.dart';
+import 'ui/screens/chat/widgets/stream_chat_theme.dart';
 
 
 final StreamChatClient streamClient = StreamChatClient(
@@ -275,6 +276,7 @@ class _MyAppState extends State<MyApp> {
       builder: (context, child) {
         return StreamChat(
           client: streamClient,
+          streamChatThemeData: StreamChatAppTheme.theme,
           child: _PomodoroPromptHost(child: child!),
         );
       },

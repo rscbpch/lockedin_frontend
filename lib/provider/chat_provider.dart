@@ -89,6 +89,9 @@ class ChatProvider extends ChangeNotifier {
     }
   }
 }
+  /// Returns the current user's Stream user ID (useful for testing)
+  String? get currentUserId => streamClient.state.currentUser?.id;
+
   /// Creates or retrieves the private channel, returns it ready to use
   Future<Channel> openPrivateChannel(String targetUserId) async {
     final result = await _chatService.createPrivateChannel(targetUserId);
