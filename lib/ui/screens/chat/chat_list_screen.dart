@@ -33,13 +33,7 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
       await chatProvider.connectUser();
     }
 
-    debugPrint('📋 Connected: ${chatProvider.isConnected}');
-
     if (mounted && chatProvider.isConnected) {
-      debugPrint('🔧 Creating mock channels...');
-      await chatProvider.createMockChannels();
-      debugPrint('✅ Mock channels done, building controller...');
-
       setState(() {
         _controller = StreamChannelListController(
           client: StreamChat.of(context).client,
@@ -202,26 +196,18 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
   }
 
   Widget _buildChannelTile(BuildContext context, Channel channel) {
-    final isMock = channel.extraData['mock'] == true;
     final name = _getChannelName(channel);
 
-    final String? avatarUrl;
-    final bool isOnline;
-    if (isMock) {
-      avatarUrl = channel.extraData['image'] as String?;
-      isOnline = false;
-    } else {
-      final currentUserId = StreamChat.of(context).client.state.currentUser!.id;
-      final members = channel.state?.members ?? [];
-      final otherMember = members.isEmpty
-          ? null
-          : members.firstWhere(
-              (m) => m.userId != currentUserId,
-              orElse: () => members.first,
-            );
-      avatarUrl = otherMember?.user?.image;
-      isOnline = otherMember?.user?.online ?? false;
-    }
+    final currentUserId = StreamChat.of(context).client.state.currentUser!.id;
+    final members = channel.state?.members ?? [];
+    final otherMember = members.isEmpty
+        ? null
+        : members.firstWhere(
+            (m) => m.userId != currentUserId,
+            orElse: () => members.first,
+          );
+    final String? avatarUrl = otherMember?.user?.image;
+    final bool isOnline = otherMember?.user?.online ?? false;
 
     final lastMessage = channel.state?.messages.isNotEmpty == true
         ? channel.state!.messages.last.text ?? ''
@@ -314,10 +300,6 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
   }
 
   String _getChannelName(Channel channel) {
-    if (channel.extraData['mock'] == true) {
-      return channel.extraData['name'] as String? ?? 'Unknown';
-    }
-
     if (channel.name != null && channel.name!.isNotEmpty) {
       return channel.name!;
     }
