@@ -38,14 +38,17 @@ class BookService {
     }
   }
 
-  /// Extract distinct, sorted categories from a list of books.
-  static List<String> extractCategories(List<Book> books) {
-    final categorySet = <String>{};
-    for (final book in books) {
-      categorySet.addAll(book.categories);
+  /// Fetch categories from the backend API.
+  static Future<List<String>> getCategories() async {
+    final uri = Uri.parse('$_base/categories');
+    final response = await http.get(uri).timeout(const Duration(seconds: 30));
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((e) => e.toString()).toList();
+    } else {
+      throw Exception('Failed to fetch categories (${response.statusCode})');
     }
-    final sorted = categorySet.toList()..sort();
-    return sorted;
   }
 
   // ─── Favorites ─────────────────────────────────────────────────

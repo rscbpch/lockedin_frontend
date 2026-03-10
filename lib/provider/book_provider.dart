@@ -11,6 +11,7 @@ class BookProvider extends ChangeNotifier {
   String? _error;
   bool _hasFetchedBooks = false;
   bool _hasFetchedFavorites = false;
+  bool _hasFetchedCategories = false;
 
   List<Book> get books => _books;
   List<String> get categories => _categories;
@@ -33,7 +34,6 @@ class BookProvider extends ChangeNotifier {
 
     try {
       final books = await BookService.getBooks(search: search, category: category);
-      final categories = BookService.extractCategories(books);
 
       final ratings = <int, double>{};
       for (final book in books) {
@@ -52,7 +52,6 @@ class BookProvider extends ChangeNotifier {
       }
 
       _books = books;
-      _categories = categories;
       _bookRatings = ratings;
       _hasFetchedBooks = (search == null && category == null);
       _isLoading = false;
@@ -62,6 +61,18 @@ class BookProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// Load categories from backend API. Uses cache if already fetched.
+  Future<void> loadCategories({bool forceRefresh = false}) async {
+    if (_hasFetchedCategories && !forceRefresh) return;
+
+    try {
+      final categories = await BookService.getCategories();
+      _categories = categories;
+      _hasFetchedCategories = true;
+      notifyListeners();
+    } catch (_) {}
   }
 
   /// Load favorites from API. Uses cache if already fetched.
@@ -120,6 +131,7 @@ class BookProvider extends ChangeNotifier {
     _bookRatings = {};
     _hasFetchedBooks = false;
     _hasFetchedFavorites = false;
+    _hasFetchedCategories = false;
     _isLoading = false;
     _error = null;
     notifyListeners();

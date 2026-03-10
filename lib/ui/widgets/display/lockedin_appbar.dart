@@ -37,6 +37,8 @@ class LockedInAppBar extends StatelessWidget implements PreferredSizeWidget {
       ],
       backgroundColor: AppColors.background,
       elevation: 0,
+      surfaceTintColor: Colors.transparent,
+      scrolledUnderElevation: 0,
     );
   }
 

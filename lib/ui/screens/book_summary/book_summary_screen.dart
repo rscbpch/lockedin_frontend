@@ -27,6 +27,7 @@ class _BookSummaryScreenState extends State<BookSummaryScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<BookProvider>();
       provider.loadBooks();
+      provider.loadCategories();
       provider.loadFavorites();
     });
   }
@@ -64,10 +65,7 @@ class _BookSummaryScreenState extends State<BookSummaryScreen> {
   void _onReadNow(Book book) {
     Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
-        builder: (_) => BookSummaryPreviewScreen(
-          book: book,
-          averageRating: context.read<BookProvider>().bookRatings[book.id],
-        ),
+        builder: (_) => BookSummaryPreviewScreen(book: book, averageRating: context.read<BookProvider>().bookRatings[book.id]),
       ),
     );
   }

@@ -6,6 +6,7 @@ import 'package:lockedin_frontend/services/book_service.dart';
 import 'package:lockedin_frontend/ui/screens/book_summary/widgets/add_review_bottom_sheet.dart';
 import 'package:lockedin_frontend/ui/screens/book_summary/widgets/preview_header.dart';
 import 'package:lockedin_frontend/ui/screens/book_summary/widgets/preview_rating_section.dart';
+import 'package:lockedin_frontend/ui/screens/book_summary/book_summary_reviews.dart';
 import 'package:lockedin_frontend/ui/screens/book_summary/widgets/preview_reviews_section.dart';
 import 'package:lockedin_frontend/ui/screens/book_summary/widgets/preview_summary_section.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
@@ -120,12 +121,12 @@ class _BookSummaryPreviewScreenState extends State<BookSummaryPreviewScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(context),
-            Padding(
+      body: CustomScrollView(
+        slivers: [
+          _buildSliverHeader(),
+
+          SliverToBoxAdapter(
+            child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -136,23 +137,98 @@ class _BookSummaryPreviewScreenState extends State<BookSummaryPreviewScreen> {
                     isExpanded: _summaryExpanded,
                     onToggleExpanded: () => setState(() => _summaryExpanded = !_summaryExpanded),
                   ),
+
                   const SizedBox(height: 24),
+
                   PreviewRatingSection(rating: rating, isLoadingReviews: _isLoadingReviews, reviewCount: _reviews.length),
+
                   const SizedBox(height: 24),
-                  PreviewReviewsSection(isLoadingReviews: _isLoadingReviews, reviews: _reviews, timeAgoBuilder: _timeAgo),
+
+                  PreviewReviewsSection(
+                    isLoadingReviews: _isLoadingReviews,
+                    reviews: _reviews,
+                    timeAgoBuilder: _timeAgo,
+                    onViewAll: () {
+                      Navigator.of(context).push(MaterialPageRoute(builder: (_) => BookSummaryReviewsScreen(bookId: widget.book.id)));
+                    },
+                  ),
+
                   const SizedBox(height: 24),
+
                   LongButton(text: 'Add review', onPressed: _showAddReviewBottomSheet),
-                  const SizedBox(height: 8),
+
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return PreviewHeader(book: widget.book, onBack: () => Navigator.of(context, rootNavigator: true).pop(), onOpenBook: _openBook);
+  Widget _buildSliverHeader() {
+    return SliverAppBar(
+      pinned: true,
+      expandedHeight: 240,
+      elevation: 0,
+      surfaceTintColor: Colors.transparent,
+      backgroundColor: AppColors.background,
+
+      leading: IconButton(
+        icon: const Icon(Icons.chevron_left,
+            size: 28, color: AppColors.textPrimary),
+        onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+      ),
+
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.ios_share,
+              size: 22, color: AppColors.textPrimary),
+          onPressed: _openBook,
+        ),
+      ],
+
+      flexibleSpace: LayoutBuilder(
+        builder: (context, constraints) {
+          final settings =
+              context.dependOnInheritedWidgetOfExactType<FlexibleSpaceBarSettings>();
+
+          final collapsed =
+              settings != null && settings.currentExtent <= settings.minExtent + 5;
+
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              FlexibleSpaceBar(
+                background: PreviewHeader(book: widget.book),
+              ),
+
+              if (collapsed)
+                Positioned(
+                  left: 56,
+                  right: 56,
+                  top: MediaQuery.of(context).padding.top,
+                  height: kToolbarHeight,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      widget.book.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: 'Nunito',
+                        fontWeight: FontWeight.w600,
+                        fontSize: 18,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
   }
 }

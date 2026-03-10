@@ -5,10 +5,8 @@ import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 
 class PreviewHeader extends StatelessWidget {
   final Book book;
-  final VoidCallback onBack;
-  final VoidCallback onOpenBook;
 
-  const PreviewHeader({super.key, required this.book, required this.onBack, required this.onOpenBook});
+  const PreviewHeader({super.key, required this.book});
 
   @override
   Widget build(BuildContext context) {
@@ -20,13 +18,7 @@ class PreviewHeader extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(4, 4, 16, 20),
           child: Column(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(onPressed: onBack, icon: const Icon(Icons.chevron_left, size: 28), color: AppColors.textPrimary),
-                  IconButton(onPressed: onOpenBook, icon: const Icon(Icons.ios_share, size: 22), color: AppColors.textPrimary),
-                ],
-              ),
+              SizedBox(height: kToolbarHeight * 1),
               const SizedBox(height: 4),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
