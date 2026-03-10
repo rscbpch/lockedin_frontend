@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lockedin_frontend/provider/auth_provider.dart';
+import 'package:lockedin_frontend/provider/streak_provider.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
+import 'package:lockedin_frontend/ui/widgets/display/profile_settings_sheet.dart';
 import 'package:lockedin_frontend/ui/widgets/inputs/update_profile.dart';
 import 'package:provider/provider.dart';
 
@@ -39,10 +41,98 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
       return Scaffold(
         backgroundColor: AppColors.background,
         body: Center(
-          child: Text(
-            auth.errorMessage ?? 'No profile loaded',
-            style: const TextStyle(color: AppColors.textPrimary),
-            textAlign: TextAlign.center,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppColors.backgroundBox,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.person_off_rounded,
+                    size: 48,
+                    color: AppColors.grey,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Profile unavailable',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                    fontFamily: 'Quicksand',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  auth.errorMessage ??
+                      'Something went wrong loading your profile.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.grey,
+                    height: 1.5,
+                    fontFamily: 'Quicksand',
+                  ),
+                ),
+                const SizedBox(height: 28),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      await context.read<AuthProvider>().logout();
+                      if (context.mounted) context.go('/');
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Back to Login',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                        fontFamily: 'Quicksand',
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () =>
+                        context.read<AuthProvider>().fetchMyProfile(),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      side: const BorderSide(color: AppColors.primary),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      'Try Again',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                        fontFamily: 'Quicksand',
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -61,7 +151,7 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
               actions: [
                 IconButton(
                   icon: const Icon(Icons.menu, color: AppColors.textPrimary),
-                  onPressed: () {},
+                  onPressed: () => showProfileSettingsDrawer(context),
                 ),
               ],
             ),
@@ -116,7 +206,7 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
                     const SizedBox(height: 10),
 
                     // Streak badge (placeholder — streak data not yet in User model)
-                    _buildStreakBadge(0),
+                    _buildStreakBadge(user.streak?.currentStreak),
                     const SizedBox(height: 10),
 
                     // Stats row
@@ -171,33 +261,6 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
                     ),
                     const SizedBox(height: 10),
 
-                    // Logout button
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: () async {
-                          await context.read<AuthProvider>().logout();
-                          if (context.mounted) context.go('/');
-                        },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.red,
-                          side: const BorderSide(color: Colors.red),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          'Log out',
-                          style: TextStyle(
-                            fontFamily: 'Quicksand',
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
                     const SizedBox(height: 10),
 
                     // Posts divider
@@ -208,7 +271,6 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
               ),
             ),
 
-            // ── Posts area (blank) ────────────────────────────────────
             SliverFillRemaining(
               hasScrollBody: false,
               child: Center(
@@ -275,7 +337,7 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
     return const Icon(Icons.person, size: 52, color: AppColors.primary);
   }
 
-  Widget _buildStreakBadge(int streakDays) {
+  Widget _buildStreakBadge(int? streakDays) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
       decoration: BoxDecoration(
@@ -283,7 +345,7 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
         borderRadius: BorderRadius.circular(30),
       ),
       child: Text(
-        '🔥 $streakDays Days Streak',
+        '🔥 ${streakDays ?? 0} Days Streak',
         style: const TextStyle(
           fontSize: 14,
           fontFamily: 'Quicksand',

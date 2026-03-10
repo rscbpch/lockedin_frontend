@@ -25,6 +25,7 @@ import 'package:lockedin_frontend/ui/widgets/display/no_transition_builder.dart'
 import 'package:provider/provider.dart';
 import 'package:lockedin_frontend/provider/auth_provider.dart';
 import 'package:lockedin_frontend/provider/chat_provider.dart';
+import 'package:lockedin_frontend/provider/streak_provider.dart';
 import 'package:lockedin_frontend/provider/group_chat_provider.dart';
 import 'package:lockedin_frontend/provider/pomodoro_timer_provider.dart';
 import 'package:lockedin_frontend/services/chat_service.dart';
@@ -33,7 +34,6 @@ import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'ui/screens/chat/chat_list_screen.dart';
 import 'ui/screens/chat/widgets/stream_chat_theme.dart';
-
 
 final StreamChatClient streamClient = StreamChatClient(
   dotenv.env['STREAM_API_KEY'] ?? '',
@@ -50,10 +50,13 @@ void main() async {
   final authProvider = AuthProvider();
   await authProvider.initialize();
 
+  final streakProvider = StreakProvider();
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: authProvider),
+        ChangeNotifierProvider.value(value: streakProvider),
         ChangeNotifierProvider(
           create: (_) => ChatProvider(
             streamClient: streamClient,
@@ -126,7 +129,8 @@ class _MyAppState extends State<MyApp> {
         // ── Auth routes ──────────────────────────────
         GoRoute(
           path: '/',
-          pageBuilder: (_, s) => const NoTransitionPage(child: GettingStartedScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: GettingStartedScreen()),
         ),
         GoRoute(
           path: '/login',
@@ -138,7 +142,8 @@ class _MyAppState extends State<MyApp> {
         ),
         GoRoute(
           path: '/forget-password',
-          pageBuilder: (_, s) => const NoTransitionPage(child: ForgetPasswordScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: ForgetPasswordScreen()),
         ),
         GoRoute(
           path: '/OTP/:email',
@@ -167,22 +172,30 @@ class _MyAppState extends State<MyApp> {
             GoRoute(
               path: '/study-room',
               pageBuilder: (_, s) => const NoTransitionPage(
-                child: PlaceholderScreen(title: 'Study room', icon: FeatherIcons.users),
+                child: PlaceholderScreen(
+                  title: 'Study room',
+                  icon: FeatherIcons.users,
+                ),
               ),
             ),
             GoRoute(
               path: '/productivity-hub',
-              pageBuilder: (_, s) => const NoTransitionPage(child: ProductivityHubScreen()),
+              pageBuilder: (_, s) =>
+                  const NoTransitionPage(child: ProductivityHubScreen()),
             ),
             GoRoute(
               path: '/books',
               pageBuilder: (_, s) => const NoTransitionPage(
-                child: PlaceholderScreen(title: 'Books', icon: FeatherIcons.bookOpen),
+                child: PlaceholderScreen(
+                  title: 'Books',
+                  icon: FeatherIcons.bookOpen,
+                ),
               ),
             ),
             GoRoute(
               path: '/profile',
-              pageBuilder: (_, s) => const NoTransitionPage(child: UserOwnProfileScreen()),
+              pageBuilder: (_, s) =>
+                  const NoTransitionPage(child: UserOwnProfileScreen()),
             ),
           ],
         ),
@@ -190,31 +203,38 @@ class _MyAppState extends State<MyApp> {
         // ── Chat route ──────────────────────────────
         GoRoute(
           path: '/chat',
-          pageBuilder: (_, s) => const NoTransitionPage(child: ChannelListScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: ChannelListScreen()),
         ),
 
         // ── Productivity tools routes ──────────────────────────────
         GoRoute(
           path: '/todo-list',
-          pageBuilder: (_, s) => const NoTransitionPage(child: TodoListScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: TodoListScreen()),
         ),
         GoRoute(
           path: '/pomodoro',
-          pageBuilder: (_, s) => const NoTransitionPage(child: PomodoroScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: PomodoroScreen()),
         ),
         GoRoute(
           path: '/flashcard',
-          pageBuilder: (_, s) => const NoTransitionPage(child: FlashcardScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: FlashcardScreen()),
         ),
         GoRoute(
           path: '/flashcard/create',
-          pageBuilder: (_, s) => const NoTransitionPage(child: ManageFlashcardScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: ManageFlashcardScreen()),
         ),
         GoRoute(
           path: '/flashcard/edit/:id',
           pageBuilder: (_, s) {
             final id = s.pathParameters['id'] ?? '';
-            return NoTransitionPage(child: ManageFlashcardScreen(editSetId: id));
+            return NoTransitionPage(
+              child: ManageFlashcardScreen(editSetId: id),
+            );
           },
         ),
         GoRoute(
@@ -250,7 +270,8 @@ class _MyAppState extends State<MyApp> {
         ),
         GoRoute(
           path: '/task-breakdown',
-          pageBuilder: (_, s) => const NoTransitionPage(child: AiBreakdownScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: AiBreakdownScreen()),
         ),
       ],
     );
@@ -279,9 +300,7 @@ class _MyAppState extends State<MyApp> {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [
-        Locale('en'),
-      ],
+      supportedLocales: const [Locale('en')],
 
       builder: (context, child) {
         return StreamChat(
