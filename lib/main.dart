@@ -34,6 +34,9 @@ import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'ui/screens/chat/chat_list_screen.dart';
 import 'ui/screens/chat/widgets/stream_chat_theme.dart';
+import 'provider/study_room_provider.dart';
+import 'services/study_room_api_service.dart';
+import 'ui/screens/study_room/lobby_screen.dart';
 
 final StreamChatClient streamClient = StreamChatClient(
   dotenv.env['STREAM_API_KEY'] ?? '',
@@ -74,6 +77,15 @@ void main() async {
           ),
         ),
         ChangeNotifierProvider(create: (_) => PomodoroTimerProvider()),
+        ChangeNotifierProvider(
+          create: (_) => StudyRoomProvider(
+            StudyRoomApiService(
+              baseUrl: dotenv.env['API_URL'] ?? 'http://localhost:3000/api',
+              getToken: () => authProvider.token,
+              jaasAppId: dotenv.env['JAAS_APP_ID'] ?? '', // ← add this
+            ),
+          ),
+        ),
       ],
       child: MyApp(authProvider: authProvider),
     ),
@@ -171,12 +183,8 @@ class _MyAppState extends State<MyApp> {
           routes: [
             GoRoute(
               path: '/study-room',
-              pageBuilder: (_, s) => const NoTransitionPage(
-                child: PlaceholderScreen(
-                  title: 'Study room',
-                  icon: FeatherIcons.users,
-                ),
-              ),
+              pageBuilder: (_, s) =>
+                  const NoTransitionPage(child: LobbyScreen()),
             ),
             GoRoute(
               path: '/productivity-hub',

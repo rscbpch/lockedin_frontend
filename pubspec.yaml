@@ -53,6 +53,7 @@ dependencies:
   stream_chat_flutter: ^9.0.0
   flutter_localizations:
     sdk: flutter
+  jitsi_meet_flutter_sdk: ^11.6.0
   
 dev_dependencies:
   flutter_test:
