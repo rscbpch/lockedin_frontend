@@ -10,4 +10,7 @@ class ApiConfig {
   static String flashcards = '${Env.apiBaseUrl}/flashcard';
   static String pomodoroRanking = '${Env.apiBaseUrl}/pomodoro/ranking';
   static String pomodoroStats = '${Env.apiBaseUrl}/pomodoro/stats';
+  static String books = '${Env.apiBaseUrl}/books';
+  static String bookFavorites = '${Env.apiBaseUrl}/books/favorites';
+  static String bookReviews = '${Env.apiBaseUrl}/books/reviews';
 }

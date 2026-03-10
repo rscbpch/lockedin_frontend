@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
+
 class ChannelScreen extends StatelessWidget {
   const ChannelScreen({super.key});
 

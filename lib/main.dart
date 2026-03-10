@@ -20,10 +20,12 @@ import 'package:lockedin_frontend/ui/screens/productivity_hub/ai_breakdown/ai_br
 import 'package:lockedin_frontend/ui/screens/productivity_hub/productivity_hub_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/todo_list/todo_list_screen.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/pomodoro/pomodoro_screen.dart';
+import 'package:lockedin_frontend/ui/screens/book_summary/book_summary_screen.dart';
 import 'package:lockedin_frontend/ui/screens/profile/user_own_profile_screen.dart';
 import 'package:lockedin_frontend/ui/widgets/display/no_transition_builder.dart';
 import 'package:provider/provider.dart';
 import 'package:lockedin_frontend/provider/auth_provider.dart';
+import 'package:lockedin_frontend/provider/book_provider.dart';
 import 'package:lockedin_frontend/provider/chat_provider.dart';
 import 'package:lockedin_frontend/provider/streak_provider.dart';
 import 'package:lockedin_frontend/provider/group_chat_provider.dart';
@@ -60,13 +62,12 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: authProvider),
+        ChangeNotifierProvider(create: (_) => BookProvider()),
         ChangeNotifierProvider.value(value: streakProvider),
         ChangeNotifierProvider(
           create: (_) => ChatProvider(
             streamClient: streamClient,
-            chatService: ChatService(
-              getAuthToken: () async => authProvider.token,
-            ),
+            chatService: ChatService(getAuthToken: () async => authProvider.token),
           ),
         ),
         ChangeNotifierProvider(
@@ -105,17 +106,7 @@ class _MyAppState extends State<MyApp> {
 
   static const _authPaths = {'/', '/login', '/register', '/forget-password'};
 
-  static const _protectedPaths = {
-    '/study-room',
-    '/productivity-hub',
-    '/books',
-    '/profile',
-    '/todo-list',
-    '/pomodoro',
-    '/flashcard',
-    '/task-breakdown',
-    '/chat',
-  };
+  static const _protectedPaths = {'/study-room', '/productivity-hub', '/books', '/profile', '/todo-list', '/pomodoro', '/flashcard', '/task-breakdown', '/chat'};
 
   @override
   void initState() {
@@ -193,12 +184,7 @@ class _MyAppState extends State<MyApp> {
             ),
             GoRoute(
               path: '/books',
-              pageBuilder: (_, s) => const NoTransitionPage(
-                child: PlaceholderScreen(
-                  title: 'Books',
-                  icon: FeatherIcons.bookOpen,
-                ),
-              ),
+              pageBuilder: (_, s) => const NoTransitionPage(child: BookSummaryScreen()),
             ),
             GoRoute(
               path: '/profile',
