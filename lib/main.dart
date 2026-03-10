@@ -27,12 +27,26 @@ import 'package:provider/provider.dart';
 import 'package:lockedin_frontend/provider/auth_provider.dart';
 import 'package:lockedin_frontend/provider/book_provider.dart';
 import 'package:lockedin_frontend/provider/chat_provider.dart';
+import 'package:lockedin_frontend/provider/streak_provider.dart';
+import 'package:lockedin_frontend/provider/group_chat_provider.dart';
+import 'package:lockedin_frontend/provider/pomodoro_timer_provider.dart';
 import 'package:lockedin_frontend/services/chat_service.dart';
+import 'package:lockedin_frontend/services/group_chat_service.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'ui/screens/chat/chat_list_screen.dart';
+import 'ui/screens/chat/widgets/stream_chat_theme.dart';
+import 'provider/study_room_provider.dart';
+import 'services/study_room_api_service.dart';
+import 'ui/screens/study_room/lobby_screen.dart';
 
-final StreamChatClient streamClient = StreamChatClient(dotenv.env['STREAM_API_KEY'] ?? '', logLevel: Level.OFF);
+final StreamChatClient streamClient = StreamChatClient(
+  dotenv.env['STREAM_API_KEY'] ?? '',
+  logLevel: Level.OFF,
+);
+
+final GlobalKey<NavigatorState> appRootNavigatorKey =
+    GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,16 +54,37 @@ void main() async {
 
   final authProvider = AuthProvider();
   await authProvider.initialize();
+  AuthProvider.onForceLogout = () => authProvider.logout();
+
+  final streakProvider = StreakProvider();
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: authProvider),
         ChangeNotifierProvider(create: (_) => BookProvider()),
+        ChangeNotifierProvider.value(value: streakProvider),
         ChangeNotifierProvider(
           create: (_) => ChatProvider(
             streamClient: streamClient,
             chatService: ChatService(getAuthToken: () async => authProvider.token),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => GroupChatProvider(
+            streamClient: streamClient,
+            service: GroupChatService(
+              getAuthToken: () async => authProvider.token,
+            ),
+          ),
+        ),
+        ChangeNotifierProvider(create: (_) => PomodoroTimerProvider()),
+        ChangeNotifierProvider(
+          create: (_) => StudyRoomProvider(
+            StudyRoomApiService(
+              getToken: () => authProvider.token,
+              jaasAppId: dotenv.env['JAAS_APP_ID'] ?? '', // ← add this
+            ),
           ),
         ),
       ],
@@ -77,6 +112,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _router = GoRouter(
+      navigatorKey: appRootNavigatorKey,
       initialLocation: '/',
       refreshListenable: widget.authProvider,
       redirect: (context, state) {
@@ -96,7 +132,8 @@ class _MyAppState extends State<MyApp> {
         // ── Auth routes ──────────────────────────────
         GoRoute(
           path: '/',
-          pageBuilder: (_, s) => const NoTransitionPage(child: GettingStartedScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: GettingStartedScreen()),
         ),
         GoRoute(
           path: '/login',
@@ -108,7 +145,8 @@ class _MyAppState extends State<MyApp> {
         ),
         GoRoute(
           path: '/forget-password',
-          pageBuilder: (_, s) => const NoTransitionPage(child: ForgetPasswordScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: ForgetPasswordScreen()),
         ),
         GoRoute(
           path: '/OTP/:email',
@@ -136,13 +174,13 @@ class _MyAppState extends State<MyApp> {
           routes: [
             GoRoute(
               path: '/study-room',
-              pageBuilder: (_, s) => const NoTransitionPage(
-                child: PlaceholderScreen(title: 'Study room', icon: FeatherIcons.users),
-              ),
+              pageBuilder: (_, s) =>
+                  const NoTransitionPage(child: LobbyScreen()),
             ),
             GoRoute(
               path: '/productivity-hub',
-              pageBuilder: (_, s) => const NoTransitionPage(child: ProductivityHubScreen()),
+              pageBuilder: (_, s) =>
+                  const NoTransitionPage(child: ProductivityHubScreen()),
             ),
             GoRoute(
               path: '/books',
@@ -150,7 +188,8 @@ class _MyAppState extends State<MyApp> {
             ),
             GoRoute(
               path: '/profile',
-              pageBuilder: (_, s) => const NoTransitionPage(child: UserOwnProfileScreen()),
+              pageBuilder: (_, s) =>
+                  const NoTransitionPage(child: UserOwnProfileScreen()),
             ),
           ],
         ),
@@ -158,31 +197,38 @@ class _MyAppState extends State<MyApp> {
         // ── Chat route ──────────────────────────────
         GoRoute(
           path: '/chat',
-          pageBuilder: (_, s) => const NoTransitionPage(child: ChannelListScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: ChannelListScreen()),
         ),
 
         // ── Productivity tools routes ──────────────────────────────
         GoRoute(
           path: '/todo-list',
-          pageBuilder: (_, s) => const NoTransitionPage(child: TodoListScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: TodoListScreen()),
         ),
         GoRoute(
           path: '/pomodoro',
-          pageBuilder: (_, s) => const NoTransitionPage(child: PomodoroScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: PomodoroScreen()),
         ),
         GoRoute(
           path: '/flashcard',
-          pageBuilder: (_, s) => const NoTransitionPage(child: FlashcardScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: FlashcardScreen()),
         ),
         GoRoute(
           path: '/flashcard/create',
-          pageBuilder: (_, s) => const NoTransitionPage(child: ManageFlashcardScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: ManageFlashcardScreen()),
         ),
         GoRoute(
           path: '/flashcard/edit/:id',
           pageBuilder: (_, s) {
             final id = s.pathParameters['id'] ?? '';
-            return NoTransitionPage(child: ManageFlashcardScreen(editSetId: id));
+            return NoTransitionPage(
+              child: ManageFlashcardScreen(editSetId: id),
+            );
           },
         ),
         GoRoute(
@@ -218,7 +264,8 @@ class _MyAppState extends State<MyApp> {
         ),
         GoRoute(
           path: '/task-breakdown',
-          pageBuilder: (_, s) => const NoTransitionPage(child: AiBreakdownScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: AiBreakdownScreen()),
         ),
       ],
     );
@@ -242,12 +289,127 @@ class _MyAppState extends State<MyApp> {
         ),
       ),
 
-      localizationsDelegates: const [GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       supportedLocales: const [Locale('en')],
 
       builder: (context, child) {
-        return StreamChat(client: streamClient, child: child!);
+        return StreamChat(
+          client: streamClient,
+          streamChatThemeData: StreamChatAppTheme.theme,
+          child: _PomodoroPromptHost(child: child!),
+        );
       },
     );
+  }
+}
+
+class _PomodoroPromptHost extends StatefulWidget {
+  const _PomodoroPromptHost({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_PomodoroPromptHost> createState() => _PomodoroPromptHostState();
+}
+
+class _PomodoroPromptHostState extends State<_PomodoroPromptHost> {
+  int _lastHandledPromptId = 0;
+  bool _isDialogOpen = false;
+  PomodoroTimerProvider? _provider;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final nextProvider = context.read<PomodoroTimerProvider>();
+    if (identical(_provider, nextProvider)) {
+      return;
+    }
+
+    _provider?.removeListener(_onProviderChanged);
+    _provider = nextProvider;
+    _provider!.addListener(_onProviderChanged);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _onProviderChanged();
+      }
+    });
+  }
+
+  void _onProviderChanged() {
+    final provider = _provider;
+    if (provider == null || _isDialogOpen) return;
+
+    final prompt = provider.pendingPrompt;
+    if (prompt == null || prompt.id == _lastHandledPromptId) return;
+
+    _showPrompt(context, provider, prompt);
+  }
+
+  void _showPrompt(
+    BuildContext context,
+    PomodoroTimerProvider provider,
+    PomodoroCompletionPrompt prompt,
+  ) {
+    final rootContext = appRootNavigatorKey.currentContext;
+    if (rootContext == null) {
+      _isDialogOpen = false;
+      return;
+    }
+
+    _isDialogOpen = true;
+    _lastHandledPromptId = prompt.id;
+
+    showDialog<void>(
+      context: rootContext,
+      useRootNavigator: true,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text(prompt.title),
+          content: Text(prompt.message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                provider.dismissPendingPrompt();
+                Navigator.of(ctx).pop();
+              },
+              child: const Text('Later'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                provider.acceptPendingPromptAndStart();
+                Navigator.of(ctx).pop();
+                GoRouter.of(context).go('/pomodoro');
+              },
+              child: const Text('Continue'),
+            ),
+          ],
+        );
+      },
+    ).whenComplete(() {
+      if (mounted) {
+        setState(() {
+          _isDialogOpen = false;
+        });
+      } else {
+        _isDialogOpen = false;
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
+  }
+
+  @override
+  void dispose() {
+    _provider?.removeListener(_onProviderChanged);
+    super.dispose();
   }
 }

@@ -1,3 +1,5 @@
+import 'package:lockedin_frontend/models/user/streak.dart';
+
 // class User {
 //   final String id;
 //   final String name;
@@ -29,6 +31,7 @@ class User {
   final int follower;
   final int following;
   final int postNumber;
+  final Streak? streak;
 
   User({
     required this.username,
@@ -39,6 +42,7 @@ class User {
     this.follower = 0,
     this.following = 0,
     this.postNumber = 0,
+    this.streak,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -51,6 +55,7 @@ class User {
       follower: json['followersCount'] ?? 0,
       following: json['followingCount'] ?? 0,
       postNumber: json['postNumber'] ?? 0,
+      streak: json['streak'] != null ? Streak.fromJson(json['streak']) : null,
     );
   }
 
@@ -64,6 +69,7 @@ class User {
       'follower': follower,
       'following': following,
       'postNumber': postNumber,
+      'streak': streak,
     };
   }
 
@@ -76,6 +82,7 @@ class User {
     int? follower,
     int? following,
     int? postNumber,
+    Streak? streak,
   }) {
     return User(
       username: username ?? this.username,
@@ -86,6 +93,7 @@ class User {
       follower: follower ?? this.follower,
       following: following ?? this.following,
       postNumber: postNumber ?? this.postNumber,
+      streak: streak ?? this.streak,
     );
   }
 }

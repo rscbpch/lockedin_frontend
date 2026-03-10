@@ -66,7 +66,7 @@ class LoginScreen extends StatelessWidget {
                         );
 
                         if (!context.mounted) return;
-                        
+
                         if (success) {
                           context.go('/productivity-hub');
                         } else {
@@ -114,13 +114,15 @@ class LoginScreen extends StatelessWidget {
                       onPressed: () async {
                         final auth = context.read<AuthProvider>();
                         final success = await auth.signInWithGoogle();
-                        
+
                         if (success) {
                           context.go('/productivity-hub');
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(auth.errorMessage ?? 'Google sign-in failed'),
+                              content: Text(
+                                auth.errorMessage ?? 'Google sign-in failed',
+                              ),
                             ),
                           );
                         }

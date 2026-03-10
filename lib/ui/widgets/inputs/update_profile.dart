@@ -198,14 +198,123 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
       username: _userNameController.text.trim(),
       bio: _bioController.text.trim(),
       displayName: _nameController.text.trim(),
-      avatarFile: _pickedImage, // null if no image was picked
+      avatarFile: _pickedImage,
     );
 
     if (!mounted) return;
+
     if (auth.errorMessage != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(auth.errorMessage!)));
+      final msg = auth.errorMessage!;
+      final isCooldown = msg.toLowerCase().contains('cooldown') ||
+          msg.toLowerCase().contains('wait') ||
+          msg.toLowerCase().contains('day') ||
+          msg.toLowerCase().contains('too soon');
+
+      if (isCooldown) {
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            backgroundColor: AppColors.background,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            contentPadding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
+            actionsPadding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.timer_outlined,
+                    size: 36,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Too Soon!',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'You can only update your profile once every 14 days. Please wait a bit before making changes again.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.grey,
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+            actions: [
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Got it',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: AppColors.secondary,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            content: Row(
+              children: [
+                const Icon(
+                  Icons.error_outline,
+                  color: AppColors.accent,
+                  size: 20,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    msg,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.backgroundBox,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     } else {
       Navigator.pop(context);
     }
