@@ -2,14 +2,14 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../core/exceptions.dart';
 import '../models/study_room/study_room.dart';
+import 'package:lockedin_frontend/config/env.dart';
 
 class StudyRoomApiService {
-  final String baseUrl;
+  final String baseUrl = Env.apiBaseUrl;
   final String? Function() getToken;
   final String jaasAppId; // e.g. "vpaas-magic-cookie-xxxxx"
 
   StudyRoomApiService({
-    required this.baseUrl,
     required this.getToken,
     required this.jaasAppId,
   });
@@ -38,7 +38,10 @@ class StudyRoomApiService {
     );
     return _handleResponse(
       res,
-      (body) => (body as List).map((e) => StudyRoom.fromJson(e)).toList(),
+      (body) {
+        final list = body is List ? body : (body['data'] ?? body) as List;
+        return list.map((e) => StudyRoom.fromJson(e as Map<String, dynamic>)).toList();
+      },
     );
   }
 
@@ -48,7 +51,10 @@ class StudyRoomApiService {
       headers: _headers,
       body: jsonEncode({'name': name}),
     );
-    return _handleResponse(res, (body) => StudyRoom.fromJson(body));
+    return _handleResponse(res, (body) {
+      final data = (body is Map && body['data'] is Map) ? body['data'] : body;
+      return StudyRoom.fromJson(data as Map<String, dynamic>);
+    });
   }
 
   Future<StudyRoom> joinRoom(String roomId) async {
@@ -56,7 +62,10 @@ class StudyRoomApiService {
       Uri.parse('$baseUrl/study-rooms/$roomId/join'),
       headers: _headers,
     );
-    return _handleResponse(res, (body) => StudyRoom.fromJson(body));
+    return _handleResponse(res, (body) {
+      final data = (body is Map && body['data'] is Map) ? body['data'] : body;
+      return StudyRoom.fromJson(data as Map<String, dynamic>);
+    });
   }
 
   Future<void> leaveRoom(String roomId) async {
@@ -85,6 +94,13 @@ class StudyRoomApiService {
         'avatar': avatar,
       }),
     );
-    return _handleResponse(res, (body) => body['token'] as String);
+    return _handleResponse(res, (body) {
+      final data = (body is Map && body['data'] is Map) ? body['data'] : body;
+      final token = data['token']?.toString();
+      if (token == null || token.isEmpty) {
+        throw ApiException('No token received from server');
+      }
+      return token;
+    });
   }
 }
