@@ -25,8 +25,10 @@ import 'package:lockedin_frontend/ui/widgets/display/no_transition_builder.dart'
 import 'package:provider/provider.dart';
 import 'package:lockedin_frontend/provider/auth_provider.dart';
 import 'package:lockedin_frontend/provider/chat_provider.dart';
+import 'package:lockedin_frontend/provider/group_chat_provider.dart';
 import 'package:lockedin_frontend/provider/pomodoro_timer_provider.dart';
 import 'package:lockedin_frontend/services/chat_service.dart';
+import 'package:lockedin_frontend/services/group_chat_service.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'ui/screens/chat/chat_list_screen.dart';
@@ -56,6 +58,14 @@ void main() async {
           create: (_) => ChatProvider(
             streamClient: streamClient,
             chatService: ChatService(
+              getAuthToken: () async => authProvider.token,
+            ),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => GroupChatProvider(
+            streamClient: streamClient,
+            service: GroupChatService(
               getAuthToken: () async => authProvider.token,
             ),
           ),

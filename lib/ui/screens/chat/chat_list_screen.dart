@@ -5,6 +5,8 @@ import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 import 'package:lockedin_frontend/provider/chat_provider.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'channel_screen.dart';
+import 'create_group_screen.dart';
+import 'group_channel_screen.dart';
 import 'widgets/stream_chat_theme.dart';
 import 'package:go_router/go_router.dart';
 
@@ -59,14 +61,16 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
 
   // ✅ Navigate to channel using GoRouter
   void _navigateToChannel(Channel channel) {
-    // Store channel info for the route or use a different approach
-    // For now, we'll keep the existing approach but could be improved
+    final isGroup = channel.id?.startsWith('group-') == true;
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => StreamChat(
           client: StreamChat.of(context).client,
           streamChatThemeData: StreamChatAppTheme.theme,
-          child: StreamChannel(channel: channel, child: const ChannelScreen()),
+          child: StreamChannel(
+            channel: channel,
+            child: isGroup ? const GroupChannelScreen() : const ChannelScreen(),
+          ),
         ),
       ),
     );
@@ -411,23 +415,12 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
   }
 
   void _showCreateGroupSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => const Padding(
-        padding: EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Create Group',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 12),
-            Text('Group chat coming soon!'),
-          ],
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => StreamChat(
+          client: StreamChat.of(context).client,
+          streamChatThemeData: StreamChatAppTheme.theme,
+          child: const CreateGroupScreen(),
         ),
       ),
     );
