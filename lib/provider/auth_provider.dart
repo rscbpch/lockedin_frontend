@@ -97,6 +97,10 @@ import '../services/auth_service.dart';
 import '../services/user_profile_service.dart';
 
 class AuthProvider extends ChangeNotifier {
+  /// Called by any service/provider when the server returns 401.
+  /// Register this in main() after creating the AuthProvider instance.
+  static VoidCallback? onForceLogout;
+
   bool isLoading = false;
   String? errorMessage;
 

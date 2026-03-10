@@ -49,6 +49,7 @@ void main() async {
 
   final authProvider = AuthProvider();
   await authProvider.initialize();
+  AuthProvider.onForceLogout = () => authProvider.logout();
 
   final streakProvider = StreakProvider();
 
