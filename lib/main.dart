@@ -81,7 +81,6 @@ void main() async {
         ChangeNotifierProvider(
           create: (_) => StudyRoomProvider(
             StudyRoomApiService(
-              baseUrl: dotenv.env['API_URL'] ?? 'http://localhost:3000/api',
               getToken: () => authProvider.token,
               jaasAppId: dotenv.env['JAAS_APP_ID'] ?? '', // ← add this
             ),

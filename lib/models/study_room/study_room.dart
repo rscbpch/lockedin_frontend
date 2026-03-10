@@ -13,9 +13,9 @@ class StudyRoom {
   double get capacityRatio => participantCount / 10;
 
   factory StudyRoom.fromJson(Map<String, dynamic> json) => StudyRoom(
-        name: json['name'] as String,
-        roomId: json['roomId'] as String,
-        participantCount: json['participantCount'] as int,
+        name: json['name']?.toString() ?? '',
+        roomId: (json['roomId'] ?? json['_id'])?.toString() ?? '',
+        participantCount: (json['participantCount'] as num?)?.toInt() ?? 0,
       );
 
   StudyRoom copyWith({int? participantCount}) => StudyRoom(
