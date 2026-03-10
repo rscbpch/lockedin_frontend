@@ -1,11 +1,58 @@
-import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
+import '../../../../provider/pomodoro_timer_provider.dart';
 import '../../../theme/app_theme.dart';
 import '../../../../services/pomodoro_service.dart';
+
+class _TimerTextInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digitsOnly = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digitsOnly.isEmpty) {
+      return const TextEditingValue(
+        text: '00:00',
+        selection: TextSelection.collapsed(offset: 5),
+      );
+    }
+
+    final boundedDigits = digitsOnly.length > 4
+      ? digitsOnly.substring(digitsOnly.length - 4)
+      : digitsOnly;
+
+    String minutePart;
+    String secondPart;
+
+    if (boundedDigits.length <= 2) {
+      minutePart = boundedDigits.padLeft(2, '0');
+      secondPart = '00';
+    } else {
+      final rawMinutes = boundedDigits.substring(0, boundedDigits.length - 2);
+      final rawSeconds = boundedDigits.substring(boundedDigits.length - 2);
+      minutePart = rawMinutes.padLeft(2, '0');
+      secondPart = rawSeconds;
+    }
+
+    final minutes = int.tryParse(minutePart) ?? 0;
+    final seconds = int.tryParse(secondPart) ?? 0;
+
+    final clampedMinutes = minutes.clamp(0, 99);
+    final clampedSeconds = seconds.clamp(0, 59);
+    final formatted =
+        '${clampedMinutes.toString().padLeft(2, '0')}:${clampedSeconds.toString().padLeft(2, '0')}';
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+}
 
 /// ================= TIMER PAINTER =================
 class TimerPainter extends CustomPainter {
@@ -45,8 +92,6 @@ class TimerPainter extends CustomPainter {
       oldDelegate.progress != progress;
 }
 
-enum TimerMode { pomodoro, shortBreak, longBreak }
-
 /// ================= SCREEN =================
 class PomodoroScreen extends StatefulWidget {
   const PomodoroScreen({super.key});
@@ -55,22 +100,15 @@ class PomodoroScreen extends StatefulWidget {
 }
 
 class _PomodoroScreenState extends State<PomodoroScreen> {
-  static const Map<TimerMode, int> defaultMinutes = {
-    TimerMode.pomodoro: 25,
-    TimerMode.shortBreak: 5,
-    TimerMode.longBreak: 10,
-  };
-
-  Timer? _timer;
   VideoPlayerController? _videoController;
   bool _videoHasError = false;
   String _videoErrorMessage = '';
-
-  TimerMode _mode = TimerMode.pomodoro;
-  int _totalSeconds = 25 * 60;
-  int _remainingSeconds = 25 * 60;
-  bool _isRunning = false;
-  int _pomodoroCount = 0;
+  int? _lastSyncedTotalSeconds;
+  bool? _lastSyncedRunning;
+  final TextEditingController _timeInputController = TextEditingController();
+  final FocusNode _timeInputFocusNode = FocusNode();
+  int? _lastSyncedTimeInputSeconds;
+  final TextInputFormatter _timerFormatter = _TimerTextInputFormatter();
 
   /// ===== TRACKING PANEL STATE =====
   bool _showTracking = false;
@@ -82,10 +120,23 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
   @override
   void initState() {
     super.initState();
-    _initializeTimer();
+    _timeInputFocusNode.addListener(() {
+      if (!_timeInputFocusNode.hasFocus && mounted) {
+        _applyTypedTime(context.read<PomodoroTimerProvider>());
+      }
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeVideo();
+      _syncTimeInputWithProvider(context.read<PomodoroTimerProvider>());
     });
+  }
+
+  @override
+  void dispose() {
+    _videoController?.dispose();
+    _timeInputController.dispose();
+    _timeInputFocusNode.dispose();
+    super.dispose();
   }
 
   /// ================= VIDEO =================
@@ -111,8 +162,10 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
       _videoController!.setVolume(0);
 
       if (mounted) {
+        _updateVideoPlaybackSpeed(
+          context.read<PomodoroTimerProvider>().totalSeconds,
+        );
         setState(() {});
-        _updateVideoPlaybackSpeed();
       }
     } catch (e) {
       setState(() {
@@ -123,13 +176,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
   }
 
   /// ================= TIMER =================
-  void _initializeTimer() {
-    _totalSeconds = defaultMinutes[_mode]! * 60;
-    _remainingSeconds = _totalSeconds;
-    _updateVideoPlaybackSpeed();
-  }
-
-  void _updateVideoPlaybackSpeed() {
+  void _updateVideoPlaybackSpeed(int totalSeconds) {
     if (_videoController == null || !_videoController!.value.isInitialized) {
       return;
     }
@@ -137,33 +184,42 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
     final videoDuration = _videoController!.value.duration.inSeconds;
     if (videoDuration == 0) return;
 
-    final speed = (videoDuration / _totalSeconds).clamp(0.1, 4.0);
+    final safeTotalSeconds = totalSeconds <= 0 ? 1 : totalSeconds;
+    final speed = (videoDuration / safeTotalSeconds).clamp(0.1, 4.0);
     _videoController!.setPlaybackSpeed(speed);
   }
 
-  void _startTimer({bool autoStart = false}) {
-    if (_isRunning) return;
-
-    setState(() {
-      _isRunning = true;
-    });
-
+  void _startTimer(PomodoroTimerProvider provider) {
+    provider.startTimer();
     _videoController?.seekTo(Duration.zero);
     _videoController?.play();
-
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (_remainingSeconds <= 0) {
-        _onTimerComplete();
-      } else {
-        setState(() => _remainingSeconds--);
-      }
-    });
   }
 
-  void _stopTimer() {
-    _timer?.cancel();
+  void _stopTimer(PomodoroTimerProvider provider) {
+    provider.stopTimer();
     _videoController?.pause();
-    setState(() => _isRunning = false);
+  }
+
+  void _syncVideoWithProvider(PomodoroTimerProvider provider) {
+    if (_videoController == null || !_videoController!.value.isInitialized) {
+      return;
+    }
+
+    if (_lastSyncedTotalSeconds != provider.totalSeconds) {
+      _lastSyncedTotalSeconds = provider.totalSeconds;
+      _updateVideoPlaybackSpeed(provider.totalSeconds);
+    }
+
+    if (_lastSyncedRunning == provider.isRunning) {
+      return;
+    }
+
+    _lastSyncedRunning = provider.isRunning;
+    if (provider.isRunning) {
+      _videoController!.play();
+    } else {
+      _videoController!.pause();
+    }
   }
 
   /// ================= TRACKING =================
@@ -642,36 +698,87 @@ Widget _statCard(
     }
   }
 
-  void _switchMode(TimerMode mode) {
-    if (_mode == mode) return;
+  void _switchMode(PomodoroTimerProvider provider, TimerMode mode) {
+    if (provider.mode == mode) return;
 
-    _stopTimer();
-    setState(() {
-      _mode = mode;
-      _initializeTimer();
-    });
+    provider.switchMode(mode);
 
     // Reset video and update speed for new timer duration
     if (_videoController != null && _videoController!.value.isInitialized) {
       _videoController!.seekTo(Duration.zero);
       _videoController!.pause();
-      _updateVideoPlaybackSpeed();
+      _updateVideoPlaybackSpeed(provider.totalSeconds);
     }
   }
 
-  void _addMinutes(int minutes) {
-    if (_isRunning) return;
+  void _addMinutes(PomodoroTimerProvider provider, int minutes) {
+    provider.addMinutes(minutes);
+    _updateVideoPlaybackSpeed(provider.totalSeconds);
+  }
 
-    final newSeconds = _remainingSeconds + minutes * 60;
-    if (newSeconds <= 0) return;
+  void _syncTimeInputWithProvider(
+    PomodoroTimerProvider provider, {
+    bool force = false,
+  }) {
+    if (!force && _timeInputFocusNode.hasFocus) return;
+    if (!force && _lastSyncedTimeInputSeconds == provider.remainingSeconds) {
+      return;
+    }
 
-    setState(() {
-      _remainingSeconds = newSeconds;
-      _totalSeconds = newSeconds;
-    });
+    _lastSyncedTimeInputSeconds = provider.remainingSeconds;
+    final formatted = _formatEditableTime(provider.remainingSeconds);
+    _timeInputController.value = TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
 
-    // Update video playback speed for new duration
-    _updateVideoPlaybackSpeed();
+  String _formatEditableTime(int remainingSeconds) {
+    final m = remainingSeconds ~/ 60;
+    final s = remainingSeconds % 60;
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+  }
+
+  int? _parseTypedTimeToSeconds(String raw) {
+    final value = raw.trim();
+    if (value.isEmpty) return null;
+
+    if (value.contains(':')) {
+      final parts = value.split(':');
+      if (parts.length != 2) return null;
+
+      final minutes = int.tryParse(parts[0]);
+      final seconds = int.tryParse(parts[1]);
+      if (minutes == null || seconds == null) return null;
+      if (minutes < 0 || seconds < 0 || seconds >= 60) return null;
+
+      final total = (minutes * 60) + seconds;
+      return total > 0 ? total : null;
+    }
+
+    final minutes = int.tryParse(value);
+    if (minutes == null || minutes <= 0) return null;
+    return minutes * 60;
+  }
+
+  void _applyTypedTime(PomodoroTimerProvider provider) {
+    if (provider.isRunning) return;
+
+    final parsedSeconds = _parseTypedTimeToSeconds(_timeInputController.text);
+    if (parsedSeconds == null) {
+      _syncTimeInputWithProvider(provider, force: true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Enter time as minutes (e.g. 25) or mm:ss (e.g. 25:00).'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    provider.setDurationSeconds(parsedSeconds);
+    _updateVideoPlaybackSpeed(provider.totalSeconds);
+    _syncTimeInputWithProvider(provider, force: true);
   }
 
   String _formatFocusTime(int totalSeconds) {
@@ -681,115 +788,28 @@ Widget _statCard(
     return '$h:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
-  String _formatTime() {
-    final m = _remainingSeconds ~/ 60;
-    final s = _remainingSeconds % 60;
+  String _formatTime(int remainingSeconds) {
+    final m = remainingSeconds ~/ 60;
+    final s = remainingSeconds % 60;
     return '${m.toString().padLeft(2, '0')} : ${s.toString().padLeft(2, '0')}';
   }
 
-  double get _progress {
-    if (_totalSeconds == 0) return 0;
-    return (_totalSeconds - _remainingSeconds) / _totalSeconds;
-  }
-
-  void _onTimerComplete() async {
-    _stopTimer();
-
-    if (_mode == TimerMode.pomodoro) {
-      // Save focus session
-      await PomodoroService.createSession(
-        durationSeconds: _totalSeconds,
-        type: 'focus',
-      );
-    }
-
-    // Vibrate when timer completes
-    HapticFeedback.heavyImpact();
-
-    // Handle different completion scenarios
-    if (_mode == TimerMode.pomodoro) {
-      _pomodoroCount++;
-
-      if (_pomodoroCount % 4 == 0) {
-        // After 4 pomodoros, suggest long break
-        _showCompletionDialog(
-          'Pomodoro Complete!',
-          'Great work! You\'ve completed 4 pomodoros. Time for a long break?',
-          () => _autoSwitchMode(TimerMode.longBreak),
-        );
-      } else {
-        // After each pomodoro, suggest short break
-        _showCompletionDialog(
-          'Pomodoro Complete!',
-          'Great work! Time for a short break?',
-          () => _autoSwitchMode(TimerMode.shortBreak),
-        );
-      }
-    } else if (_mode == TimerMode.shortBreak) {
-      // After short break, suggest pomodoro
-      _showCompletionDialog(
-        'Short Break Complete!',
-        'Break\'s over! Ready to start another pomodoro?',
-        () => _autoSwitchMode(TimerMode.pomodoro),
-      );
-    } else if (_mode == TimerMode.longBreak) {
-      // After long break, reset count and suggest pomodoro
-      _pomodoroCount = 0;
-      _showCompletionDialog(
-        'Long Break Complete!',
-        'You\'re refreshed! Ready to start a new pomodoro cycle?',
-        () => _autoSwitchMode(TimerMode.pomodoro),
-      );
-    }
-  }
-
-  void _showCompletionDialog(String title, String message, VoidCallback onYes) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(title),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Later'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                onYes();
-              },
-              child: const Text('Yes'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _autoSwitchMode(TimerMode mode) {
-    setState(() {
-      _mode = mode;
-      _initializeTimer();
-    });
-
-    // Reset video for new timer mode
-    if (_videoController != null && _videoController!.value.isInitialized) {
-      _videoController!.seekTo(Duration.zero);
-      _updateVideoPlaybackSpeed();
-    }
-
-    _startTimer(autoStart: true);
+  double _progress(int totalSeconds, int remainingSeconds) {
+    if (totalSeconds == 0) return 0;
+    return (totalSeconds - remainingSeconds) / totalSeconds;
   }
 
   /// ================= BUILD =================
   @override
   Widget build(BuildContext context) {
+    final timerProvider = context.watch<PomodoroTimerProvider>();
     final width = MediaQuery.of(context).size.width;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _syncVideoWithProvider(timerProvider);
+      _syncTimeInputWithProvider(timerProvider);
+    });
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -812,7 +832,7 @@ Widget _statCard(
 
       body: Stack(
         children: [
-          Center(
+          SingleChildScrollView(
             child: Column(
               children: [
                 /// ===== ORIGINAL UI (UNCHANGED) =====
@@ -823,7 +843,7 @@ Widget _statCard(
                 Wrap(
                   spacing: 8,
                   children: TimerMode.values.map((mode) {
-                    final isSelected = _mode == mode;
+                    final isSelected = timerProvider.mode == mode;
                     return ChoiceChip(
                       label: Text(
                         _label(mode),
@@ -840,7 +860,7 @@ Widget _statCard(
                       backgroundColor: isSelected
                           ? AppColors.primary
                           : AppColors.background,
-                      onSelected: (_) => _switchMode(mode),
+                      onSelected: (_) => _switchMode(timerProvider, mode),
                       selectedColor: AppColors.secondary,
                       showCheckmark: false, // Remove default checkmark icon
                     );
@@ -859,7 +879,12 @@ Widget _statCard(
                       // Progress circle
                       CustomPaint(
                         size: const Size(260, 260),
-                        painter: TimerPainter(progress: _progress),
+                        painter: TimerPainter(
+                          progress: _progress(
+                            timerProvider.totalSeconds,
+                            timerProvider.remainingSeconds,
+                          ),
+                        ),
                       ),
                       // Video player in the center
                       Container(
@@ -945,7 +970,7 @@ Widget _statCard(
               
 
                 // Cycle counter
-                if (_mode == TimerMode.pomodoro)
+                if (timerProvider.mode == TimerMode.pomodoro)
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -956,7 +981,7 @@ Widget _statCard(
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      'Pomodoro ${_pomodoroCount + 1} of 4',
+                      'Pomodoro ${timerProvider.pomodoroCount + 1} of 4',
                       style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
@@ -974,19 +999,41 @@ Widget _statCard(
                     IconButton(
                       iconSize: 32,
                       icon: const Icon(Icons.remove),
-                      onPressed: () => _addMinutes(-1),
+                      onPressed: timerProvider.isRunning
+                          ? null
+                          : () => _addMinutes(timerProvider, -1),
                     ),
-                    Text(
-                      _formatTime(),
-                      style: const TextStyle(
-                        fontSize: 36,
-                        fontWeight: FontWeight.bold,
+                    SizedBox(
+                      width: 170,
+                      child: TextField(
+                        controller: _timeInputController,
+                        focusNode: _timeInputFocusNode,
+                        enabled: !timerProvider.isRunning,
+                        textAlign: TextAlign.center,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [_timerFormatter],
+                        style: const TextStyle(
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          isCollapsed: true,
+                          hintText: '25:00',
+                        ),
+                        onSubmitted: (_) => _applyTypedTime(timerProvider),
+                        onEditingComplete: () {
+                          _applyTypedTime(timerProvider);
+                          FocusScope.of(context).unfocus();
+                        },
                       ),
                     ),
                     IconButton(
                       iconSize: 32,
                       icon: const Icon(Icons.add),
-                      onPressed: () => _addMinutes(1),
+                      onPressed: timerProvider.isRunning
+                          ? null
+                          : () => _addMinutes(timerProvider, 1),
                     ),
                   ],
                 ),
@@ -994,11 +1041,13 @@ Widget _statCard(
                 const SizedBox(height: 24),
 
                 ElevatedButton(
-                  onPressed: _isRunning ? _stopTimer : () => _startTimer(),
+                  onPressed: timerProvider.isRunning
+                      ? () => _stopTimer(timerProvider)
+                      : () => _startTimer(timerProvider),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.background,
                   ),
-                  child: Text(_isRunning ? 'Stop' : 'Start'),
+                  child: Text(timerProvider.isRunning ? 'Stop' : 'Start'),
                 ),
               ],
             ),

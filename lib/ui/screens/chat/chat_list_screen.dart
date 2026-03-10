@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 import 'package:lockedin_frontend/provider/chat_provider.dart';
+import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'channel_screen.dart';
+import 'create_group_screen.dart';
+import 'group_channel_screen.dart';
+import 'widgets/stream_chat_theme.dart';
 import 'package:go_router/go_router.dart';
 
 class ChannelListScreen extends StatefulWidget {
@@ -30,13 +35,7 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
       await chatProvider.connectUser();
     }
 
-    debugPrint('📋 Connected: ${chatProvider.isConnected}');
-
     if (mounted && chatProvider.isConnected) {
-      debugPrint('🔧 Creating mock channels...');
-      await chatProvider.createMockChannels();
-      debugPrint('✅ Mock channels done, building controller...');
-
       setState(() {
         _controller = StreamChannelListController(
           client: StreamChat.of(context).client,
@@ -62,15 +61,15 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
 
   // ✅ Navigate to channel using GoRouter
   void _navigateToChannel(Channel channel) {
-    // Store channel info for the route or use a different approach
-    // For now, we'll keep the existing approach but could be improved
+    final isGroup = channel.id?.startsWith('group-') == true;
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => StreamChat(
           client: StreamChat.of(context).client,
+          streamChatThemeData: StreamChatAppTheme.theme,
           child: StreamChannel(
             channel: channel,
-            child: const ChannelScreen(),
+            child: isGroup ? const GroupChannelScreen() : const ChannelScreen(),
           ),
         ),
       ),
@@ -95,8 +94,15 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4FF),
+      backgroundColor: AppColors.background,
       appBar: _buildAppBar(context),
+      // [DEV] FAB for testing direct chat without follow feature
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.deepPurple,
+        tooltip: '[DEV] Open direct chat by user ID',
+        onPressed: () => _showDirectChatDialog(context, chatProvider),
+        child: const Icon(Icons.science_outlined, color: Colors.white),
+      ),
       body: Column(
         children: [
           _buildSearchBar(),
@@ -130,16 +136,16 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
-      backgroundColor: const Color(0xFFF0F4FF),
+      backgroundColor: AppColors.background,
       elevation: 0,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+        icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
         onPressed: _handleBackNavigation,
       ),
       title: const Text(
         'Chats',
         style: TextStyle(
-          color: Colors.black,
+          color: AppColors.textPrimary,
           fontWeight: FontWeight.bold,
           fontSize: 20,
         ),
@@ -149,7 +155,7 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
         IconButton(
           icon: const Icon(
             Icons.group_add_outlined,
-            color: Colors.black,
+            color: AppColors.textPrimary,
             size: 28,
           ),
           onPressed: () => _showCreateGroupSheet(context),
@@ -161,19 +167,32 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: TextField(
-        controller: _searchController,
-        onChanged: (value) => setState(() => _searchQuery = value),
-        decoration: InputDecoration(
-          hintText: 'Search chats',
-          hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-          prefixIcon: const Icon(Icons.search, color: Colors.grey),
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(vertical: 0),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(30),
-            borderSide: BorderSide.none,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.backgroundBox,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 4,
+              offset: const Offset(0, 3),
+            )
+          ]
+        ),
+        child: TextField(
+          controller: _searchController,
+          onChanged: (value) => setState(() => _searchQuery = value),
+          decoration: InputDecoration(
+            hintText: 'Search chats',
+            hintStyle: const TextStyle(color: AppColors.grey, fontSize: 14),
+            prefixIcon: const Icon(Icons.search, color: AppColors.grey),
+            filled: true,
+            fillColor: AppColors.backgroundBox,
+            contentPadding: const EdgeInsets.symmetric(vertical: 0),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(30),
+              borderSide: BorderSide.none,
+            ),
           ),
         ),
       ),
@@ -181,27 +200,18 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
   }
 
   Widget _buildChannelTile(BuildContext context, Channel channel) {
-    final isMock = channel.extraData['mock'] == true;
     final name = _getChannelName(channel);
 
-    final String? avatarUrl;
-    final bool isOnline;
-    if (isMock) {
-      avatarUrl = channel.extraData['image'] as String?;
-      isOnline = false;
-    } else {
-      final currentUserId =
-          StreamChat.of(context).client.state.currentUser!.id;
-      final members = channel.state?.members ?? [];
-      final otherMember = members.isEmpty
-          ? null
-          : members.firstWhere(
-              (m) => m.userId != currentUserId,
-              orElse: () => members.first,
-            );
-      avatarUrl = otherMember?.user?.image;
-      isOnline = otherMember?.user?.online ?? false;
-    }
+    final currentUserId = StreamChat.of(context).client.state.currentUser!.id;
+    final members = channel.state?.members ?? [];
+    final otherMember = members.isEmpty
+        ? null
+        : members.firstWhere(
+            (m) => m.userId != currentUserId,
+            orElse: () => members.first,
+          );
+    final String? avatarUrl = otherMember?.user?.image;
+    final bool isOnline = otherMember?.user?.online ?? false;
 
     final lastMessage = channel.state?.messages.isNotEmpty == true
         ? channel.state!.messages.last.text ?? ''
@@ -218,9 +228,10 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
               children: [
                 CircleAvatar(
                   radius: 26,
-                  backgroundColor: Colors.grey.shade300,
-                  backgroundImage:
-                      avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                  backgroundColor: AppColors.grey,
+                  backgroundImage: avatarUrl != null
+                      ? NetworkImage(avatarUrl)
+                      : null,
                   child: avatarUrl == null
                       ? Text(
                           name.isNotEmpty ? name[0].toUpperCase() : '?',
@@ -257,13 +268,13 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 15,
-                      color: Colors.black,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 3),
                   Text(
                     lastMessage.isNotEmpty ? lastMessage : 'No messages yet',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    style: const TextStyle(fontSize: 12, color: AppColors.grey),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -274,7 +285,7 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: const BoxDecoration(
-                  color: Colors.blue,
+                  color: AppColors.primary,
                   shape: BoxShape.circle,
                 ),
                 child: Text(
@@ -293,16 +304,11 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
   }
 
   String _getChannelName(Channel channel) {
-    if (channel.extraData['mock'] == true) {
-      return channel.extraData['name'] as String? ?? 'Unknown';
-    }
-
     if (channel.name != null && channel.name!.isNotEmpty) {
       return channel.name!;
     }
 
-    final currentUserId =
-        StreamChat.of(context).client.state.currentUser?.id;
+    final currentUserId = StreamChat.of(context).client.state.currentUser?.id;
     final members = channel.state?.members ?? [];
     final otherMember = members.isEmpty
         ? null
@@ -313,24 +319,108 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
     return otherMember?.user?.name ?? 'Unknown';
   }
 
-  void _showCreateGroupSheet(BuildContext context) {
-    showModalBottomSheet(
+  /// [DEV ONLY] Dialog to open a direct channel with any user by Stream ID.
+  /// Bypasses the backend follow check. Remove when follow feature ships.
+  void _showDirectChatDialog(BuildContext context, ChatProvider chatProvider) {
+    final myId = chatProvider.currentUserId ?? '(not connected)';
+    final controller = TextEditingController();
+
+    showDialog(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => const Padding(
-        padding: EdgeInsets.all(24),
-        child: Column(
+      builder: (ctx) => AlertDialog(
+        title: const Text('[DEV] Direct Chat Test'),
+        content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Create Group',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            const Text(
+              'Your Stream user ID:',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
-            SizedBox(height: 12),
-            Text('Group chat coming soon!'),
+            const SizedBox(height: 4),
+            GestureDetector(
+              onTap: () {
+                Clipboard.setData(ClipboardData(text: myId));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('User ID copied!'),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        myId,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ),
+                    const Icon(Icons.copy, size: 16, color: Colors.grey),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              decoration: const InputDecoration(
+                labelText: "Other user's Stream ID",
+                hintText: 'Paste the other user ID here',
+                border: OutlineInputBorder(),
+              ),
+              autofocus: true,
+            ),
           ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final targetId = controller.text.trim();
+              if (targetId.isEmpty || targetId == myId) return;
+              Navigator.of(ctx).pop();
+              try {
+                final channel = await chatProvider.openPrivateChannel(targetId);
+                if (context.mounted) _navigateToChannel(channel);
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('Error: $e')));
+                }
+              }
+            },
+            child: const Text('Open Chat'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCreateGroupSheet(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => StreamChat(
+          client: StreamChat.of(context).client,
+          streamChatThemeData: StreamChatAppTheme.theme,
+          child: const CreateGroupScreen(),
         ),
       ),
     );
@@ -338,7 +428,7 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
 
   Widget _buildLoadingState() {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4FF),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: const Color(0xFFF0F4FF),
         elevation: 0,
@@ -354,7 +444,7 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
 
   Widget _buildErrorState(ChatProvider chatProvider) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4FF),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: const Color(0xFFF0F4FF),
         elevation: 0,
@@ -372,10 +462,7 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
             const SizedBox(height: 12),
             Text(chatProvider.errorMessage ?? 'Failed to connect'),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _initChat,
-              child: const Text('Retry'),
-            ),
+            ElevatedButton(onPressed: _initChat, child: const Text('Retry')),
           ],
         ),
       ),

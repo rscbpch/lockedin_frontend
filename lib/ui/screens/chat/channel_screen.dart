@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart';
-import 'package:go_router/go_router.dart';
+import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 class ChannelScreen extends StatelessWidget {
   const ChannelScreen({super.key});
 
@@ -42,13 +42,12 @@ class ChannelScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4FF),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF0F4FF),
+        backgroundColor: AppColors.background,
         elevation: 0,
-        // ✅ Safe navigation back with proper checks
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
           onPressed: () => _handleBackNavigation(context),
         ),
         title: Row(
@@ -57,7 +56,7 @@ class ChannelScreen extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 18,
-                  backgroundColor: Colors.grey.shade300,
+                  backgroundColor: AppColors.grey,
                   backgroundImage:
                       avatarUrl != null ? NetworkImage(avatarUrl) : null,
                   child: avatarUrl == null
@@ -87,7 +86,7 @@ class ChannelScreen extends StatelessWidget {
             Text(
               name,
               style: const TextStyle(
-                color: Colors.black,
+                color: AppColors.textPrimary,
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
               ),
