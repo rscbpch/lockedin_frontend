@@ -96,7 +96,7 @@ class _BookSummaryScreenState extends State<BookSummaryScreen> {
   }
 
   Widget _buildBody(BookProvider provider) {
-    if (provider.isLoading && provider.books.isEmpty) {
+    if (provider.isLoading) {
       return const Center(child: CircularProgressIndicator(color: AppColors.primary));
     }
 
