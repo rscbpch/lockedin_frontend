@@ -220,7 +220,10 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // ---------- GET USER PROFILE ----------
-  Future<void> fetchMyProfile() async {
+  Future<void> fetchMyProfile({bool forceRefresh = false}) async {
+    // Return cached data immediately if available and no forced refresh
+    if (_currentUser != null && !forceRefresh) return;
+
     // If _token is not in memory (e.g. after hot restart), read from secure storage
     _token ??= await AuthService.getToken();
 

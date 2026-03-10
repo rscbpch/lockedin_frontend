@@ -3,13 +3,29 @@ class Streak {
   final String userId;
   final int currentStreak;
   final int longestStreak;
-  final int targetDurationInSeconds;  // store as second in backend
+  final int totalGoalDays;
+  final int dailyGoalSeconds;
+  final int todayAccumulatedSeconds;
 
   Streak({
     required this.id,
     required this.userId,
     required this.currentStreak,
     required this.longestStreak,
-    required this.targetDurationInSeconds
+    required this.totalGoalDays,
+    required this.dailyGoalSeconds,
+    required this.todayAccumulatedSeconds,
   });
+
+  factory Streak.fromJson(Map<String, dynamic> json) {
+    return Streak(
+      id: json['_id'] ?? '',
+      userId: json['userId'] ?? '',
+      currentStreak: json['currentStreak'] ?? 0,
+      longestStreak: json['longestStreak'] ?? 0,
+      totalGoalDays: json['totalGoalDays'] ?? 0,
+      dailyGoalSeconds: json['dailyGoalSeconds'] ?? 0,
+      todayAccumulatedSeconds: json['todayAccumulatedSeconds'] ?? 0,
+    );
+  }
 }
