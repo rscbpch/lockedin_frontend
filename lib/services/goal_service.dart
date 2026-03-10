@@ -26,6 +26,9 @@ class GoalService {
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        throw Exception('UNAUTHORIZED');
+      }
       try {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         throw Exception(data['message'] ?? 'Failed to set goal');
@@ -54,6 +57,9 @@ class GoalService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as Map<String, dynamic>;
     } else {
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        throw Exception('UNAUTHORIZED');
+      }
       try {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         throw Exception(data['message'] ?? 'Failed to fetch streak');

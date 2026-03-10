@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lockedin_frontend/models/user/streak.dart';
+import 'package:lockedin_frontend/provider/auth_provider.dart';
 import 'package:lockedin_frontend/services/goal_service.dart';
 import '../services/auth_service.dart';
 
@@ -42,7 +43,12 @@ class StreakProvider extends ChangeNotifier {
         '[StreakProvider] fetchStreak success: dailyGoalSeconds=${streak?.dailyGoalSeconds}',
       );
     } catch (e) {
-      errorMessage = e.toString().replaceFirst('Exception: ', '');
+      final msg = e.toString();
+      if (msg.contains('UNAUTHORIZED')) {
+        _handleUnauthorized();
+        return;
+      }
+      errorMessage = msg.replaceFirst('Exception: ', '');
       debugPrint('[StreakProvider] fetchStreak error: $e');
     } finally {
       isLoading = false;
@@ -82,13 +88,30 @@ class StreakProvider extends ChangeNotifier {
       );
       return true;
     } catch (e) {
-      errorMessage = e.toString().replaceFirst('Exception: ', '');
+      final msg = e.toString();
+      if (msg.contains('UNAUTHORIZED')) {
+        _handleUnauthorized();
+        return false;
+      }
+      errorMessage = msg.replaceFirst('Exception: ', '');
       debugPrint('[StreakProvider] setDailyGoal error: $e');
       return false;
     } finally {
       isLoading = false;
       notifyListeners();
     }
+  }
+
+  // ---------- UNAUTHORIZED (force logout) ----------
+  void _handleUnauthorized() {
+    debugPrint('[StreakProvider] 401 received — forcing logout');
+    streak = null;
+    _token = null;
+    isLoading = false;
+    errorMessage = null;
+    AuthService.clearToken();
+    AuthProvider.onForceLogout?.call();
+    notifyListeners();
   }
 
   // ---------- RESET (on logout) ----------
