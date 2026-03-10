@@ -14,6 +14,8 @@
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>LockedIn needs permission to save photos.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Microphone access is needed for audio calls</string>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
