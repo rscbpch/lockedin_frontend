@@ -31,9 +31,7 @@ void showProfileSettingsDrawer(BuildContext context) {
         position: Tween<Offset>(
           begin: const Offset(1, 0),
           end: Offset.zero,
-        ).animate(
-          CurvedAnimation(parent: animation, curve: Curves.easeOut),
-        ),
+        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut)),
         child: child,
       );
     },
@@ -105,13 +103,16 @@ class _ProfileSettingsPanel extends StatelessWidget {
                               ),
                           transitionsBuilder: (_, animation, __, child) =>
                               SlideTransition(
-                                position: Tween<Offset>(
-                                  begin: const Offset(0, 1),
-                                  end: Offset.zero,
-                                ).animate(CurvedAnimation(
-                                  parent: animation,
-                                  curve: Curves.easeOut,
-                                )),
+                                position:
+                                    Tween<Offset>(
+                                      begin: const Offset(0, 1),
+                                      end: Offset.zero,
+                                    ).animate(
+                                      CurvedAnimation(
+                                        parent: animation,
+                                        curve: Curves.easeOut,
+                                      ),
+                                    ),
                                 child: child,
                               ),
                         ),

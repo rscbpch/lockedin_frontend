@@ -171,6 +171,7 @@ class ProductivityStatsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
+    final streak = context.watch<StreakProvider>();
 
     return Container(
       width: double.infinity,
@@ -186,7 +187,7 @@ class ProductivityStatsCard extends StatelessWidget {
           Image.asset('assets/images/streak.png', height: width * 0.40),
           const SizedBox(height: 2),
           Text(
-            '67',
+            '${streak.currentStreak}',
             style: TextStyle(
               fontSize: Responsive.text(context, size: 36),
               fontFamily: 'Nunito',
