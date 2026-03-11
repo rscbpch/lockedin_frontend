@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:lockedin_frontend/provider/auth_provider.dart';
+import 'package:lockedin_frontend/provider/book_provider.dart';
 import 'package:lockedin_frontend/provider/streak_provider.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/screens/onboarding/goal_selection_screen.dart';
+import 'package:lockedin_frontend/ui/screens/profile/favorite_books_screen.dart';
 
 /// Opens a full-screen settings panel that slides in from the right,
 /// overlaying the bottom nav bar.
 void showProfileSettingsDrawer(BuildContext context) {
   final auth = context.read<AuthProvider>();
+  final bookProvider = context.read<BookProvider>();
   final streak = context.read<StreakProvider>();
 
   showGeneralDialog(
@@ -22,16 +25,14 @@ void showProfileSettingsDrawer(BuildContext context) {
     pageBuilder: (ctx, _, __) => MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: auth),
+        ChangeNotifierProvider.value(value: bookProvider),
         ChangeNotifierProvider.value(value: streak),
       ],
       child: const _ProfileSettingsPanel(),
     ),
     transitionBuilder: (_, animation, __, child) {
       return SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(1, 0),
-          end: Offset.zero,
-        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut)),
+        position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut)),
         child: child,
       );
     },
@@ -64,18 +65,10 @@ class _ProfileSettingsPanel extends StatelessWidget {
                     children: [
                       const Text(
                         'Settings',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          fontFamily: 'Quicksand',
-                          color: AppColors.textPrimary,
-                        ),
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, fontFamily: 'Quicksand', color: AppColors.textPrimary),
                       ),
                       IconButton(
-                        icon: const Icon(
-                          Icons.close_rounded,
-                          color: AppColors.grey,
-                        ),
+                        icon: const Icon(Icons.close_rounded, color: AppColors.grey),
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                     ],
@@ -96,25 +89,30 @@ class _ProfileSettingsPanel extends StatelessWidget {
                       Navigator.of(context, rootNavigator: true).pop();
                       Navigator.of(context, rootNavigator: true).push(
                         PageRouteBuilder(
-                          pageBuilder: (_, animation, __) =>
-                              ChangeNotifierProvider.value(
-                                value: context.read<StreakProvider>(),
-                                child: const GoalSelectionScreen(),
-                              ),
-                          transitionsBuilder: (_, animation, __, child) =>
-                              SlideTransition(
-                                position:
-                                    Tween<Offset>(
-                                      begin: const Offset(0, 1),
-                                      end: Offset.zero,
-                                    ).animate(
-                                      CurvedAnimation(
-                                        parent: animation,
-                                        curve: Curves.easeOut,
-                                      ),
-                                    ),
-                                child: child,
-                              ),
+                          pageBuilder: (_, animation, __) => ChangeNotifierProvider.value(value: context.read<StreakProvider>(), child: const GoalSelectionScreen()),
+                          transitionsBuilder: (_, animation, __, child) => SlideTransition(
+                            position: Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut)),
+                            child: child,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+
+                  const Divider(height: 1, color: Color(0xFFF0EDE8)),
+
+                  // ── Favorites ───────────────────────────────────────────
+                  _SettingTile(
+                    icon: Icons.favorite_rounded,
+                    iconColor: Colors.red,
+                    iconBg: const Color(0xFFFFEEEE),
+                    title: 'Favorites',
+                    subtitle: 'Your saved books',
+                    onTap: () {
+                      Navigator.of(context, rootNavigator: true).pop();
+                      Navigator.of(context, rootNavigator: true).push(
+                        MaterialPageRoute(
+                          builder: (_) => ChangeNotifierProvider.value(value: context.read<BookProvider>(), child: const FavoriteBooksScreen()),
                         ),
                       );
                     },
@@ -158,15 +156,7 @@ class _SettingTile extends StatelessWidget {
   final Color? titleColor;
   final VoidCallback onTap;
 
-  const _SettingTile({
-    required this.icon,
-    required this.iconColor,
-    required this.iconBg,
-    required this.title,
-    this.subtitle,
-    this.titleColor,
-    required this.onTap,
-  });
+  const _SettingTile({required this.icon, required this.iconColor, required this.iconBg, required this.title, this.subtitle, this.titleColor, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -183,10 +173,7 @@ class _SettingTile extends StatelessWidget {
               Container(
                 width: 42,
                 height: 42,
-                decoration: BoxDecoration(
-                  color: iconBg,
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(12)),
                 child: Icon(icon, color: iconColor, size: 20),
               ),
               const SizedBox(width: 14),
@@ -198,22 +185,13 @@ class _SettingTile extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'Quicksand',
-                        color: titleColor ?? AppColors.textPrimary,
-                      ),
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, fontFamily: 'Quicksand', color: titleColor ?? AppColors.textPrimary),
                     ),
                     if (subtitle != null) ...[
                       const SizedBox(height: 2),
                       Text(
                         subtitle!,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontFamily: 'Quicksand',
-                          color: AppColors.grey,
-                        ),
+                        style: TextStyle(fontSize: 12, fontFamily: 'Quicksand', color: AppColors.grey),
                       ),
                     ],
                   ],
@@ -221,11 +199,7 @@ class _SettingTile extends StatelessWidget {
               ),
 
               // Chevron
-              Icon(
-                Icons.chevron_right_rounded,
-                color: AppColors.grey.withOpacity(0.6),
-                size: 20,
-              ),
+              Icon(Icons.chevron_right_rounded, color: AppColors.grey.withOpacity(0.6), size: 20),
             ],
           ),
         ),

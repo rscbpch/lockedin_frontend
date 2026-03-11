@@ -6,7 +6,7 @@ import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import 'package:lockedin_frontend/ui/widgets/display/lockedin_appbar.dart';
 import 'package:lockedin_frontend/ui/screens/book_summary/widgets/book_search_bar.dart';
 import 'package:lockedin_frontend/ui/screens/book_summary/widgets/category_chips.dart';
-import 'package:lockedin_frontend/ui/screens/book_summary/widgets/book_card.dart';
+import 'package:lockedin_frontend/ui/widgets/display/book_card.dart';
 import 'package:lockedin_frontend/ui/screens/book_summary/book_summary_preview_screen.dart';
 import 'package:provider/provider.dart';
 
