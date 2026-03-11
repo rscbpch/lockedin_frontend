@@ -21,6 +21,9 @@ class BookProvider extends ChangeNotifier {
   String? get error => _error;
   bool get hasFetchedBooks => _hasFetchedBooks;
 
+  /// Books that the user has favorited.
+  List<Book> get favoriteBooks => _books.where((b) => _favoriteBookIds.contains(b.id)).toList();
+
   /// Load books from API. Uses cache if already fetched and [forceRefresh] is false.
   Future<void> loadBooks({String? search, String? category, bool forceRefresh = false}) async {
     // Use cached data if available and no filters/search applied and not forcing refresh

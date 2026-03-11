@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lockedin_frontend/ui/widgets/actions/square_button.dart';
 import 'package:provider/provider.dart';
 import '../../../provider/study_room_provider.dart';
 import '../../../models/study_room/study_room.dart';
@@ -8,6 +9,7 @@ import 'meeting_screen.dart';
 import '../../theme/app_theme.dart';
 import '../../../provider/auth_provider.dart';
 import '../../widgets/display/lockedin_appbar.dart';
+import '../../widgets/inputs/search_bar_widget.dart';
 
 class LobbyScreen extends StatefulWidget {
   const LobbyScreen({super.key});
@@ -99,27 +101,35 @@ class _LobbyScreenState extends State<LobbyScreen> {
         children: [
           // Search bar
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.backgroundBox,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.withOpacity(0.15)),
-              ),
-              child: TextField(
-                controller: _searchController,
-                style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
-                decoration: InputDecoration(
-                  hintText: 'Search rooms',
-                  hintStyle: TextStyle(color: AppColors.grey, fontSize: 14),
-                  prefixIcon:
-                      Icon(Icons.search, color: AppColors.grey, size: 20),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: SearchBarWidget(
+              controller: _searchController,
+              hintText: 'Search rooms',
             ),
           ),
+          // Old search bar code:
+          // Padding(
+          //   padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          //   child: Container(
+          //     decoration: BoxDecoration(
+          //       color: AppColors.backgroundBox,
+          //       borderRadius: BorderRadius.circular(12),
+          //       border: Border.all(color: Colors.grey.withOpacity(0.15)),
+          //     ),
+          //     child: TextField(
+          //       controller: _searchController,
+          //       style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
+          //       decoration: InputDecoration(
+          //         hintText: 'Search rooms',
+          //         hintStyle: TextStyle(color: AppColors.grey, fontSize: 14),
+          //         prefixIcon:
+          //             Icon(Icons.search, color: AppColors.grey, size: 20),
+          //         border: InputBorder.none,
+          //         contentPadding: const EdgeInsets.symmetric(vertical: 12),
+          //       ),
+          //     ),
+          //   ),
+          // ),
 
           // Room list
           Expanded(
@@ -130,12 +140,12 @@ class _LobbyScreenState extends State<LobbyScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showCreateSheet,
-        backgroundColor: const Color(0xFF1A1A1A),
-        foregroundColor: Colors.white,
-        elevation: 4,
-        child: const Icon(Icons.add, size: 26),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 16, right: 8),
+        child: SquareButton(
+          icon: Icons.add,
+          onPressed: () => _showCreateSheet(),
+        ),
       ),
     );
   }

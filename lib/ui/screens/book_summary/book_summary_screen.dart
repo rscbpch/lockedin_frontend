@@ -4,9 +4,9 @@ import 'package:lockedin_frontend/provider/book_provider.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import 'package:lockedin_frontend/ui/widgets/display/lockedin_appbar.dart';
-import 'package:lockedin_frontend/ui/screens/book_summary/widgets/book_search_bar.dart';
+import 'package:lockedin_frontend/ui/widgets/inputs/search_bar_widget.dart';
 import 'package:lockedin_frontend/ui/screens/book_summary/widgets/category_chips.dart';
-import 'package:lockedin_frontend/ui/screens/book_summary/widgets/book_card.dart';
+import 'package:lockedin_frontend/ui/widgets/display/book_card.dart';
 import 'package:lockedin_frontend/ui/screens/book_summary/book_summary_preview_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -83,7 +83,7 @@ class _BookSummaryScreenState extends State<BookSummaryScreen> {
           child: Column(
             children: [
               const SizedBox(height: 4),
-              BookSearchBar(controller: _searchController, onSubmitted: _onSearch, onClear: _onClearSearch),
+              SearchBarWidget(controller: _searchController, onSubmitted: _onSearch, onClear: _onClearSearch, hintText: 'Search books'),
               const SizedBox(height: 12),
               CategoryChips(categories: provider.categories, selectedCategory: _selectedCategory, onSelected: _onCategorySelected),
               const SizedBox(height: 12),

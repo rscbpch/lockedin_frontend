@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../../models/study_room/study_room.dart';
-import '../lobby_screen.dart';
 import '../../../theme/app_theme.dart';
 
 class RoomCard extends StatelessWidget {
