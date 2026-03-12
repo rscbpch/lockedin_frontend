@@ -4,6 +4,7 @@ import 'package:lockedin_frontend/services/flashcard_service.dart';
 import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/actions/square_button.dart';
+import 'package:lockedin_frontend/utils/activity_tracker.dart';
 
 class FlashcardScreen extends StatefulWidget {
   const FlashcardScreen({super.key});
@@ -12,7 +13,7 @@ class FlashcardScreen extends StatefulWidget {
   State<FlashcardScreen> createState() => _FlashcardState();
 }
 
-class _FlashcardState extends State<FlashcardScreen> {
+class _FlashcardState extends State<FlashcardScreen> with ActivityTracker {
   List<FlashcardSet> _sets = [];
   bool _loading = false;
   String? _error;
@@ -49,27 +50,19 @@ class _FlashcardState extends State<FlashcardScreen> {
       appBar: AppBar(
         title: Text(
           'Flashcard',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontFamily: 'Nunito',
-            fontSize: Responsive.text(context, size: 24),
-            fontWeight: FontWeight.w500
-          )
+          style: TextStyle(color: AppColors.textPrimary, fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 24), fontWeight: FontWeight.w500),
         ),
         centerTitle: true,
         leading: IconButton(
           onPressed: () => context.go('/productivity-hub'),
-          icon: Icon(Icons.arrow_back_ios, size: width * 0.06, color: AppColors.textPrimary)
+          icon: Icon(Icons.arrow_back_ios, size: width * 0.06, color: AppColors.textPrimary),
         ),
         backgroundColor: AppColors.background,
         elevation: 0,
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 16, right: 8),
-        child: SquareButton(
-          icon: Icons.add,
-          onPressed: () => context.go('/flashcard/create'),
-        ),
+        child: SquareButton(icon: Icons.add, onPressed: () => context.go('/flashcard/create')),
       ),
       body: SafeArea(
         bottom: false,
@@ -80,9 +73,17 @@ class _FlashcardState extends State<FlashcardScreen> {
               if (_loading)
                 Expanded(child: Center(child: CircularProgressIndicator()))
               else if (_error != null)
-                Expanded(child: Center(child: Text(_error ?? 'An error occurred', style: TextStyle(color: AppColors.textPrimary))))
+                Expanded(
+                  child: Center(
+                    child: Text(_error ?? 'An error occurred', style: TextStyle(color: AppColors.textPrimary)),
+                  ),
+                )
               else if (_sets.isEmpty)
-                Expanded(child: Center(child: Text('No flashcard sets found', style: TextStyle(color: AppColors.textPrimary))))
+                Expanded(
+                  child: Center(
+                    child: Text('No flashcard sets found', style: TextStyle(color: AppColors.textPrimary)),
+                  ),
+                )
               else
                 Expanded(
                   child: ListView.separated(
@@ -96,7 +97,7 @@ class _FlashcardState extends State<FlashcardScreen> {
                 ),
             ],
           ),
-        )
+        ),
       ),
     );
   }
@@ -107,12 +108,7 @@ class FlashcardTiles extends StatelessWidget {
   final String flashcardTitle;
   final int cardsNumber;
 
-  const FlashcardTiles({
-    super.key,
-    required this.flashcardId,
-    required this.flashcardTitle,
-    required this.cardsNumber,
-  });
+  const FlashcardTiles({super.key, required this.flashcardId, required this.flashcardTitle, required this.cardsNumber});
 
   @override
   Widget build(BuildContext context) {
@@ -123,33 +119,18 @@ class FlashcardTiles extends StatelessWidget {
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.backgroundBox,
-          borderRadius: BorderRadius.circular(
-            Responsive.radius(context, size: 12),
-          ),
-        ),
+        decoration: BoxDecoration(color: AppColors.backgroundBox, borderRadius: BorderRadius.circular(Responsive.radius(context, size: 12))),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               flashcardTitle,
-              style: TextStyle(
-                fontSize: Responsive.text(context, size: 18),
-                fontFamily: 'Nunito',
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
-              ),
+              style: TextStyle(fontSize: Responsive.text(context, size: 18), fontFamily: 'Nunito', fontWeight: FontWeight.w500, color: AppColors.textPrimary),
             ),
             const SizedBox(height: 4),
             Text(
               '$cardsNumber $cardText',
-              style: TextStyle(
-                fontSize: Responsive.text(context, size: 12),
-                fontFamily: 'Quicksand',
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
-              ),
+              style: TextStyle(fontSize: Responsive.text(context, size: 12), fontFamily: 'Quicksand', fontWeight: FontWeight.w500, color: AppColors.textPrimary),
             ),
           ],
         ),

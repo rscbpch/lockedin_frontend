@@ -11,6 +11,7 @@ import 'package:lockedin_frontend/ui/screens/book_summary/widgets/preview_review
 import 'package:lockedin_frontend/ui/screens/book_summary/widgets/preview_summary_section.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/actions/long_button.dart';
+import 'package:lockedin_frontend/utils/activity_tracker.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -24,7 +25,7 @@ class BookSummaryPreviewScreen extends StatefulWidget {
   State<BookSummaryPreviewScreen> createState() => _BookSummaryPreviewScreenState();
 }
 
-class _BookSummaryPreviewScreenState extends State<BookSummaryPreviewScreen> {
+class _BookSummaryPreviewScreenState extends State<BookSummaryPreviewScreen> with ActivityTracker {
   List<BookReview> _reviews = [];
   bool _isLoadingReviews = true;
   bool _summaryExpanded = false;
@@ -176,33 +177,27 @@ class _BookSummaryPreviewScreenState extends State<BookSummaryPreviewScreen> {
       backgroundColor: AppColors.background,
 
       leading: IconButton(
-        icon: const Icon(Icons.chevron_left,
-            size: 28, color: AppColors.textPrimary),
+        icon: const Icon(Icons.chevron_left, size: 28, color: AppColors.textPrimary),
         onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
       ),
 
       actions: [
         IconButton(
-          icon: const Icon(Icons.ios_share,
-              size: 22, color: AppColors.textPrimary),
+          icon: const Icon(Icons.ios_share, size: 22, color: AppColors.textPrimary),
           onPressed: _openBook,
         ),
       ],
 
       flexibleSpace: LayoutBuilder(
         builder: (context, constraints) {
-          final settings =
-              context.dependOnInheritedWidgetOfExactType<FlexibleSpaceBarSettings>();
+          final settings = context.dependOnInheritedWidgetOfExactType<FlexibleSpaceBarSettings>();
 
-          final collapsed =
-              settings != null && settings.currentExtent <= settings.minExtent + 5;
+          final collapsed = settings != null && settings.currentExtent <= settings.minExtent + 5;
 
           return Stack(
             fit: StackFit.expand,
             children: [
-              FlexibleSpaceBar(
-                background: PreviewHeader(book: widget.book),
-              ),
+              FlexibleSpaceBar(background: PreviewHeader(book: widget.book)),
 
               if (collapsed)
                 Positioned(
@@ -216,12 +211,7 @@ class _BookSummaryPreviewScreenState extends State<BookSummaryPreviewScreen> {
                       widget.book.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontFamily: 'Nunito',
-                        fontWeight: FontWeight.w600,
-                        fontSize: 18,
-                        color: AppColors.textPrimary,
-                      ),
+                      style: const TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w600, fontSize: 18, color: AppColors.textPrimary),
                     ),
                   ),
                 ),

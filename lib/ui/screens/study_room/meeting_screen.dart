@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:jitsi_meet_flutter_sdk/jitsi_meet_flutter_sdk.dart';
 import 'package:provider/provider.dart';
 import 'package:lockedin_frontend/provider/auth_provider.dart';
+import 'package:lockedin_frontend/utils/activity_tracker.dart';
 import '../../../models/study_room/study_room.dart';
 import '../../../provider/study_room_provider.dart';
 import '../../theme/app_theme.dart';
@@ -10,17 +11,13 @@ class MeetingScreen extends StatefulWidget {
   final StudyRoom room;
   final String displayName;
 
-  const MeetingScreen({
-    super.key,
-    required this.room,
-    this.displayName = 'Student',
-  });
+  const MeetingScreen({super.key, required this.room, this.displayName = 'Student'});
 
   @override
   State<MeetingScreen> createState() => _MeetingScreenState();
 }
 
-class _MeetingScreenState extends State<MeetingScreen> {
+class _MeetingScreenState extends State<MeetingScreen> with ActivityTracker {
   final _jitsi = JitsiMeet();
   bool _isConnected = false;
   bool _isJoining = true;
@@ -42,13 +39,8 @@ class _MeetingScreenState extends State<MeetingScreen> {
       // Fetch JWT from your backend — sets user as moderator, bypasses lobby
       final auth = context.read<AuthProvider>();
       final provider = context.read<StudyRoomProvider>();
-      final avatarUrl = auth.currentUser?.avatar ?? ''; 
-      final token = await provider.getJitsiToken(
-        roomId: widget.room.roomId,
-        displayName: widget.displayName,
-        email: '',
-        avatar: avatarUrl,  
-      );
+      final avatarUrl = auth.currentUser?.avatar ?? '';
+      final token = await provider.getJitsiToken(roomId: widget.room.roomId, displayName: widget.displayName, email: '', avatar: avatarUrl);
       // JaaS room format: vpaas-magic-cookie-xxxxx/roomId
       final roomName = '${provider.jaasAppId}/${widget.room.roomId}';
 
@@ -71,7 +63,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
           'whiteboard.enabled': false,
           'disableDesktopSharing': true,
           'screensharingIcons': false,
-          'subject': widget.room.name, 
+          'subject': widget.room.name,
           'localSubject': widget.room.name,
         },
         featureFlags: {
@@ -136,11 +128,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            _MeetingBar(
-              room: widget.room,
-              isConnected: _isConnected,
-              onLeave: _hangup,
-            ),
+            _MeetingBar(room: widget.room, isConnected: _isConnected, onLeave: _hangup),
             Expanded(
               child: _error != null
                   ? _ErrorView(message: _error!, onRetry: _join)
@@ -160,11 +148,7 @@ class _MeetingBar extends StatelessWidget {
   final bool isConnected;
   final VoidCallback onLeave;
 
-  const _MeetingBar({
-    required this.room,
-    required this.isConnected,
-    required this.onLeave,
-  });
+  const _MeetingBar({required this.room, required this.isConnected, required this.onLeave});
 
   @override
   Widget build(BuildContext context) {
@@ -172,9 +156,7 @@ class _MeetingBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.backgroundBox,
-        border: Border(
-          bottom: BorderSide(color: AppColors.primary.withOpacity(0.2)),
-        ),
+        border: Border(bottom: BorderSide(color: AppColors.primary.withOpacity(0.2))),
       ),
       child: Row(
         children: [
@@ -183,11 +165,7 @@ class _MeetingBar extends StatelessWidget {
           Expanded(
             child: Text(
               room.name,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w700,
-                fontSize: 15,
-              ),
+              style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -206,20 +184,12 @@ class _MeetingBar extends StatelessWidget {
                   Container(
                     width: 6,
                     height: 6,
-                    decoration: BoxDecoration(
-                      color: AppColors.accent,
-                      shape: BoxShape.circle,
-                    ),
+                    decoration: BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
                   ),
                   const SizedBox(width: 4),
                   Text(
                     'LIVE',
-                    style: TextStyle(
-                      color: AppColors.accent,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
-                    ),
+                    style: TextStyle(color: AppColors.accent, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.8),
                   ),
                 ],
               ),
@@ -235,13 +205,8 @@ class _MeetingBar extends StatelessWidget {
               backgroundColor: AppColors.primary.withOpacity(0.1),
               side: BorderSide(color: AppColors.primary.withOpacity(0.3)),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              textStyle: const TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
             ),
           ),
         ],
@@ -261,10 +226,7 @@ class _ConnectingView extends StatelessWidget {
         children: [
           CircularProgressIndicator(color: AppColors.accent, strokeWidth: 2),
           const SizedBox(height: 16),
-          Text(
-            'Connecting to room…',
-            style: TextStyle(color: AppColors.grey, fontSize: 14),
-          ),
+          Text('Connecting to room…', style: TextStyle(color: AppColors.grey, fontSize: 14)),
         ],
       ),
     );
@@ -284,17 +246,10 @@ class _JitsiPlaceholder extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             'Meeting is active',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
+            style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
-          Text(
-            'Jitsi is running in its native view.',
-            style: TextStyle(color: AppColors.grey, fontSize: 13),
-          ),
+          Text('Jitsi is running in its native view.', style: TextStyle(color: AppColors.grey, fontSize: 13)),
         ],
       ),
     );

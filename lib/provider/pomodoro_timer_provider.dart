@@ -5,16 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../services/pomodoro_service.dart';
+import 'streak_provider.dart';
 
 enum TimerMode { pomodoro, shortBreak, longBreak }
 
 class PomodoroCompletionPrompt {
-  const PomodoroCompletionPrompt({
-    required this.id,
-    required this.title,
-    required this.message,
-    required this.suggestedMode,
-  });
+  const PomodoroCompletionPrompt({required this.id, required this.title, required this.message, required this.suggestedMode});
 
   final int id;
   final String title;
@@ -22,12 +18,14 @@ class PomodoroCompletionPrompt {
   final TimerMode suggestedMode;
 }
 
-class PomodoroTimerProvider extends ChangeNotifier {
-  static const Map<TimerMode, int> _defaultMinutes = {
-    TimerMode.pomodoro: 25,
-    TimerMode.shortBreak: 5,
-    TimerMode.longBreak: 10,
-  };
+class PomodoroTimerProvider extends ChangeNotifier with WidgetsBindingObserver {
+  StreakProvider? _streakProvider;
+
+  void setStreakProvider(StreakProvider sp) {
+    _streakProvider = sp;
+  }
+
+  static const Map<TimerMode, int> _defaultMinutes = {TimerMode.pomodoro: 25, TimerMode.shortBreak: 5, TimerMode.longBreak: 10};
 
   TimerMode _mode = TimerMode.pomodoro;
   int _totalSeconds = 25 * 60;
@@ -37,6 +35,9 @@ class PomodoroTimerProvider extends ChangeNotifier {
 
   Timer? _ticker;
   DateTime? _targetEndTime;
+
+  bool _pausedByLifecycle = false;
+  int _lifecyclePausedRemaining = 0;
 
   int _nextPromptId = 0;
   int _promptEventId = 0;
@@ -65,24 +66,46 @@ class PomodoroTimerProvider extends ChangeNotifier {
       _syncTick();
     });
 
+    WidgetsBinding.instance.addObserver(this);
+
+    // Start streak tracking when pomodoro focus starts
+    if (_mode == TimerMode.pomodoro) {
+      _streakProvider?.startSession();
+    }
+
     notifyListeners();
   }
 
   void stopTimer() {
+    final wasRunningPomodoro = _isRunning && _mode == TimerMode.pomodoro;
     _ticker?.cancel();
     _ticker = null;
     _targetEndTime = null;
     _isRunning = false;
+    WidgetsBinding.instance.removeObserver(this);
+
+    // End streak tracking when pomodoro focus is manually stopped
+    if (wasRunningPomodoro) {
+      _streakProvider?.endSession();
+    }
+
     notifyListeners();
   }
 
   void switchMode(TimerMode mode) {
     if (_mode == mode) return;
 
+    final wasRunningPomodoro = _isRunning && _mode == TimerMode.pomodoro;
     _ticker?.cancel();
     _ticker = null;
     _targetEndTime = null;
     _isRunning = false;
+    WidgetsBinding.instance.removeObserver(this);
+
+    if (wasRunningPomodoro) {
+      _streakProvider?.endSession();
+    }
+
     _mode = mode;
     _initializeModeDuration();
     notifyListeners();
@@ -143,68 +166,75 @@ class PomodoroTimerProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
+      // App exited (home button, switched app, etc.) — pause timer
+      if (_isRunning) {
+        _pausedByLifecycle = true;
+        _lifecyclePausedRemaining = _remainingSeconds;
+        _ticker?.cancel();
+        _ticker = null;
+        _targetEndTime = null;
+        _isRunning = false;
+        notifyListeners();
+      }
+    } else if (state == AppLifecycleState.resumed) {
+      // App resumed — restore timer if it was paused by lifecycle
+      if (_pausedByLifecycle) {
+        _pausedByLifecycle = false;
+        if (_lifecyclePausedRemaining > 0) {
+          _remainingSeconds = _lifecyclePausedRemaining;
+          _isRunning = true;
+          _targetEndTime = DateTime.now().add(Duration(seconds: _remainingSeconds));
+          _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+            _syncTick();
+          });
+          notifyListeners();
+        }
+      }
+    }
+  }
+
   Future<void> _onTimerComplete() async {
     _ticker?.cancel();
     _ticker = null;
     _targetEndTime = null;
     _isRunning = false;
     _remainingSeconds = 0;
+    WidgetsBinding.instance.removeObserver(this);
 
     if (_mode == TimerMode.pomodoro) {
-      unawaited(
-        PomodoroService.createSession(durationSeconds: _totalSeconds, type: 'focus'),
-      );
+      // End streak tracking when pomodoro completes
+      _streakProvider?.endSession();
+      unawaited(PomodoroService.createSession(durationSeconds: _totalSeconds, type: 'focus'));
       _pomodoroCount++;
       if (_pomodoroCount % 4 == 0) {
-        _queuePrompt(
-          title: 'Pomodoro Complete!',
-          message: 'Great work! You\'ve completed 4 pomodoros. Time for a long break?',
-          suggestedMode: TimerMode.longBreak,
-        );
+        _queuePrompt(title: 'Pomodoro Complete!', message: 'Great work! You\'ve completed 4 pomodoros. Time for a long break?', suggestedMode: TimerMode.longBreak);
       } else {
-        _queuePrompt(
-          title: 'Pomodoro Complete!',
-          message: 'Great work! Time for a short break?',
-          suggestedMode: TimerMode.shortBreak,
-        );
+        _queuePrompt(title: 'Pomodoro Complete!', message: 'Great work! Time for a short break?', suggestedMode: TimerMode.shortBreak);
       }
     } else if (_mode == TimerMode.shortBreak) {
-      _queuePrompt(
-        title: 'Short Break Complete!',
-        message: 'Break\'s over! Ready to start another pomodoro?',
-        suggestedMode: TimerMode.pomodoro,
-      );
+      _queuePrompt(title: 'Short Break Complete!', message: 'Break\'s over! Ready to start another pomodoro?', suggestedMode: TimerMode.pomodoro);
     } else {
       _pomodoroCount = 0;
-      _queuePrompt(
-        title: 'Long Break Complete!',
-        message: 'You\'re refreshed! Ready to start a new pomodoro cycle?',
-        suggestedMode: TimerMode.pomodoro,
-      );
+      _queuePrompt(title: 'Long Break Complete!', message: 'You\'re refreshed! Ready to start a new pomodoro cycle?', suggestedMode: TimerMode.pomodoro);
     }
 
     HapticFeedback.heavyImpact();
     notifyListeners();
   }
 
-  void _queuePrompt({
-    required String title,
-    required String message,
-    required TimerMode suggestedMode,
-  }) {
+  void _queuePrompt({required String title, required String message, required TimerMode suggestedMode}) {
     _nextPromptId++;
-    _pendingPrompt = PomodoroCompletionPrompt(
-      id: _nextPromptId,
-      title: title,
-      message: message,
-      suggestedMode: suggestedMode,
-    );
+    _pendingPrompt = PomodoroCompletionPrompt(id: _nextPromptId, title: title, message: message, suggestedMode: suggestedMode);
     _promptEventId = _nextPromptId;
   }
 
   @override
   void dispose() {
     _ticker?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 }

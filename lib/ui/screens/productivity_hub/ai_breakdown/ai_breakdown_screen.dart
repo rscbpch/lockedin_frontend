@@ -10,6 +10,7 @@ import 'package:lockedin_frontend/ui/screens/productivity_hub/ai_breakdown/widge
 import '../../../../models/productivity_tools/task_breakdown/breakdown_step.dart';
 import './../../../../models/productivity_tools/task_breakdown/chat_message.dart';
 import '../../../../services/ai_breakdown_service.dart';
+import '../../../../utils/activity_tracker.dart';
 import 'history_screen.dart';
 import '../../../theme/app_theme.dart';
 
@@ -22,7 +23,7 @@ class AiBreakdownScreen extends StatefulWidget {
   State<AiBreakdownScreen> createState() => _AiBreakdownScreenState();
 }
 
-class _AiBreakdownScreenState extends State<AiBreakdownScreen> {
+class _AiBreakdownScreenState extends State<AiBreakdownScreen> with ActivityTracker {
   final TextEditingController _inputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
@@ -73,18 +74,10 @@ class _AiBreakdownScreenState extends State<AiBreakdownScreen> {
           final decoded = jsonDecode(rawContent) as Map<String, dynamic>;
           final status = decoded['status'] as String?;
           final rawSteps = decoded['steps'] as List<dynamic>? ?? [];
-          final steps = rawSteps
-              .map((s) => BreakdownStep.fromJson(s as Map<String, dynamic>))
-              .toList();
+          final steps = rawSteps.map((s) => BreakdownStep.fromJson(s as Map<String, dynamic>)).toList();
           final clarification = decoded['clarification_question'] as String?;
 
-          return ChatMessage(
-            role: role,
-            content: rawContent,
-            status: status,
-            steps: steps,
-            clarificationQuestion: clarification,
-          );
+          return ChatMessage(role: role, content: rawContent, status: status, steps: steps, clarificationQuestion: clarification);
         } catch (_) {
           // If content is not valid JSON, render as plain text fallback
           return ChatMessage(role: role, content: rawContent);
@@ -120,31 +113,18 @@ class _AiBreakdownScreenState extends State<AiBreakdownScreen> {
     _scrollToBottom();
 
     try {
-      final result = await _service.sendMessage(
-        message: text,
-        chatId: _currentChatId,
-      );
+      final result = await _service.sendMessage(message: text, chatId: _currentChatId);
 
       final chatId = result['chatId'] as String?;
       final response = result['response'] as Map<String, dynamic>? ?? {};
       final status = response['status'] as String? ?? '';
       final rawSteps = response['steps'] as List<dynamic>? ?? [];
-      final steps = rawSteps
-          .map((s) => BreakdownStep.fromJson(s as Map<String, dynamic>))
-          .toList();
+      final steps = rawSteps.map((s) => BreakdownStep.fromJson(s as Map<String, dynamic>)).toList();
       final clarification = response['clarification_question'] as String?;
 
       setState(() {
         _currentChatId = chatId;
-        _messages.add(
-          ChatMessage(
-            role: 'assistant',
-            content: '',
-            status: status,
-            steps: steps,
-            clarificationQuestion: clarification,
-          ),
-        );
+        _messages.add(ChatMessage(role: 'assistant', content: '', status: status, steps: steps, clarificationQuestion: clarification));
         _isLoading = false;
       });
     } catch (e) {
@@ -160,11 +140,7 @@ class _AiBreakdownScreenState extends State<AiBreakdownScreen> {
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
+        _scrollController.animateTo(_scrollController.position.maxScrollExtent, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
       }
     });
   }
@@ -203,16 +179,8 @@ class _AiBreakdownScreenState extends State<AiBreakdownScreen> {
       body: Column(
         children: [
           Expanded(child: _buildMessageList()),
-          if (_errorMessage != null)
-            ErrorBanner(
-              message: _errorMessage!,
-              onDismiss: () => setState(() => _errorMessage = null),
-            ),
-          ChatInputBar(
-            controller: _inputController,
-            onSend: _sendMessage,
-            isLoading: _isLoading,
-          ),
+          if (_errorMessage != null) ErrorBanner(message: _errorMessage!, onDismiss: () => setState(() => _errorMessage = null)),
+          ChatInputBar(controller: _inputController, onSend: _sendMessage, isLoading: _isLoading),
         ],
       ),
     );
@@ -229,12 +197,7 @@ class _AiBreakdownScreenState extends State<AiBreakdownScreen> {
       ),
       title: const Text(
         'Task Breakdown',
-        style: TextStyle(
-          color: Color(0xFF1E293B),
-          fontFamily: 'Nunito',
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-        ),
+        style: TextStyle(color: Color(0xFF1E293B), fontFamily: 'Nunito', fontSize: 20, fontWeight: FontWeight.w600),
       ),
       actions: [
         IconButton(
@@ -259,9 +222,7 @@ class _AiBreakdownScreenState extends State<AiBreakdownScreen> {
           return const TypingIndicator();
         }
         final msg = _messages[index];
-        return msg.role == 'user'
-            ? UserMessageBubble(content: msg.content)
-            : AssistantMessageBubble(message: msg);
+        return msg.role == 'user' ? UserMessageBubble(content: msg.content) : AssistantMessageBubble(message: msg);
       },
     );
   }

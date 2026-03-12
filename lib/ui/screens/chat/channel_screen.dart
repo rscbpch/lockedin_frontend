@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
+import 'package:lockedin_frontend/utils/activity_tracker.dart';
 
-class ChannelScreen extends StatelessWidget {
+class ChannelScreen extends StatefulWidget {
   const ChannelScreen({super.key});
 
+  @override
+  State<ChannelScreen> createState() => _ChannelScreenState();
+}
+
+class _ChannelScreenState extends State<ChannelScreen> with ActivityTracker {
   void _handleBackNavigation(BuildContext context) {
     // Use Navigator.pop since the channel was pushed with Navigator.push
     if (Navigator.of(context).canPop()) {
@@ -31,12 +37,7 @@ class ChannelScreen extends StatelessWidget {
       isOnline = false;
     } else {
       final members = channel.state?.members ?? [];
-      final otherMember = members.isEmpty
-          ? null
-          : members.firstWhere(
-              (m) => m.userId != currentUserId,
-              orElse: () => members.first,
-            );
+      final otherMember = members.isEmpty ? null : members.firstWhere((m) => m.userId != currentUserId, orElse: () => members.first);
       name = otherMember?.user?.name ?? channel.name ?? 'Chat';
       avatarUrl = otherMember?.user?.image;
       isOnline = otherMember?.user?.online ?? false;
@@ -58,14 +59,8 @@ class ChannelScreen extends StatelessWidget {
                 CircleAvatar(
                   radius: 18,
                   backgroundColor: AppColors.grey,
-                  backgroundImage:
-                      avatarUrl != null ? NetworkImage(avatarUrl) : null,
-                  child: avatarUrl == null
-                      ? Text(
-                          name.isNotEmpty ? name[0].toUpperCase() : '?',
-                          style: const TextStyle(color: Colors.white),
-                        )
-                      : null,
+                  backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                  child: avatarUrl == null ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?', style: const TextStyle(color: Colors.white)) : null,
                 ),
                 if (isOnline)
                   Positioned(
@@ -86,11 +81,7 @@ class ChannelScreen extends StatelessWidget {
             const SizedBox(width: 10),
             Text(
               name,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
+              style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 16),
             ),
           ],
         ),
