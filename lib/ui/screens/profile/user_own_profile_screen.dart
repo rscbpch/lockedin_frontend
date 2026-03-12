@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lockedin_frontend/provider/auth_provider.dart';
+import 'package:lockedin_frontend/provider/streak_provider.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/display/profile_settings_sheet.dart';
 import 'package:lockedin_frontend/ui/widgets/inputs/update_profile.dart';
@@ -19,6 +20,7 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AuthProvider>().fetchMyProfile();
+      context.read<StreakProvider>().fetchStreak(forceRefresh: true);
     });
   }
 
@@ -204,8 +206,8 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
                       ),
                     const SizedBox(height: 10),
 
-                    // Streak badge (placeholder — streak data not yet in User model)
-                    _buildStreakBadge(user.streak?.currentStreak),
+                    // Streak badge — reads from StreakProvider for live updates
+                    _buildStreakBadge(context.watch<StreakProvider>().currentStreak),
                     const SizedBox(height: 10),
 
                     // Stats row
@@ -344,7 +346,7 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
         borderRadius: BorderRadius.circular(30),
       ),
       child: Text(
-        '🔥 ${streakDays ?? 0} Days Streak',
+        '🔥 ${streakDays ?? 0} ${(streakDays ?? 0) == 1 ? 'Day' : 'Days'} Streak',
         style: const TextStyle(
           fontSize: 14,
           fontFamily: 'Quicksand',

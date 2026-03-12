@@ -289,40 +289,17 @@ class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
           ],
           const SizedBox(height: 6),
 
-          // Today's progress bar
-          // if (goalSeconds > 0) ...[
-          //   Padding(
-          //     padding: const EdgeInsets.symmetric(horizontal: 24),
-          //     child: Column(
-          //       children: [
-          //         Row(
-          //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          //           children: [
-          //             Text(
-          //               'Today: ${_formatTime(totalToday)}',
-          //               style: TextStyle(fontSize: Responsive.text(context, size: 12), fontFamily: 'Quicksand', fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-          //             ),
-          //             Text(
-          //               'Goal: ${_formatTime(goalSeconds)}',
-          //               style: TextStyle(fontSize: Responsive.text(context, size: 12), fontFamily: 'Quicksand', fontWeight: FontWeight.w500, color: AppColors.grey),
-          //             ),
-          //           ],
-          //         ),
-          //         const SizedBox(height: 6),
-          //         ClipRRect(
-          //           borderRadius: BorderRadius.circular(6),
-          //           child: LinearProgressIndicator(
-          //             value: progress,
-          //             minHeight: 8,
-          //             backgroundColor: AppColors.grey.withOpacity(0.2),
-          //             valueColor: AlwaysStoppedAnimation<Color>(todayGoalMet ? Colors.green : AppColors.primary),
-          //           ),
-          //         ),
-          //       ],
-          //     ),
-          //   ),
-          //   const SizedBox(height: 12),
-          // ],
+          // Stats row
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Text(
+              'Longest streak: ${streak.longestStreak}',
+              style: TextStyle(
+                fontFamily: 'Nunito'
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
 
           // Weekly day checks
           Padding(
@@ -335,44 +312,8 @@ class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
             ),
           ),
           const SizedBox(height: 8),
-
-          // Stats row
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _StatChip(label: 'Longest', value: '${streak.longestStreak}'),
-                _StatChip(label: 'Total days', value: '${streak.totalGoalDays}'),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
         ],
       ),
-    );
-  }
-}
-
-class _StatChip extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _StatChip({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(fontSize: Responsive.text(context, size: 16), fontFamily: 'Nunito', fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-        ),
-        Text(
-          label,
-          style: TextStyle(fontSize: Responsive.text(context, size: 11), fontFamily: 'Quicksand', fontWeight: FontWeight.w500, color: AppColors.grey),
-        ),
-      ],
     );
   }
 }
