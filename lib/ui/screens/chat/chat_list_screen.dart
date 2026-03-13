@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:lockedin_frontend/ui/screens/User/search_user_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 import 'package:lockedin_frontend/provider/chat_provider.dart';
@@ -96,12 +97,15 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: _buildAppBar(context),
-      // [DEV] FAB for testing direct chat without follow feature
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.deepPurple,
-        tooltip: '[DEV] Open direct chat by user ID',
-        onPressed: () => _showDirectChatDialog(context, chatProvider),
-        child: const Icon(Icons.science_outlined, color: Colors.white),
+        backgroundColor: AppColors.accent,
+        tooltip: 'Find people',
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const SearchUserScreen()),
+          );
+        },
+        child: const Icon(Icons.person_search, color: Colors.black),
       ),
       body: Column(
         children: [
