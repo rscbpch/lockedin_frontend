@@ -24,6 +24,18 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
     });
   }
 
+  void _showFollowList({required bool isFollowers}) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => FollowListSheet(isFollowers: isFollowers),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
@@ -164,7 +176,7 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // Avatar
-                    _buildAvatar(user.avatar),
+                    ProfileAvatar(avatarUrl: user.avatar),
                     const SizedBox(height: 6),
 
                     // Display name
@@ -211,10 +223,11 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
                     const SizedBox(height: 10),
 
                     // Stats row
-                    _buildStatsRow(
-                      user.postNumber,
-                      user.follower,
-                      user.following,
+                    ProfileStatsRow(
+                      followers: user.follower,
+                      following: user.following,
+                      onFollowersTap: () => _showFollowList(isFollowers: true),
+                      onFollowingTap: () => _showFollowList(isFollowers: false),
                     ),
                     const SizedBox(height: 10),
 
