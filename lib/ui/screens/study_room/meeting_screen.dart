@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:lockedin_frontend/provider/auth_provider.dart';
 import '../../../models/study_room/study_room.dart';
 import '../../../provider/study_room_provider.dart';
-import 'lobby_screen.dart';
 import '../../theme/app_theme.dart';
 
 class MeetingScreen extends StatefulWidget {

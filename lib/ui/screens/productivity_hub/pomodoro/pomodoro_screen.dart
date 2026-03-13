@@ -788,12 +788,6 @@ Widget _statCard(
     return '$h:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
-  String _formatTime(int remainingSeconds) {
-    final m = remainingSeconds ~/ 60;
-    final s = remainingSeconds % 60;
-    return '${m.toString().padLeft(2, '0')} : ${s.toString().padLeft(2, '0')}';
-  }
-
   double _progress(int totalSeconds, int remainingSeconds) {
     if (totalSeconds == 0) return 0;
     return (totalSeconds - remainingSeconds) / totalSeconds;
