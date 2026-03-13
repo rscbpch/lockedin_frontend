@@ -19,6 +19,20 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
     {'minutes': 20, 'label': '20 minutes', 'desc': 'Staying committed'},
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    // Pre-select the current goal if one is already set
+    final streak = context.read<StreakProvider>();
+    if (streak.dailyGoalSeconds > 0) {
+      final currentMinutes = streak.dailyGoalSeconds ~/ 60;
+      final match = _goals.any((g) => g['minutes'] == currentMinutes);
+      if (match) {
+        _selectedMinutes = currentMinutes;
+      }
+    }
+  }
+
   Future<void> _onSetGoal() async {
     if (_selectedMinutes == null) return;
     final streak = context.read<StreakProvider>();
@@ -32,9 +46,7 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
           content: Text(streak.errorMessage ?? 'Failed to set goal'),
           backgroundColor: AppColors.secondary,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
     }
@@ -60,15 +72,8 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
                 Container(
                   width: 72,
                   height: 72,
-                  decoration: BoxDecoration(
-                    color: AppColors.accent,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Icon(
-                    Icons.local_fire_department_rounded,
-                    color: AppColors.primary,
-                    size: 40,
-                  ),
+                  decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(20)),
+                  child: const Icon(Icons.local_fire_department_rounded, color: AppColors.primary, size: 40),
                 ),
 
                 const SizedBox(height: 24),
@@ -76,12 +81,7 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
                 // Title
                 const Text(
                   'Set your daily goal',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                    fontFamily: 'Quicksand',
-                  ),
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary, fontFamily: 'Quicksand'),
                 ),
 
                 const SizedBox(height: 8),
@@ -90,23 +90,13 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
                 const Text(
                   'How long do you want to study each day?',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppColors.grey,
-                    fontFamily: 'Quicksand',
-                  ),
+                  style: TextStyle(fontSize: 14, color: AppColors.grey, fontFamily: 'Quicksand'),
                 ),
 
                 const SizedBox(height: 36),
 
                 // Goal cards
-                ..._goals.map(
-                  (g) => _buildGoalCard(
-                    g['minutes'] as int,
-                    g['label'] as String,
-                    g['desc'] as String,
-                  ),
-                ),
+                ..._goals.map((g) => _buildGoalCard(g['minutes'] as int, g['label'] as String, g['desc'] as String)),
 
                 const Spacer(),
 
@@ -114,37 +104,19 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: (_selectedMinutes == null || streak.isLoading)
-                        ? null
-                        : _onSetGoal,
+                    onPressed: (_selectedMinutes == null || streak.isLoading) ? null : _onSetGoal,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
-                      disabledBackgroundColor: AppColors.primary.withOpacity(
-                        0.35,
-                      ),
+                      disabledBackgroundColor: AppColors.primary.withOpacity(0.35),
                       padding: const EdgeInsets.symmetric(vertical: 18),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       elevation: 0,
                     ),
                     child: streak.isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
+                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                         : const Text(
                             'Set Goal',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'Quicksand',
-                            ),
+                            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: 'Quicksand'),
                           ),
                   ),
                 ),
@@ -169,17 +141,8 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
         decoration: BoxDecoration(
           color: isSelected ? AppColors.accent : Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : Colors.transparent,
-            width: 2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.grey.withOpacity(0.1),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          border: Border.all(color: isSelected ? AppColors.primary : Colors.transparent, width: 2),
+          boxShadow: [BoxShadow(color: AppColors.grey.withOpacity(0.1), blurRadius: 6, offset: const Offset(0, 2))],
         ),
         child: Row(
           children: [
@@ -187,23 +150,11 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
             Container(
               width: 52,
               height: 52,
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? AppColors.primary.withOpacity(0.12)
-                    : AppColors.backgroundBox,
-                borderRadius: BorderRadius.circular(12),
-              ),
+              decoration: BoxDecoration(color: isSelected ? AppColors.primary.withOpacity(0.12) : AppColors.backgroundBox, borderRadius: BorderRadius.circular(12)),
               child: Center(
                 child: Text(
                   '${minutes}m',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: isSelected
-                        ? AppColors.primary
-                        : AppColors.textPrimary,
-                    fontFamily: 'Quicksand',
-                  ),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: isSelected ? AppColors.primary : AppColors.textPrimary, fontFamily: 'Quicksand'),
                 ),
               ),
             ),
@@ -215,21 +166,12 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
                 children: [
                   Text(
                     label,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                      color: AppColors.textPrimary,
-                      fontFamily: 'Quicksand',
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary, fontFamily: 'Quicksand'),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     desc,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.grey,
-                      fontFamily: 'Quicksand',
-                    ),
+                    style: const TextStyle(fontSize: 12, color: AppColors.grey, fontFamily: 'Quicksand'),
                   ),
                 ],
               ),
@@ -238,11 +180,7 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
             AnimatedOpacity(
               opacity: isSelected ? 1.0 : 0.0,
               duration: const Duration(milliseconds: 180),
-              child: const Icon(
-                Icons.check_circle_rounded,
-                color: AppColors.primary,
-                size: 22,
-              ),
+              child: const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 22),
             ),
           ],
         ),

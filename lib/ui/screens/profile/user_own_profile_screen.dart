@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lockedin_frontend/provider/auth_provider.dart';
-import 'package:lockedin_frontend/ui/screens/profile/widgets/avatar.dart';
-import 'package:lockedin_frontend/ui/screens/profile/widgets/follow_list_sheet.dart';
-import 'package:lockedin_frontend/ui/screens/profile/widgets/stat_row.dart';
-import 'package:lockedin_frontend/ui/screens/profile/widgets/streak_badge.dart';
+import 'package:lockedin_frontend/provider/streak_provider.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/display/profile_settings_sheet.dart';
 import 'package:lockedin_frontend/ui/widgets/inputs/update_profile.dart';
@@ -23,6 +20,7 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AuthProvider>().fetchMyProfile();
+      context.read<StreakProvider>().fetchStreak(forceRefresh: true);
     });
   }
 
@@ -220,8 +218,8 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
                       ),
                     const SizedBox(height: 10),
 
-                    // Streak badge (placeholder — streak data not yet in User model)
-                    StreakBadge(streakDays: user.streak?.currentStreak),
+                    // Streak badge — reads from StreakProvider for live updates
+                    _buildStreakBadge(context.watch<StreakProvider>().currentStreak),
                     const SizedBox(height: 10),
 
                     // Stats row
@@ -309,6 +307,166 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAvatar(String avatarUrl) {
+    return GestureDetector(
+      onTap: avatarUrl.isNotEmpty
+          ? () => _viewFullScreenAvatar(avatarUrl)
+          : null,
+      child: CircleAvatar(
+        radius: 50,
+        backgroundColor: const Color(0xFFF5E6D8),
+        child: avatarUrl.isNotEmpty
+            ? ClipOval(
+                child: Image.network(
+                  avatarUrl,
+                  width: 100,
+                  height: 100,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => _avatarFallback(),
+                ),
+              )
+            : _avatarFallback(),
+      ),
+    );
+  }
+
+  void _viewFullScreenAvatar(String avatarUrl) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.black87,
+        pageBuilder: (_, __, ___) =>
+            _FullScreenAvatarView(avatarUrl: avatarUrl),
+        transitionsBuilder: (_, animation, __, child) =>
+            FadeTransition(opacity: animation, child: child),
+      ),
+    );
+  }
+
+  Widget _avatarFallback() {
+    return const Icon(Icons.person, size: 52, color: AppColors.primary);
+  }
+
+  Widget _buildStreakBadge(int? streakDays) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFBF2C0),
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: Text(
+        '🔥 ${streakDays ?? 0} ${(streakDays ?? 0) == 1 ? 'Day' : 'Days'} Streak',
+        style: const TextStyle(
+          fontSize: 14,
+          fontFamily: 'Quicksand',
+          fontWeight: FontWeight.w600,
+          color: AppColors.textPrimary,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatsRow(int postNumber, int follower, int following) {
+    final stats = [
+      {'count': '$postNumber', 'label': 'Posts'},
+      {'count': '$follower', 'label': 'Followers'},
+      {'count': '$following', 'label': 'Following'},
+    ];
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(stats.length * 2 - 1, (index) {
+        if (index.isOdd) {
+          // Divider between stats
+          return _dividerLine();
+        } else {
+          final stat = stats[index ~/ 2];
+          return Expanded(child: _statItem(stat['count']!, stat['label']!));
+        }
+      }),
+    );
+  }
+
+  Widget _statItem(String count, String label) {
+    return Column(
+      children: [
+        Text(
+          count,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 13, color: AppColors.grey),
+        ),
+      ],
+    );
+  }
+
+  Widget _dividerLine() {
+    return Container(
+      width: 1,
+      height: 30,
+      color: AppColors.grey.withOpacity(0.4),
+    );
+  }
+}
+
+class _FullScreenAvatarView extends StatelessWidget {
+  final String avatarUrl;
+
+  const _FullScreenAvatarView({required this.avatarUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Stack(
+        children: [
+          // Dismiss on tap outside
+          GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            child: const SizedBox.expand(
+              child: ColoredBox(color: Colors.transparent),
+            ),
+          ),
+          Center(
+            child: Hero(
+              tag: 'avatar_hero',
+              child: InteractiveViewer(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    avatarUrl,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, _, _) => const Icon(
+                      Icons.person,
+                      size: 120,
+                      color: Colors.white54,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Close button
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            right: 12,
+            child: IconButton(
+              icon: const Icon(Icons.close, color: Colors.white, size: 28),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ),
+        ],
       ),
     );
   }

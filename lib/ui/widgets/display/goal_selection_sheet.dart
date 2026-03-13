@@ -19,6 +19,21 @@ class _GoalSelectionSheetState extends State<GoalSelectionSheet> {
     {'minutes': 20, 'label': '20 minutes', 'desc': 'Staying committed'},
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    // Pre-select the current goal if one is already set
+    final streak = context.read<StreakProvider>();
+    if (streak.dailyGoalSeconds > 0) {
+      final currentMinutes = streak.dailyGoalSeconds ~/ 60;
+      // Match to one of the preset options
+      final match = _goals.any((g) => g['minutes'] == currentMinutes);
+      if (match) {
+        _selectedMinutes = currentMinutes;
+      }
+    }
+  }
+
   Future<void> _onSetGoal() async {
     if (_selectedMinutes == null) return;
     final streak = context.read<StreakProvider>();
@@ -32,9 +47,7 @@ class _GoalSelectionSheetState extends State<GoalSelectionSheet> {
           content: Text(streak.errorMessage ?? 'Failed to set goal'),
           backgroundColor: AppColors.secondary,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
     }
@@ -49,12 +62,7 @@ class _GoalSelectionSheetState extends State<GoalSelectionSheet> {
         color: AppColors.background,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      padding: EdgeInsets.fromLTRB(
-        24,
-        20,
-        24,
-        MediaQuery.of(context).viewInsets.bottom + 24,
-      ),
+      padding: EdgeInsets.fromLTRB(24, 20, 24, MediaQuery.of(context).viewInsets.bottom + 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -64,10 +72,7 @@ class _GoalSelectionSheetState extends State<GoalSelectionSheet> {
             child: Container(
               width: 40,
               height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.grey.withOpacity(0.4),
-                borderRadius: BorderRadius.circular(2),
-              ),
+              decoration: BoxDecoration(color: AppColors.grey.withOpacity(0.4), borderRadius: BorderRadius.circular(2)),
             ),
           ),
           const SizedBox(height: 20),
@@ -75,48 +80,25 @@ class _GoalSelectionSheetState extends State<GoalSelectionSheet> {
           // Icon
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.accent,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.local_fire_department_rounded,
-              color: AppColors.primary,
-              size: 26,
-            ),
+            decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(12)),
+            child: const Icon(Icons.local_fire_department_rounded, color: AppColors.primary, size: 26),
           ),
           const SizedBox(height: 16),
 
           // Title
           const Text(
             'Set your daily study goal',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
-              fontFamily: 'Quicksand',
-            ),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary, fontFamily: 'Quicksand'),
           ),
           const SizedBox(height: 6),
           const Text(
             'Choose how long you plan to study each day to keep your streak going.',
-            style: TextStyle(
-              fontSize: 13,
-              color: AppColors.grey,
-              height: 1.4,
-              fontFamily: 'Quicksand',
-            ),
+            style: TextStyle(fontSize: 13, color: AppColors.grey, height: 1.4, fontFamily: 'Quicksand'),
           ),
           const SizedBox(height: 20),
 
           // Goal options
-          ..._goals.map(
-            (g) => _buildGoalCard(
-              g['minutes'] as int,
-              g['label'] as String,
-              g['desc'] as String,
-            ),
-          ),
+          ..._goals.map((g) => _buildGoalCard(g['minutes'] as int, g['label'] as String, g['desc'] as String)),
 
           const SizedBox(height: 16),
 
@@ -124,35 +106,19 @@ class _GoalSelectionSheetState extends State<GoalSelectionSheet> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: (_selectedMinutes == null || streak.isLoading)
-                  ? null
-                  : _onSetGoal,
+              onPressed: (_selectedMinutes == null || streak.isLoading) ? null : _onSetGoal,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 disabledBackgroundColor: AppColors.grey.withOpacity(0.3),
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 elevation: 0,
               ),
               child: streak.isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
+                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                   : const Text(
                       'Set Goal',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: 'Quicksand',
-                      ),
+                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: 'Quicksand'),
                     ),
             ),
           ),
@@ -173,31 +139,18 @@ class _GoalSelectionSheetState extends State<GoalSelectionSheet> {
         decoration: BoxDecoration(
           color: isSelected ? AppColors.accent : AppColors.backgroundBox,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : Colors.transparent,
-            width: 2,
-          ),
+          border: Border.all(color: isSelected ? AppColors.primary : Colors.transparent, width: 2),
         ),
         child: Row(
           children: [
             Container(
               width: 46,
               height: 46,
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? AppColors.primary
-                    : AppColors.grey.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
+              decoration: BoxDecoration(color: isSelected ? AppColors.primary : AppColors.grey.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
               alignment: Alignment.center,
               child: Text(
                 minutes >= 60 ? '1h' : '${minutes}m',
-                style: TextStyle(
-                  color: isSelected ? Colors.white : AppColors.textPrimary,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                  fontFamily: 'Quicksand',
-                ),
+                style: TextStyle(color: isSelected ? Colors.white : AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 14, fontFamily: 'Quicksand'),
               ),
             ),
             const SizedBox(width: 14),
@@ -207,30 +160,16 @@ class _GoalSelectionSheetState extends State<GoalSelectionSheet> {
                 children: [
                   Text(
                     label,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                      color: AppColors.textPrimary,
-                      fontFamily: 'Quicksand',
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary, fontFamily: 'Quicksand'),
                   ),
                   Text(
                     desc,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.grey,
-                      fontFamily: 'Quicksand',
-                    ),
+                    style: const TextStyle(fontSize: 12, color: AppColors.grey, fontFamily: 'Quicksand'),
                   ),
                 ],
               ),
             ),
-            if (isSelected)
-              const Icon(
-                Icons.check_circle_rounded,
-                color: AppColors.primary,
-                size: 20,
-              ),
+            if (isSelected) const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 20),
           ],
         ),
       ),

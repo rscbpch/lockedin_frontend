@@ -8,6 +8,7 @@ import 'package:lockedin_frontend/ui/screens/productivity_hub/todo_list/todo_tas
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/actions/square_button.dart';
 import 'package:lockedin_frontend/ui/widgets/pickers/date_picker.dart';
+import 'package:lockedin_frontend/utils/activity_tracker.dart';
 
 class TodoListScreen extends StatefulWidget {
   const TodoListScreen({super.key});
@@ -16,7 +17,7 @@ class TodoListScreen extends StatefulWidget {
   State<TodoListScreen> createState() => _TodoListScreenState();
 }
 
-class _TodoListScreenState extends State<TodoListScreen> {
+class _TodoListScreenState extends State<TodoListScreen> with ActivityTracker {
   DateTime _selectedDate = DateTime.now();
   bool _showCompletedTasks = false;
   List<TodoTask> _tasks = [];
