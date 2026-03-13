@@ -23,6 +23,7 @@ import 'package:lockedin_frontend/models/user/streak.dart';
 // }
 
 class User {
+  final String? id; // add
   final String username;
   final String bio;
   final String displayName;
@@ -32,8 +33,10 @@ class User {
   final int following;
   final int postNumber;
   final Streak? streak;
+  final bool isFollowing; // add
 
   User({
+    this.id,
     required this.username,
     required this.bio,
     required this.displayName,
@@ -43,37 +46,36 @@ class User {
     this.following = 0,
     this.postNumber = 0,
     this.streak,
+    this.isFollowing = false,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
+    // Handle both flat shape (/setting/me) and nested shape (/users/:username)
+    final stats = json['stats'] as Map<String, dynamic>?;
+
     return User(
+      id: json['_id'] as String? ?? json['id'] as String?,
       username: json['username'] ?? '',
       bio: json['bio'] ?? '',
       displayName: json['displayName'] ?? '',
       avatar: json['avatar'] ?? '',
       authProvider: json['authProvider'] ?? '',
-      follower: json['followersCount'] ?? 0,
-      following: json['followingCount'] ?? 0,
+      follower:
+          (stats?['followers'] as int?) ??
+          (json['followersCount'] as int?) ??
+          0,
+      following:
+          (stats?['following'] as int?) ??
+          (json['followingCount'] as int?) ??
+          0,
       postNumber: json['postNumber'] ?? 0,
       streak: json['streak'] != null ? Streak.fromJson(json['streak']) : null,
+      isFollowing: json['isFollowing'] as bool? ?? false,
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'username': username,
-      'bio': bio,
-      'displayName': displayName,
-      'avatar': avatar,
-      'authProvider': authProvider,
-      'follower': follower,
-      'following': following,
-      'postNumber': postNumber,
-      'streak': streak,
-    };
-  }
-
   User copyWith({
+    String? id,
     String? username,
     String? bio,
     String? displayName,
@@ -83,8 +85,10 @@ class User {
     int? following,
     int? postNumber,
     Streak? streak,
+    bool? isFollowing,
   }) {
     return User(
+      id: id ?? this.id,
       username: username ?? this.username,
       bio: bio ?? this.bio,
       displayName: displayName ?? this.displayName,
@@ -94,6 +98,7 @@ class User {
       following: following ?? this.following,
       postNumber: postNumber ?? this.postNumber,
       streak: streak ?? this.streak,
+      isFollowing: isFollowing ?? this.isFollowing,
     );
   }
 }
