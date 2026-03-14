@@ -140,12 +140,12 @@ class AuthProvider extends ChangeNotifier {
         await onSessionCleanup!.call();
       }
 
-    await AuthService.clearToken();
-    _token = null;
-    _currentUser = null;
-    errorMessage = null;
-    isLoading = false;
-    notifyListeners();
+      await AuthService.clearToken();
+      _token = null;
+      _currentUser = null;
+      errorMessage = null;
+      isLoading = false;
+      notifyListeners();
     } finally {
       _isLoggingOut = false;
     }

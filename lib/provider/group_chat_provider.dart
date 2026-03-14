@@ -75,18 +75,20 @@ class GroupChatProvider extends ChangeNotifier {
 
   /// Get full group details including members
   Future<GroupModel?> getGroupDetails(String groupId) async {
-  try {
-    debugPrint('🔍 Fetching group details for: $groupId');
-    final result = await _service.getGroupDetails(groupId);
-    debugPrint('✅ Group details: ${result.name}, members: ${result.members.length}');
-    return result;
-  } catch (e) {
-    debugPrint('❌ getGroupDetails error: $e');
-    _errorMessage = e.toString();
-    notifyListeners();
-    return null;
+    try {
+      debugPrint('🔍 Fetching group details for: $groupId');
+      final result = await _service.getGroupDetails(groupId);
+      debugPrint(
+        '✅ Group details: ${result.name}, members: ${result.members.length}',
+      );
+      return result;
+    } catch (e) {
+      debugPrint('❌ getGroupDetails error: $e');
+      _errorMessage = e.toString();
+      notifyListeners();
+      return null;
+    }
   }
-}
 
   /// Add members to a group
   Future<bool> addMembers({
@@ -147,9 +149,14 @@ class GroupChatProvider extends ChangeNotifier {
     required String groupId,
     required String newOwnerId,
   }) async {
-    debugPrint('🔄 transferOwnership: groupId=$groupId, newOwnerId=$newOwnerId');
+    debugPrint(
+      '🔄 transferOwnership: groupId=$groupId, newOwnerId=$newOwnerId',
+    );
     try {
-      await _service.transferOwnership(groupId: groupId, newOwnerId: newOwnerId);
+      await _service.transferOwnership(
+        groupId: groupId,
+        newOwnerId: newOwnerId,
+      );
       debugPrint('✅ transferOwnership success');
       await fetchGroups();
       return true;
