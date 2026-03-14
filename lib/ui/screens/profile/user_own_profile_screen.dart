@@ -1,7 +1,12 @@
+// ignore_for_file: unused_element
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lockedin_frontend/provider/auth_provider.dart';
 import 'package:lockedin_frontend/provider/streak_provider.dart';
+import 'package:lockedin_frontend/ui/screens/profile/widgets/avatar.dart';
+import 'package:lockedin_frontend/ui/screens/profile/widgets/follow_list_sheet.dart';
+import 'package:lockedin_frontend/ui/screens/profile/widgets/stat_row.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/display/profile_settings_sheet.dart';
 import 'package:lockedin_frontend/ui/widgets/inputs/update_profile.dart';
@@ -311,45 +316,8 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
     );
   }
 
-  Widget _buildAvatar(String avatarUrl) {
-    return GestureDetector(
-      onTap: avatarUrl.isNotEmpty
-          ? () => _viewFullScreenAvatar(avatarUrl)
-          : null,
-      child: CircleAvatar(
-        radius: 50,
-        backgroundColor: const Color(0xFFF5E6D8),
-        child: avatarUrl.isNotEmpty
-            ? ClipOval(
-                child: Image.network(
-                  avatarUrl,
-                  width: 100,
-                  height: 100,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => _avatarFallback(),
-                ),
-              )
-            : _avatarFallback(),
-      ),
-    );
-  }
 
-  void _viewFullScreenAvatar(String avatarUrl) {
-    Navigator.of(context).push(
-      PageRouteBuilder(
-        opaque: false,
-        barrierColor: Colors.black87,
-        pageBuilder: (_, __, ___) =>
-            _FullScreenAvatarView(avatarUrl: avatarUrl),
-        transitionsBuilder: (_, animation, __, child) =>
-            FadeTransition(opacity: animation, child: child),
-      ),
-    );
-  }
 
-  Widget _avatarFallback() {
-    return const Icon(Icons.person, size: 52, color: AppColors.primary);
-  }
 
   Widget _buildStreakBadge(int? streakDays) {
     return Container(
@@ -370,54 +338,8 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
     );
   }
 
-  Widget _buildStatsRow(int postNumber, int follower, int following) {
-    final stats = [
-      {'count': '$postNumber', 'label': 'Posts'},
-      {'count': '$follower', 'label': 'Followers'},
-      {'count': '$following', 'label': 'Following'},
-    ];
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(stats.length * 2 - 1, (index) {
-        if (index.isOdd) {
-          // Divider between stats
-          return _dividerLine();
-        } else {
-          final stat = stats[index ~/ 2];
-          return Expanded(child: _statItem(stat['count']!, stat['label']!));
-        }
-      }),
-    );
-  }
 
-  Widget _statItem(String count, String label) {
-    return Column(
-      children: [
-        Text(
-          count,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 13, color: AppColors.grey),
-        ),
-      ],
-    );
-  }
-
-  Widget _dividerLine() {
-    return Container(
-      width: 1,
-      height: 30,
-      color: AppColors.grey.withOpacity(0.4),
-    );
-  }
 }
 
 class _FullScreenAvatarView extends StatelessWidget {

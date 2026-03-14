@@ -9,6 +9,10 @@ import 'package:lockedin_frontend/ui/screens/profile/widgets/streak_badge.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 
+import 'package:lockedin_frontend/provider/chat_provider.dart';
+import 'package:lockedin_frontend/ui/screens/chat/channel_screen.dart';
+import 'package:stream_chat_flutter/stream_chat_flutter.dart';
+
 class UserOtherProfileScreen extends StatefulWidget {
   final SearchUserResult user;
   const UserOtherProfileScreen({required this.user, super.key});
@@ -51,14 +55,42 @@ class _UserOtherProfileScreenState extends State<UserOtherProfileScreen> {
     }
   }
 
-  void _openMessage() {
-    // TODO: wire ChatProvider.openPrivateChannel(widget.user.id)
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('You need to mutually follow each other to message'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+  // void _openMessage() {
+  //   // TODO: wire ChatProvider.openPrivateChannel(widget.user.id)
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     const SnackBar(
+  //       content: Text('You need to mutually follow each other to message'),
+  //       duration: Duration(seconds: 2),
+  //     ),
+  //   );
+  // }
+
+  Future<void> _openMessage() async {
+    final chatProvider = context.read<ChatProvider>();
+
+    // Make sure Stream is connected first
+    if (!chatProvider.isConnected) {
+      await chatProvider.connectUser();
+    }
+
+    try {
+      final channel = await chatProvider.openPrivateChannel(widget.user.id);
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                StreamChannel(channel: channel, child: const ChannelScreen()),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   @override
@@ -180,7 +212,8 @@ class _UserOtherProfileScreenState extends State<UserOtherProfileScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: OutlinedButton.icon(
-                            onPressed: _openMessage,
+                            // onPressed: _openMessage,
+                            onPressed: () => _openMessage(),
                             icon: const Icon(
                               Icons.chat_bubble_outline,
                               size: 16,
