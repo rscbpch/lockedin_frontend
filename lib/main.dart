@@ -38,9 +38,13 @@ import 'provider/study_room_provider.dart';
 import 'services/study_room_api_service.dart';
 import 'ui/screens/study_room/lobby_screen.dart';
 
-final StreamChatClient streamClient = StreamChatClient(dotenv.env['STREAM_API_KEY'] ?? '', logLevel: Level.OFF);
+final StreamChatClient streamClient = StreamChatClient(
+  dotenv.env['STREAM_API_KEY'] ?? '',
+  logLevel: Level.OFF,
+);
 
-final GlobalKey<NavigatorState> appRootNavigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> appRootNavigatorKey =
+    GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -106,7 +110,17 @@ class _MyAppState extends State<MyApp> {
 
   static const _authPaths = {'/', '/login', '/register', '/forget-password'};
 
-  static const _protectedPaths = {'/study-room', '/productivity-hub', '/books', '/profile', '/todo-list', '/pomodoro', '/flashcard', '/task-breakdown', '/chat'};
+  static const _protectedPaths = {
+    '/study-room',
+    '/productivity-hub',
+    '/books',
+    '/profile',
+    '/todo-list',
+    '/pomodoro',
+    '/flashcard',
+    '/task-breakdown',
+    '/chat',
+  };
 
   @override
   void initState() {
@@ -132,7 +146,8 @@ class _MyAppState extends State<MyApp> {
         // ── Auth routes ──────────────────────────────
         GoRoute(
           path: '/',
-          pageBuilder: (_, s) => const NoTransitionPage(child: GettingStartedScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: GettingStartedScreen()),
         ),
         GoRoute(
           path: '/login',
@@ -144,7 +159,8 @@ class _MyAppState extends State<MyApp> {
         ),
         GoRoute(
           path: '/forget-password',
-          pageBuilder: (_, s) => const NoTransitionPage(child: ForgetPasswordScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: ForgetPasswordScreen()),
         ),
         GoRoute(
           path: '/OTP/:email',
@@ -172,19 +188,23 @@ class _MyAppState extends State<MyApp> {
           routes: [
             GoRoute(
               path: '/study-room',
-              pageBuilder: (_, s) => const NoTransitionPage(child: LobbyScreen()),
+              pageBuilder: (_, s) =>
+                  const NoTransitionPage(child: LobbyScreen()),
             ),
             GoRoute(
               path: '/productivity-hub',
-              pageBuilder: (_, s) => const NoTransitionPage(child: ProductivityHubScreen()),
+              pageBuilder: (_, s) =>
+                  const NoTransitionPage(child: ProductivityHubScreen()),
             ),
             GoRoute(
               path: '/books',
-              pageBuilder: (_, s) => const NoTransitionPage(child: BookSummaryScreen()),
+              pageBuilder: (_, s) =>
+                  const NoTransitionPage(child: BookSummaryScreen()),
             ),
             GoRoute(
               path: '/profile',
-              pageBuilder: (_, s) => const NoTransitionPage(child: UserOwnProfileScreen()),
+              pageBuilder: (_, s) =>
+                  const NoTransitionPage(child: UserOwnProfileScreen()),
             ),
           ],
         ),
@@ -192,31 +212,38 @@ class _MyAppState extends State<MyApp> {
         // ── Chat route ──────────────────────────────
         GoRoute(
           path: '/chat',
-          pageBuilder: (_, s) => const NoTransitionPage(child: ChannelListScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: ChannelListScreen()),
         ),
 
         // ── Productivity tools routes ──────────────────────────────
         GoRoute(
           path: '/todo-list',
-          pageBuilder: (_, s) => const NoTransitionPage(child: TodoListScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: TodoListScreen()),
         ),
         GoRoute(
           path: '/pomodoro',
-          pageBuilder: (_, s) => const NoTransitionPage(child: PomodoroScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: PomodoroScreen()),
         ),
         GoRoute(
           path: '/flashcard',
-          pageBuilder: (_, s) => const NoTransitionPage(child: FlashcardScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: FlashcardScreen()),
         ),
         GoRoute(
           path: '/flashcard/create',
-          pageBuilder: (_, s) => const NoTransitionPage(child: ManageFlashcardScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: ManageFlashcardScreen()),
         ),
         GoRoute(
           path: '/flashcard/edit/:id',
           pageBuilder: (_, s) {
             final id = s.pathParameters['id'] ?? '';
-            return NoTransitionPage(child: ManageFlashcardScreen(editSetId: id));
+            return NoTransitionPage(
+              child: ManageFlashcardScreen(editSetId: id),
+            );
           },
         ),
         GoRoute(
@@ -252,7 +279,8 @@ class _MyAppState extends State<MyApp> {
         ),
         GoRoute(
           path: '/task-breakdown',
-          pageBuilder: (_, s) => const NoTransitionPage(child: AiBreakdownScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: AiBreakdownScreen()),
         ),
       ],
     );
@@ -276,7 +304,11 @@ class _MyAppState extends State<MyApp> {
         ),
       ),
 
-      localizationsDelegates: const [GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       supportedLocales: const [Locale('en')],
 
       builder: (context, child) {
@@ -333,7 +365,11 @@ class _PomodoroPromptHostState extends State<_PomodoroPromptHost> {
     _showPrompt(context, provider, prompt);
   }
 
-  void _showPrompt(BuildContext context, PomodoroTimerProvider provider, PomodoroCompletionPrompt prompt) {
+  void _showPrompt(
+    BuildContext context,
+    PomodoroTimerProvider provider,
+    PomodoroCompletionPrompt prompt,
+  ) {
     final rootContext = appRootNavigatorKey.currentContext;
     if (rootContext == null) {
       _isDialogOpen = false;

@@ -29,7 +29,8 @@ class ChatProvider extends ChangeNotifier {
       final currentStreamUserId = streamClient.state.currentUser?.id;
 
       // If Stream is already connected to another account, force-switch user.
-      if (currentStreamUserId != null && currentStreamUserId != tokenData.userId) {
+      if (currentStreamUserId != null &&
+          currentStreamUserId != tokenData.userId) {
         await streamClient.disconnectUser();
       }
 
