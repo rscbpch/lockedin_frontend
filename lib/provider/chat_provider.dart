@@ -21,11 +21,22 @@ class ChatProvider extends ChangeNotifier {
 
   /// Call once after the user logs in
   Future<void> connectUser() async {
-    if (_status == ChatStatus.connected) return;
+    if (_status == ChatStatus.loading) return;
     _setStatus(ChatStatus.loading);
 
     try {
       final ChatTokenModel tokenData = await _chatService.fetchChatToken();
+      final currentStreamUserId = streamClient.state.currentUser?.id;
+
+      // If Stream is already connected to another account, force-switch user.
+      if (currentStreamUserId != null && currentStreamUserId != tokenData.userId) {
+        await streamClient.disconnectUser();
+      }
+
+      if (streamClient.state.currentUser?.id == tokenData.userId) {
+        _setStatus(ChatStatus.connected);
+        return;
+      }
 
       await streamClient.connectUser(
         User(
@@ -58,7 +69,10 @@ class ChatProvider extends ChangeNotifier {
 
   /// Call on logout
   Future<void> disconnectUser() async {
-    await streamClient.disconnectUser();
+    if (streamClient.state.currentUser != null) {
+      await streamClient.disconnectUser();
+    }
+    _errorMessage = null;
     _setStatus(ChatStatus.idle);
   }
 

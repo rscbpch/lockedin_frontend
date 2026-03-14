@@ -99,13 +99,18 @@ import '../services/user_profile_service.dart';
 class AuthProvider extends ChangeNotifier {
   /// Called by any service/provider when the server returns 401.
   /// Register this in main() after creating the AuthProvider instance.
-  static VoidCallback? onForceLogout;
+  static Future<void> Function()? onForceLogout;
+
+  /// Optional app-level cleanup hook (chat disconnect, provider resets, etc.)
+  /// that runs before token/user state is cleared.
+  static Future<void> Function()? onSessionCleanup;
 
   bool isLoading = false;
   String? errorMessage;
 
   String? _token;
   User? _currentUser;
+  bool _isLoggingOut = false;
 
   String? get token => _token;
   User? get currentUser => _currentUser;
@@ -127,10 +132,23 @@ class AuthProvider extends ChangeNotifier {
 
   // ---------- LOGOUT ----------
   Future<void> logout() async {
+    if (_isLoggingOut) return;
+    _isLoggingOut = true;
+
+    try {
+      if (onSessionCleanup != null) {
+        await onSessionCleanup!.call();
+      }
+
     await AuthService.clearToken();
     _token = null;
     _currentUser = null;
+    errorMessage = null;
+    isLoading = false;
     notifyListeners();
+    } finally {
+      _isLoggingOut = false;
+    }
   }
 
   // ---------- LOGIN ----------

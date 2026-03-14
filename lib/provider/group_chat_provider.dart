@@ -204,6 +204,13 @@ class GroupChatProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
   }
+
+  void reset() {
+    _groups = [];
+    _errorMessage = null;
+    _status = GroupStatus.idle;
+    notifyListeners();
+  }
 }
 
 // import 'package:flutter/material.dart';
