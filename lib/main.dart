@@ -48,44 +48,45 @@ void main() async {
 
   final authProvider = AuthProvider();
   await authProvider.initialize();
-  AuthProvider.onForceLogout = () => authProvider.logout();
 
   final streakProvider = StreakProvider();
   await streakProvider.restoreSession();
+  final bookProvider = BookProvider();
+  final chatProvider = ChatProvider(
+    streamClient: streamClient,
+    chatService: ChatService(getAuthToken: () async => authProvider.token),
+  );
+  final groupChatProvider = GroupChatProvider(
+    streamClient: streamClient,
+    service: GroupChatService(getAuthToken: () async => authProvider.token),
+  );
+  final pomodoroProvider = PomodoroTimerProvider();
+  pomodoroProvider.setStreakProvider(streakProvider);
+  final studyRoomProvider = StudyRoomProvider(
+    StudyRoomApiService(
+      getToken: () => authProvider.token,
+      jaasAppId: dotenv.env['JAAS_APP_ID'] ?? '',
+    ),
+  );
+
+  AuthProvider.onSessionCleanup = () async {
+    await chatProvider.disconnectUser();
+    groupChatProvider.reset();
+    streakProvider.reset();
+    bookProvider.clear();
+  };
+  AuthProvider.onForceLogout = () async => authProvider.logout();
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: authProvider),
-        ChangeNotifierProvider(create: (_) => BookProvider()),
+        ChangeNotifierProvider.value(value: bookProvider),
         ChangeNotifierProvider.value(value: streakProvider),
-        ChangeNotifierProvider(
-          create: (_) => ChatProvider(
-            streamClient: streamClient,
-            chatService: ChatService(getAuthToken: () async => authProvider.token),
-          ),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => GroupChatProvider(
-            streamClient: streamClient,
-            service: GroupChatService(getAuthToken: () async => authProvider.token),
-          ),
-        ),
-        ChangeNotifierProvider(
-          create: (_) {
-            final pomodoro = PomodoroTimerProvider();
-            pomodoro.setStreakProvider(streakProvider);
-            return pomodoro;
-          },
-        ),
-        ChangeNotifierProvider(
-          create: (_) => StudyRoomProvider(
-            StudyRoomApiService(
-              getToken: () => authProvider.token,
-              jaasAppId: dotenv.env['JAAS_APP_ID'] ?? '', // ← add this
-            ),
-          ),
-        ),
+        ChangeNotifierProvider.value(value: chatProvider),
+        ChangeNotifierProvider.value(value: groupChatProvider),
+        ChangeNotifierProvider.value(value: pomodoroProvider),
+        ChangeNotifierProvider.value(value: studyRoomProvider),
       ],
       child: MyApp(authProvider: authProvider),
     ),
