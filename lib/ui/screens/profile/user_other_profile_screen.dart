@@ -3,7 +3,6 @@ import 'package:lockedin_frontend/models/user/search_user_model.dart';
 import 'package:lockedin_frontend/provider/auth_provider.dart';
 import 'package:lockedin_frontend/services/user_service.dart';
 import 'package:lockedin_frontend/ui/screens/profile/widgets/avatar.dart';
-import 'package:lockedin_frontend/ui/screens/profile/widgets/follow_list_sheet.dart';
 import 'package:lockedin_frontend/ui/screens/profile/widgets/stat_row.dart';
 import 'package:lockedin_frontend/ui/screens/profile/widgets/streak_badge.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';

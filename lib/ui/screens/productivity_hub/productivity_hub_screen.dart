@@ -102,12 +102,7 @@ class FeatureCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(
-            Responsive.radius(context, size: 12),
-          ),
-        ),
+        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(Responsive.radius(context, size: 12))),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -115,12 +110,7 @@ class FeatureCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               label,
-              style: TextStyle(
-                fontFamily: 'Nunito',
-                fontSize: Responsive.text(context, size: 16),
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
-              ),
+              style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 16), fontWeight: FontWeight.w500, color: AppColors.textPrimary),
             ),
           ],
         ),
@@ -139,12 +129,27 @@ class ProductivityStreakCard extends StatefulWidget {
 class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
   Timer? _timer;
 
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   // Tick every second to update the live session counter
+  //   _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+  //     if (mounted) setState(() {});
+  //   });
+  // }
+
   @override
   void initState() {
     super.initState();
-    // Tick every second to update the live session counter
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() {});
+      if (mounted) {
+        setState(() {});
+        // Auto-refresh streak from backend when goal is just completed
+        final streak = context.read<StreakProvider>();
+        if (streak.hasCompletedTodayGoal && !streak.sessionActive) {
+          streak.fetchStreak(forceRefresh: true);
+        }
+      }
     });
   }
 
@@ -159,15 +164,34 @@ class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
 
   /// Determines which days of the current week have met the goal,
   /// based on the currentStreak count going backwards from today.
+  // List<bool> _weekActivity(int currentStreak, bool todayGoalMet) {
+  //   final now = DateTime.now();
+  //   final todayIndex = now.weekday - 1; // 0-based (Mon=0 .. Sun=6)
+
+  //   final activeDays = List.filled(7, false);
+
+  //   // Ensure at least 1 so today gets marked when goal is met locally
+  //   int streakRemaining = todayGoalMet ? (currentStreak < 1 ? 1 : currentStreak) : currentStreak;
+  //   int startDay = todayGoalMet ? todayIndex : todayIndex - 1;
+
+  //   for (int i = startDay; i >= 0 && streakRemaining > 0; i--) {
+  //     activeDays[i] = true;
+  //     streakRemaining--;
+  //   }
+
+  //   return activeDays;
+  // }
+
   List<bool> _weekActivity(int currentStreak, bool todayGoalMet) {
     final now = DateTime.now();
     final todayIndex = now.weekday - 1; // 0-based (Mon=0 .. Sun=6)
 
     final activeDays = List.filled(7, false);
 
-    // Ensure at least 1 so today gets marked when goal is met locally
-    int streakRemaining = todayGoalMet ? (currentStreak < 1 ? 1 : currentStreak) : currentStreak;
-    int startDay = todayGoalMet ? todayIndex : todayIndex - 1;
+    final bool countToday = todayGoalMet && currentStreak > 0;
+
+    int streakRemaining = currentStreak;
+    int startDay = countToday ? todayIndex : todayIndex - 1;
 
     for (int i = startDay; i >= 0 && streakRemaining > 0; i--) {
       activeDays[i] = true;
@@ -192,11 +216,8 @@ class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
     final width = MediaQuery.of(context).size.width;
     final streak = context.watch<StreakProvider>();
 
-    final goalSeconds = streak.dailyGoalSeconds;
-    final accumulated = streak.todayAccumulatedSeconds;
-    final liveSessionSeconds = streak.currentSessionSeconds;
-    final totalToday = accumulated + liveSessionSeconds;
-    final todayGoalMet = goalSeconds > 0 && totalToday >= goalSeconds;
+    final totalToday = streak.todayTrackedSeconds;
+    final todayGoalMet = streak.hasCompletedTodayGoal;
     final weekActive = _weekActivity(streak.currentStreak, todayGoalMet);
 
     return Container(
@@ -275,13 +296,8 @@ class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
                   ),
                   const SizedBox(width: 5),
                   Text(
-                    streak.sessionActive ? 'Active' : 'Paused',
-                    style: TextStyle(
-                      fontSize: Responsive.text(context, size: 11),
-                      fontFamily: 'Quicksand',
-                      fontWeight: FontWeight.w600,
-                      color: streak.sessionActive ? AppColors.primary : AppColors.grey,
-                    ),
+                    'Not completed',
+                    style: TextStyle(fontSize: Responsive.text(context, size: 11), fontFamily: 'Quicksand', fontWeight: FontWeight.w600, color: AppColors.grey),
                   ),
                 ],
               ),
@@ -292,12 +308,7 @@ class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
           // Stats row
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Text(
-              'Longest streak: ${streak.longestStreak}',
-              style: TextStyle(
-                fontFamily: 'Nunito'
-              ),
-            ),
+            child: Text('Longest streak: ${streak.longestStreak}', style: TextStyle(fontFamily: 'Nunito')),
           ),
           const SizedBox(height: 8),
 
