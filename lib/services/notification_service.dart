@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 import 'package:lockedin_frontend/config/env.dart';
+import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 
-// ✅ Must be top-level — handles notifications when app is killed
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   debugPrint('🔔 Background message: ${message.notification?.title}');
@@ -29,22 +29,25 @@ class NotificationService {
     if (_initialized) return;
     _initialized = true;
 
-    // Background handler
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-    // Create Android notification channel
+    await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
     await _localNotifications
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.createNotificationChannel(_channel);
 
-    // Init local notifications
     const initSettings = InitializationSettings(
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
     );
     await _localNotifications.initialize(initSettings);
 
-    // Show notification when app is in FOREGROUND
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       debugPrint('🔔 Foreground message: ${message.notification?.title}');
       final notification = message.notification;
@@ -68,14 +71,50 @@ class NotificationService {
     });
   }
 
-  /// Call this after user logs in — saves FCM token to backend
+  /// Call after user connects to Stream — registers FCM token with Stream
+  static Future<void> registerWithStream(StreamChatClient streamClient) async {
+    try {
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+      if (fcmToken == null) return;
+
+      await streamClient.addDevice(
+        fcmToken,
+        PushProvider.firebase,
+        pushProviderName: 'LockedIn',
+      );
+      debugPrint('✅ FCM token registered with Stream');
+
+      FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+        await streamClient.addDevice(
+          newToken,
+          PushProvider.firebase,
+          pushProviderName: 'LockedIn',
+        );
+        debugPrint('🔄 Stream FCM token refreshed');
+      });
+    } catch (e) {
+      debugPrint('❌ Failed to register token with Stream: $e');
+    }
+  }
+
+  /// Call on logout — removes FCM token from Stream
+  static Future<void> removeFromStream(StreamChatClient streamClient) async {
+    try {
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+      if (fcmToken == null) return;
+      await streamClient.removeDevice(fcmToken);
+      debugPrint('✅ FCM token removed from Stream');
+    } catch (e) {
+      debugPrint('❌ Failed to remove token from Stream: $e');
+    }
+  }
+
+  /// Call after user logs in — saves FCM token to your backend (for follow notifications)
   static Future<void> saveTokenToBackend(
       Future<String?> Function() getAuthToken) async {
     try {
       final fcmToken = await FirebaseMessaging.instance.getToken();
       if (fcmToken == null) return;
-
-      debugPrint('📱 Saving FCM token to backend...');
 
       final authToken = await getAuthToken();
       if (authToken == null) return;
@@ -94,7 +133,7 @@ class NotificationService {
     }
   }
 
-  /// Call on logout — clears token from backend
+  /// Call on logout — clears FCM token from your backend
   static Future<void> removeTokenFromBackend(
       Future<String?> Function() getAuthToken) async {
     try {
@@ -110,7 +149,7 @@ class NotificationService {
         body: jsonEncode({'deviceToken': null}),
       );
       await FirebaseMessaging.instance.deleteToken();
-      debugPrint('📱 Device token removed');
+      debugPrint('📱 Device token removed from backend');
     } catch (e) {
       debugPrint('❌ Failed to remove device token: $e');
     }
