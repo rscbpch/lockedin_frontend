@@ -5,17 +5,28 @@ import 'package:lockedin_frontend/ui/widgets/actions/long_button.dart';
 
 class AddReviewBottomSheet extends StatefulWidget {
   final Future<void> Function(int rating, String feedback) onSubmit;
+  final String title;
+  final String submitLabel;
+  final int initialRating;
+  final String initialFeedback;
 
-  const AddReviewBottomSheet({super.key, required this.onSubmit});
+  const AddReviewBottomSheet({super.key, required this.onSubmit, this.title = 'Add Review', this.submitLabel = 'Submit Review', this.initialRating = 0, this.initialFeedback = ''});
 
   @override
   State<AddReviewBottomSheet> createState() => _AddReviewBottomSheetState();
 }
 
 class _AddReviewBottomSheetState extends State<AddReviewBottomSheet> {
-  final TextEditingController _feedbackController = TextEditingController();
-  int _selectedRating = 0;
+  late final TextEditingController _feedbackController;
+  late int _selectedRating;
   bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedRating = widget.initialRating;
+    _feedbackController = TextEditingController(text: widget.initialFeedback);
+  }
 
   @override
   void dispose() {
@@ -55,8 +66,8 @@ class _AddReviewBottomSheetState extends State<AddReviewBottomSheet> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Add Review',
-            style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 18), fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+            widget.title,
+            style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 18), fontWeight: FontWeight.w600, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 16),
           Row(
@@ -74,10 +85,10 @@ class _AddReviewBottomSheetState extends State<AddReviewBottomSheet> {
           TextField(
             controller: _feedbackController,
             maxLines: 4,
-            style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 14), color: AppColors.textPrimary),
+            style: TextStyle(fontFamily: 'Quicksand', fontSize: Responsive.text(context, size: 16), color: AppColors.textPrimary),
             decoration: InputDecoration(
               hintText: 'Share your thoughts about the book...',
-              hintStyle: TextStyle(fontFamily: 'Nunito', color: AppColors.grey, fontSize: Responsive.text(context, size: 14)),
+              hintStyle: TextStyle(fontFamily: 'Quicksand', color: AppColors.grey, fontSize: Responsive.text(context, size: 16)),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: Colors.grey.shade300),
@@ -93,7 +104,7 @@ class _AddReviewBottomSheetState extends State<AddReviewBottomSheet> {
             ),
           ),
           const SizedBox(height: 20),
-          LongButton(text: _isSubmitting ? 'Submitting...' : 'Submit Review', onPressed: _isSubmitting || _selectedRating == 0 ? null : _submit),
+          LongButton(text: _isSubmitting ? 'Submitting...' : widget.submitLabel, onPressed: _isSubmitting || _selectedRating == 0 ? null : _submit),
         ],
       ),
     );

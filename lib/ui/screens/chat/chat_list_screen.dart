@@ -126,7 +126,7 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
                   style: TextStyle(
                     fontFamily: 'Nunito',
                     fontSize: Responsive.text(context, size: 16),
-                    color: Colors.grey
+                    color: AppColors.grey
                   ),
                 ),
               ),

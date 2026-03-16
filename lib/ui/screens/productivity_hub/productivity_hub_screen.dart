@@ -129,6 +129,7 @@ class ProductivityStreakCard extends StatefulWidget {
 class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
   Timer? _timer;
   bool _hasRefreshedOnCompletion = false;
+  DateTime? _lastTrackedDate;
 
   @override
   void initState() {
@@ -137,11 +138,21 @@ class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
       if (mounted) {
         setState(() {});
         final streak = context.read<StreakProvider>();
+
+        // Reset refresh flag each new calendar day
+        final todayDate = DateTime.now();
+        final todayDay = DateTime(todayDate.year, todayDate.month, todayDate.day);
+        if (_lastTrackedDate != null && _lastTrackedDate != todayDay) {
+          _hasRefreshedOnCompletion = false;
+        }
+        _lastTrackedDate = todayDay;
+
         // Only fetch once when goal is completed, not every second
         if (streak.hasCompletedTodayGoal && !streak.sessionActive && !_hasRefreshedOnCompletion) {
           _hasRefreshedOnCompletion = true;
           streak.fetchStreak(forceRefresh: true);
         }
+
       }
     });
   }
@@ -151,6 +162,7 @@ class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
     _timer?.cancel();
     super.dispose();
   }
+
 
   /// Returns day labels starting from Monday of the current week.
   List<String> get _dayLabels => const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -192,7 +204,9 @@ class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
     final totalToday = streak.todayTrackedSeconds;
     final todayGoalMet = streak.hasCompletedTodayGoal;
     final weekActive = _weekActivity(streak.currentStreak, todayGoalMet);
-    final streakImagePath = todayGoalMet ? 'assets/images/streak.png' : 'assets/images/bw-streak.png';
+    final streakImagePath = todayGoalMet
+        ? 'assets/images/streak.png'
+        : 'assets/images/bw-streak.png';
 
     return Container(
       width: double.infinity,
@@ -205,80 +219,95 @@ class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Image.asset(streakImagePath, height: width * 0.22),
-          const SizedBox(height: 2),
-          Text(
-            '${streak.currentStreak}',
-            style: TextStyle(fontSize: Responsive.text(context, size: 32), fontFamily: 'Nunito', fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-          ),
-          const Text(
-            'Current streak',
-            style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w500, color: AppColors.textPrimary),
-          ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 12),
 
-          // Goal complete or session timer
-          if (todayGoalMet) ...[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.check_circle, color: Colors.green, size: 18),
-                const SizedBox(width: 6),
-                Text(
-                  "Today's goal complete!",
-                  style: TextStyle(
-                    fontSize: Responsive.text(context, size: 14),
-                    fontFamily: 'Nunito',
-                    fontWeight: FontWeight.w600,
-                    color: Colors.green
-                  ),
-                ),
-              ],
-            ),
-          ] else ...[
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 24),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: streak.sessionActive ? AppColors.primary.withOpacity(0.08) : AppColors.grey.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: streak.sessionActive ? AppColors.primary.withOpacity(0.3) : AppColors.grey.withOpacity(0.3)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 7,
-                    height: 7,
-                    decoration: BoxDecoration(color: streak.sessionActive ? Colors.green : AppColors.grey, shape: BoxShape.circle),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    _formatSessionTime(totalToday),
-                    style: TextStyle(
-                      fontSize: Responsive.text(context, size: 14),
-                      fontFamily: 'Nunito',
-                      fontWeight: FontWeight.bold,
-                      color: streak.sessionActive ? AppColors.primary : AppColors.grey,
+          // Image with timer overlaid at the bottom
+          Stack(
+            alignment: Alignment.bottomCenter,
+            clipBehavior: Clip.none,
+            children: [
+              Image.asset(streakImagePath, height: width * 0.22),
+
+              // Timer pill — only shown when goal is NOT met
+              if (!todayGoalMet)
+                Positioned(
+                  bottom: -(width * 0.035), // float it slightly below the image
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: streak.sessionActive
+                            ? AppColors.primary.withOpacity(0.3)
+                            : AppColors.grey.withOpacity(0.3),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.06),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: streak.sessionActive ? Colors.green : AppColors.grey,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          _formatSessionTime(totalToday),
+                          style: TextStyle(
+                            fontSize: Responsive.text(context, size: 13),
+                            fontFamily: 'Nunito',
+                            fontWeight: FontWeight.bold,
+                            color: streak.sessionActive ? AppColors.primary : AppColors.grey,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 5),
-                  Text(
-                    'Not completed',
-                    style: TextStyle(fontSize: Responsive.text(context, size: 11), fontFamily: 'Quicksand', fontWeight: FontWeight.w600, color: AppColors.grey),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          const SizedBox(height: 4),
+                ),
+            ],
+          ),
 
-          // Stats row
+          // Extra gap when timer pill is shown so it doesn't overlap the streak number
+          SizedBox(height: todayGoalMet ? 2 : width * 0.045),
+
+          Text(
+            '${streak.currentStreak}',
+            style: TextStyle(
+              fontSize: Responsive.text(context, size: 32),
+              fontFamily: 'Nunito',
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          
+          Text(
+            'Current streak',
+            style: TextStyle(
+              fontFamily: 'Nunito',
+              fontWeight: FontWeight.w500,
+              color: AppColors.textPrimary,
+              fontSize: Responsive.text(context, size: 16)
+            ),
+          ),
+          // const SizedBox(height: 8),
+
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Text('Longest streak: ${streak.longestStreak}', style: TextStyle(fontFamily: 'Nunito')),
+            child: Text(
+              'Longest streak: ${streak.longestStreak}',
+              style: const TextStyle(fontFamily: 'Nunito'),
+            ),
           ),
           const SizedBox(height: 10),
 

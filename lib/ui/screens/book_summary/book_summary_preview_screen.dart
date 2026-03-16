@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:lockedin_frontend/models/book_summary/book.dart';
 import 'package:lockedin_frontend/models/book_summary/book_review.dart';
 import 'package:lockedin_frontend/provider/book_provider.dart';
+import 'package:lockedin_frontend/services/auth_service.dart';
 import 'package:lockedin_frontend/services/book_service.dart';
+import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import 'package:lockedin_frontend/ui/screens/book_summary/widgets/add_review_bottom_sheet.dart';
 import 'package:lockedin_frontend/ui/screens/book_summary/widgets/preview_header.dart';
 import 'package:lockedin_frontend/ui/screens/book_summary/widgets/preview_rating_section.dart';
@@ -11,6 +13,8 @@ import 'package:lockedin_frontend/ui/screens/book_summary/widgets/preview_review
 import 'package:lockedin_frontend/ui/screens/book_summary/widgets/preview_summary_section.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/actions/long_button.dart';
+import 'package:lockedin_frontend/ui/widgets/notifications/app_alert_dialog.dart';
+import 'package:lockedin_frontend/ui/widgets/notifications/app_snack_bar.dart';
 import 'package:lockedin_frontend/utils/activity_tracker.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -30,6 +34,7 @@ class _BookSummaryPreviewScreenState extends State<BookSummaryPreviewScreen> wit
   bool _isLoadingReviews = true;
   bool _summaryExpanded = false;
   double? _currentRating;
+  String? _currentUserId;
 
   @override
   void initState() {
@@ -39,10 +44,13 @@ class _BookSummaryPreviewScreenState extends State<BookSummaryPreviewScreen> wit
   }
 
   Future<void> _loadReviews() async {
+    final currentUserId = await AuthService.getUserId();
+
     try {
       final reviews = await BookService.getBookReviews(widget.book.id);
       if (mounted) {
         setState(() {
+          _currentUserId = currentUserId;
           _reviews = reviews;
           _isLoadingReviews = false;
           if (reviews.isNotEmpty) {
@@ -51,8 +59,24 @@ class _BookSummaryPreviewScreenState extends State<BookSummaryPreviewScreen> wit
         });
       }
     } catch (_) {
-      if (mounted) setState(() => _isLoadingReviews = false);
+      if (mounted) {
+        setState(() {
+          _currentUserId = currentUserId;
+          _isLoadingReviews = false;
+        });
+      }
     }
+  }
+
+  BookReview? get _myReview {
+    final userId = _currentUserId;
+    if (userId == null || userId.isEmpty) return null;
+    for (final review in _reviews) {
+      if (review.userId == userId) {
+        return review;
+      }
+    }
+    return null;
   }
 
   Future<void> _openBook() async {
@@ -65,7 +89,7 @@ class _BookSummaryPreviewScreenState extends State<BookSummaryPreviewScreen> wit
     }
   }
 
-  void _showAddReviewBottomSheet() {
+  void _showAddOrEditReviewBottomSheet({BookReview? existingReview}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -73,9 +97,21 @@ class _BookSummaryPreviewScreenState extends State<BookSummaryPreviewScreen> wit
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) {
         return AddReviewBottomSheet(
+          title: existingReview == null ? 'Add Review' : 'Edit Review',
+          submitLabel: existingReview == null ? 'Submit Review' : 'Save Changes',
+          initialRating: existingReview?.rating ?? 0,
+          initialFeedback: existingReview?.feedback ?? '',
           onSubmit: (rating, feedback) async {
             try {
-              await BookService.createReview(bookId: widget.book.id, rating: rating, feedback: feedback);
+              if (existingReview == null) {
+                if (_myReview != null) {
+                  throw Exception('You can only add one review for this book. Edit your existing review instead.');
+                }
+                await BookService.createReview(bookId: widget.book.id, rating: rating, feedback: feedback);
+              } else {
+                await BookService.updateReview(reviewId: existingReview.id, rating: rating, feedback: feedback);
+              }
+
               if (!mounted) {
                 return;
               }
@@ -87,7 +123,7 @@ class _BookSummaryPreviewScreenState extends State<BookSummaryPreviewScreen> wit
                 context.read<BookProvider>().updateRating(widget.book.id, _currentRating!);
               }
 
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Review submitted!')));
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(existingReview == null ? 'Review submitted!' : 'Review updated!')));
             } catch (e) {
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red.shade400));
@@ -98,6 +134,57 @@ class _BookSummaryPreviewScreenState extends State<BookSummaryPreviewScreen> wit
         );
       },
     );
+  }
+
+  Future<void> _deleteReview(BookReview review) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => const AppAlertDialog(title: 'Delete review', message: 'Are you sure you want to delete your review?', cancelLabel: 'Cancel', confirmLabel: 'Delete'),
+    );
+
+    if (confirmed != true) return;
+
+    final deletedRating = review.rating;
+    final deletedFeedback = review.feedback;
+
+    try {
+      await BookService.deleteReview(review.id);
+      if (!mounted) return;
+      await _loadReviews();
+
+      if (_currentRating != null) {
+        context.read<BookProvider>().updateRating(widget.book.id, _currentRating!);
+      }
+
+      if (!mounted) return;
+      AppSnackBar.show(
+        context,
+        message: 'Review deleted',
+        actionLabel: 'Undo',
+        onAction: () => _undoDeleteReview(rating: deletedRating, feedback: deletedFeedback),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red.shade400));
+    }
+  }
+
+  Future<void> _undoDeleteReview({required int rating, required String feedback}) async {
+    try {
+      await BookService.createReview(bookId: widget.book.id, rating: rating, feedback: feedback);
+      if (!mounted) return;
+      await _loadReviews();
+
+      if (_currentRating != null) {
+        context.read<BookProvider>().updateRating(widget.book.id, _currentRating!);
+      }
+
+      if (!mounted) return;
+      AppSnackBar.show(context, message: 'Review restored');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red.shade400));
+    }
   }
 
   String _timeAgo(DateTime? dt) {
@@ -119,6 +206,7 @@ class _BookSummaryPreviewScreenState extends State<BookSummaryPreviewScreen> wit
   @override
   Widget build(BuildContext context) {
     final rating = _currentRating ?? 0.0;
+    final hasMyReview = _myReview != null;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -149,6 +237,9 @@ class _BookSummaryPreviewScreenState extends State<BookSummaryPreviewScreen> wit
                     isLoadingReviews: _isLoadingReviews,
                     reviews: _reviews,
                     timeAgoBuilder: _timeAgo,
+                    currentUserId: _currentUserId,
+                    onEditReview: (review) => _showAddOrEditReviewBottomSheet(existingReview: review),
+                    onDeleteReview: _deleteReview,
                     onViewAll: () {
                       Navigator.of(context).push(MaterialPageRoute(builder: (_) => BookSummaryReviewsScreen(bookId: widget.book.id)));
                     },
@@ -156,7 +247,10 @@ class _BookSummaryPreviewScreenState extends State<BookSummaryPreviewScreen> wit
 
                   const SizedBox(height: 24),
 
-                  LongButton(text: 'Add review', onPressed: _showAddReviewBottomSheet),
+                  LongButton(
+                    text: hasMyReview ? 'Edit your comment' : 'Add review',
+                    onPressed: () => _showAddOrEditReviewBottomSheet(existingReview: _myReview),
+                  ),
 
                   const SizedBox(height: 20),
                 ],
@@ -211,7 +305,7 @@ class _BookSummaryPreviewScreenState extends State<BookSummaryPreviewScreen> wit
                       widget.book.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w600, fontSize: 18, color: AppColors.textPrimary),
+                      style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 20), fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                     ),
                   ),
                 ),

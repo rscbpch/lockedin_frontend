@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lockedin_frontend/ui/widgets/notifications/app_alert_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:lockedin_frontend/provider/streak_provider.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
@@ -12,6 +13,7 @@ class GoalSelectionScreen extends StatefulWidget {
 
 class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
   int? _selectedMinutes;
+  bool _hasShownCooldownDialog = false;
 
   final List<Map<String, dynamic>> _goals = [
     {'minutes': 10, 'label': '10 minutes', 'desc': 'Just getting started'},
@@ -22,7 +24,13 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
   @override
   void initState() {
     super.initState();
-    // Pre-select the current goal if one is already set
+    _syncSelectedGoalFromProvider();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshGoalStatus();
+    });
+  }
+
+  void _syncSelectedGoalFromProvider() {
     final streak = context.read<StreakProvider>();
     if (streak.dailyGoalSeconds > 0) {
       final currentMinutes = streak.dailyGoalSeconds ~/ 60;
@@ -33,9 +41,51 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
     }
   }
 
+  Future<void> _refreshGoalStatus() async {
+    final streak = context.read<StreakProvider>();
+    await streak.fetchStreak(forceRefresh: true);
+    if (!mounted) return;
+
+    setState(() {
+      _syncSelectedGoalFromProvider();
+    });
+
+    final isReturningUser = streak.hasSetGoal;
+    final cooldownActive = !streak.canUpdateGoal && isReturningUser;
+    if (cooldownActive && !_hasShownCooldownDialog) {
+      _hasShownCooldownDialog = true;
+      await _showCooldownDialog(streak.goalUpdateDaysRemaining);
+    }
+  }
+
+  String _cooldownMessage(int daysRemaining) {
+    return 'You can only change your goal once per week. Try again in $daysRemaining day${daysRemaining == 1 ? '' : 's'}.';
+  }
+
+  Future<void> _showCooldownDialog(int daysRemaining) {
+    return showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        return AppAlertDialog(
+          title: 'Goal update locked',
+          message: _cooldownMessage(daysRemaining),
+          confirmLabel: 'Close',
+        );
+      },
+    );
+  }
+
   Future<void> _onSetGoal() async {
     if (_selectedMinutes == null) return;
     final streak = context.read<StreakProvider>();
+
+    final isReturningUser = streak.hasSetGoal;
+    final cooldownActive = !streak.canUpdateGoal && isReturningUser;
+    if (cooldownActive) {
+      await _showCooldownDialog(streak.goalUpdateDaysRemaining);
+      return;
+    }
+
     final success = await streak.setDailyGoal(minutes: _selectedMinutes!);
     if (!mounted) return;
     if (success) {
@@ -55,9 +105,12 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     final streak = context.watch<StreakProvider>();
+    final isFirstTimeUser = !streak.hasSetGoal;
+    final cooldownActive = !streak.canUpdateGoal && !isFirstTimeUser;
+    final canSubmit = _selectedMinutes != null && !streak.isLoading && !cooldownActive;
 
     return PopScope(
-      canPop: false,
+      canPop: !isFirstTimeUser,
       child: Scaffold(
         backgroundColor: AppColors.background,
         body: SafeArea(
@@ -66,7 +119,19 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const SizedBox(height: 48),
+                const SizedBox(height: 12),
+                if (!isFirstTimeUser)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                      onPressed: () => Navigator.of(context).maybePop(),
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary),
+                    ),
+                  )
+                else
+                  const SizedBox(height: 36),
+
+                const SizedBox(height: 8),
 
                 // Fire icon
                 Container(
@@ -103,21 +168,28 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
                 // Set Goal button
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: (_selectedMinutes == null || streak.isLoading) ? null : _onSetGoal,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      disabledBackgroundColor: AppColors.primary.withOpacity(0.35),
-                      padding: const EdgeInsets.symmetric(vertical: 18),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      elevation: 0,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: cooldownActive ? () => _showCooldownDialog(streak.goalUpdateDaysRemaining) : null,
+                    child: AbsorbPointer(
+                      absorbing: cooldownActive,
+                      child: ElevatedButton(
+                        onPressed: canSubmit ? _onSetGoal : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          disabledBackgroundColor: AppColors.primary.withOpacity(0.35),
+                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          elevation: 0,
+                        ),
+                        child: streak.isLoading
+                            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : const Text(
+                                'Set Goal',
+                                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: 'Quicksand'),
+                              ),
+                      ),
                     ),
-                    child: streak.isLoading
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Text(
-                            'Set Goal',
-                            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700, fontFamily: 'Quicksand'),
-                          ),
                   ),
                 ),
 

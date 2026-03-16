@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:jitsi_meet_flutter_sdk/jitsi_meet_flutter_sdk.dart';
 import 'package:provider/provider.dart';
 import 'package:lockedin_frontend/provider/auth_provider.dart';
@@ -23,6 +25,11 @@ class _MeetingScreenState extends State<MeetingScreen> with ActivityTracker {
   bool _isJoining = true;
   String? _error;
 
+  bool get _isSupportedPlatform {
+    if (kIsWeb) return false;
+    return defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -34,6 +41,14 @@ class _MeetingScreenState extends State<MeetingScreen> with ActivityTracker {
       _isJoining = true;
       _error = null;
     });
+
+    if (!_isSupportedPlatform) {
+      setState(() {
+        _isJoining = false;
+        _error = 'Jitsi meetings are supported only on Android and iOS for this app.';
+      });
+      return;
+    }
 
     try {
       // Fetch JWT from your backend — sets user as moderator, bypasses lobby
@@ -95,13 +110,20 @@ class _MeetingScreenState extends State<MeetingScreen> with ActivityTracker {
           _isConnected = true;
           _isJoining = false;
         }),
-        conferenceTerminated: (_, __) => _handleEnd(),
+        conferenceTerminated: (_, reason) => _handleEnd(reason),
         conferenceWillJoin: (_) => setState(() => _isJoining = true),
         participantJoined: (_, __, ___, ____) {},
         participantLeft: (_) {},
       );
 
       await _jitsi.join(options, listener);
+    } on MissingPluginException {
+      if (mounted) {
+        setState(() {
+          _isJoining = false;
+          _error = 'Jitsi native plugin is not available in this running build. Stop the app and run it again on Android/iOS (not web/macOS), then try joining again.';
+        });
+      }
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -112,8 +134,18 @@ class _MeetingScreenState extends State<MeetingScreen> with ActivityTracker {
     }
   }
 
-  void _handleEnd() {
-    if (mounted) Navigator.pop(context);
+  void _handleEnd([Object? reason]) {
+    if (!mounted) return;
+
+    if (_isConnected) {
+      Navigator.pop(context);
+      return;
+    }
+
+    setState(() {
+      _isJoining = false;
+      _error = reason?.toString() ?? 'Unable to start meeting. Please try joining again.';
+    });
   }
 
   Future<void> _hangup() async {

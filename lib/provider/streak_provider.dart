@@ -20,6 +20,16 @@ class StreakProvider extends ChangeNotifier {
   bool _sessionActive = false;
   bool get sessionActive => _sessionActive;
 
+  // Once-per-day goal completion notification
+  bool _pendingGoalCompletion = false;
+  DateTime? _goalCompletionDate;
+  bool get hasPendingGoalCompletion => _pendingGoalCompletion;
+
+  void acknowledgeGoalCompletion() {
+    _pendingGoalCompletion = false;
+    notifyListeners();
+  }
+
   /// Local timestamp when the current session started (for live UI timer)
   DateTime? _sessionStartTime;
   DateTime? get sessionStartTime => _sessionStartTime;
@@ -39,16 +49,15 @@ class StreakProvider extends ChangeNotifier {
 
   // Easy getters
   bool get hasSetGoal => (streak?.dailyGoalSeconds ?? 0) > 0;
+  bool get canUpdateGoal => streak?.canUpdateGoal ?? true;
+  int get goalUpdateDaysRemaining => streak?.goalUpdateDaysRemaining ?? 0;
   int get currentStreak => streak?.currentStreak ?? 0;
   int get longestStreak => streak?.longestStreak ?? 0;
   int get totalGoalDays => streak?.totalGoalDays ?? 0;
   int get dailyGoalSeconds => streak?.dailyGoalSeconds ?? 0;
   int get todayAccumulatedSeconds => streak?.todayAccumulatedSeconds ?? 0;
   int get todayTrackedSeconds => todayAccumulatedSeconds + currentSessionSeconds;
-  bool get hasCompletedTodayGoal =>
-    streak != null &&
-    dailyGoalSeconds > 0 &&
-    todayTrackedSeconds >= dailyGoalSeconds;
+  bool get hasCompletedTodayGoal => streak != null && dailyGoalSeconds > 0 && todayTrackedSeconds >= dailyGoalSeconds;
 
   Future<void> restoreSession() async {
     final stored = await _storage.read(key: _sessionStartKey);
@@ -139,6 +148,8 @@ class StreakProvider extends ChangeNotifier {
           totalGoalDays: streak!.totalGoalDays,
           dailyGoalSeconds: minutes * 60,
           todayAccumulatedSeconds: streak!.todayAccumulatedSeconds,
+          canUpdateGoal: false,
+          goalUpdateDaysRemaining: 7,
         );
       }
       debugPrint('[StreakProvider] setDailyGoal success: ${minutes * 60} seconds');
@@ -221,6 +232,13 @@ class StreakProvider extends ChangeNotifier {
       debugPrint('[StreakProvider] session ended: $result');
 
       await fetchStreak(forceRefresh: true);
+      // Flag goal completion once per calendar day
+      final now = DateTime.now();
+      final todayDate = DateTime(now.year, now.month, now.day);
+      if (hasCompletedTodayGoal && _goalCompletionDate != todayDate) {
+        _goalCompletionDate = todayDate;
+        _pendingGoalCompletion = true;
+      }
       notifyListeners();
     } catch (e) {
       final msg = e.toString();
@@ -240,6 +258,8 @@ class StreakProvider extends ChangeNotifier {
     _token = null;
     _sessionActive = false;
     _sessionStartTime = null;
+    _pendingGoalCompletion = false;
+    _goalCompletionDate = null;
     _storage.delete(key: _sessionStartKey);
     notifyListeners();
   }

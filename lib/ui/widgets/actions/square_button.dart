@@ -9,8 +9,19 @@ class SquareButton extends StatelessWidget {
   final Color? iconColor;
   final double iconSize;
   final double borderRadius;
+  final BoxBorder? border;
 
-  const SquareButton({super.key, required this.icon, this.onPressed, this.size = 56, this.backgroundColor, this.iconColor, this.iconSize = 28, this.borderRadius = 16});
+  const SquareButton({
+    super.key,
+    required this.icon,
+    this.onPressed,
+    this.size = 56,
+    this.backgroundColor,
+    this.iconColor,
+    this.iconSize = 28,
+    this.borderRadius = 16,
+    this.border,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +30,11 @@ class SquareButton extends StatelessWidget {
       child: Container(
         width: size,
         height: size,
-        decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(borderRadius)),
+        decoration: BoxDecoration(
+          color: backgroundColor ?? AppColors.primary,
+          borderRadius: BorderRadius.circular(borderRadius),
+          border: border, 
+        ),
         child: Icon(icon, color: iconColor ?? AppColors.background, size: iconSize),
       ),
     );
