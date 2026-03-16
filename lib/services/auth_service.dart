@@ -51,6 +51,10 @@ class AuthService {
     return token;
   }
 
+  static Future<String?> getUserId() async {
+    return _storage.read(key: 'userId');
+  }
+
   static Future<void> clearToken() async {
     await _storage.delete(key: 'auth_token');
     await _storage.delete(key: 'token');
@@ -127,7 +131,7 @@ class AuthService {
 
       final status = response.statusCode;
       final body = response.body;
-      
+
       // Log for debugging
       // ignore: avoid_print
       print('AuthService.login -> status: $status body: $body');

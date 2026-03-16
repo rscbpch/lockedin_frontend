@@ -54,7 +54,7 @@ class GoalService {
     debugPrint('[GoalService] status: ${response.statusCode} body: ${response.body}');
 
     if (response.statusCode != 200 && response.statusCode != 201) {
-      if (response.statusCode == 401 || response.statusCode == 403) {
+      if (response.statusCode == 401) {
         throw Exception('UNAUTHORIZED');
       }
       try {

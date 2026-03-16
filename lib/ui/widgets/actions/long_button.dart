@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
+import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 
 class LongButton extends StatelessWidget {
   final String text;
@@ -31,7 +32,7 @@ class LongButton extends StatelessWidget {
           style: OutlinedButton.styleFrom(
             side: const BorderSide(color: AppColors.primary, width: 2),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(Responsive.radius(context, size: 16)),
             ),
             backgroundColor: Colors.white,
           ),
@@ -41,9 +42,9 @@ class LongButton extends StatelessWidget {
               if (icon != null) ...[icon!, const SizedBox(width: 12)],
               Text(
                 text,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Nunito',
-                  fontSize: 16,
+                  fontSize: Responsive.text(context, size: 16),
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w600,
                 ),
@@ -68,9 +69,9 @@ class LongButton extends StatelessWidget {
         ),
         child: Text(
           text,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Nunito',
-            fontSize: 16,
+            fontSize: Responsive.text(context, size: 16),
             color: Colors.white,
             fontWeight: FontWeight.w600,
           ),

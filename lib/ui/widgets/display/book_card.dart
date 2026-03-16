@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:lockedin_frontend/models/book_summary/book.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/responsive/responsive.dart';
+import 'package:lockedin_frontend/ui/widgets/actions/long_button.dart';
+import 'package:lockedin_frontend/ui/widgets/actions/square_button.dart';
 
 class BookCard extends StatelessWidget {
   final Book book;
@@ -16,12 +18,12 @@ class BookCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(Responsive.radius(context, size: 16)),
         border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 2))],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,73 +63,58 @@ class BookCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: SizedBox(
-                          height: Responsive.text(context, size: 15) * 1.3 * 2,
-                          child: Text(
-                            book.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontFamily: 'Nunito',
-                              fontSize: Responsive.text(context, size: 15),
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.textPrimary,
-                              height: 1.3,
+                        child: Column( // Group title + author together
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              book.title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontFamily: 'Nunito',
+                                fontSize: Responsive.text(context, size: 16),
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.textPrimary,
+                                height: 1.3,
+                              ),
                             ),
-                          ),
+                            const SizedBox(height: 2),
+                            Text(
+                              book.author,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontFamily: 'Quicksand',
+                                fontSize: Responsive.text(context, size: 12),
+                                color: AppColors.grey,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(width: 16),
                       _ratingBadge(context),
                     ],
                   ),
-
-                  // Author
-                  Text(
-                    book.author,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 12), color: AppColors.grey),
-                  ),
-
                   // Read now button + favorite
                   Row(
                     children: [
                       Expanded(
-                        child: SizedBox(
-                          height: 36,
-                          child: ElevatedButton(
-                            onPressed: onReadNow,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Responsive.radius(context, size: 12))),
-                              elevation: 0,
-                            ),
-                            child: Text(
-                              'Read now',
-                              style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 13), fontWeight: FontWeight.w700),
-                            ),
-                          ),
+                        child: LongButton(
+                          text: 'Read now',
+                          onPressed: onReadNow,
                         ),
                       ),
                       const SizedBox(width: 10),
-                      GestureDetector(
-                        onTap: onToggleFavorite,
-                        child: Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(Responsive.radius(context, size: 12)),
-                            border: Border.all(color: Colors.grey.shade400, width: 1.5),
-                            color: isFavorite ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
-                          ),
-                          child: Icon(
-                            isFavorite ? Icons.favorite : Icons.favorite_border,
-                            color: isFavorite ? Colors.red : AppColors.grey,
-                            size: Responsive.icon(context, size: 18),
-                          ),
-                        ),
+                      SquareButton(
+                        icon: isFavorite ? Icons.favorite : Icons.favorite_border,
+                        onPressed: onToggleFavorite,
+                        size: 46,
+                        backgroundColor: isFavorite ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
+                        iconColor: isFavorite ? Colors.red : AppColors.grey,
+                        iconSize: Responsive.icon(context, size: 18),
+                        borderRadius: Responsive.radius(context, size: 12),
+                        border: Border.all(color: AppColors.grey, width: 1.5),
                       ),
                     ],
                   ),

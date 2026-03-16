@@ -32,7 +32,7 @@ class LockedInAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
         IconButton(
           icon: Icon(PhosphorIconsBold.chatsCircle, size: width * 0.06, color: AppColors.textPrimary),
-          onPressed: onChatPressed ?? () => context.go('/chat'),
+          onPressed: onChatPressed ?? () => context.push('/chat'),
         ),
       ],
       backgroundColor: AppColors.background,

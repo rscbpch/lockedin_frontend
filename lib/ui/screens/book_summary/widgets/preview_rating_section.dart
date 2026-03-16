@@ -18,7 +18,7 @@ class PreviewRatingSection extends StatelessWidget {
           'Rating',
           style: TextStyle(
             fontFamily: 'Nunito',
-            fontSize: Responsive.text(context, size: 16),
+            fontSize: Responsive.text(context, size: 18),
             fontWeight: FontWeight.w500,
             color: AppColors.textPrimary
           ),
@@ -54,9 +54,10 @@ class PreviewRatingSection extends StatelessWidget {
           Text(
             'Based on $reviewCount review${reviewCount == 1 ? '' : 's'}',
             style: TextStyle(
-              fontFamily: 'Nunito',
+              fontFamily: 'Quicksand',
               fontSize: Responsive.text(context, size: 12),
-              color: AppColors.grey
+              color: AppColors.grey,
+              fontWeight: FontWeight.w500
             ),
           ),
       ],

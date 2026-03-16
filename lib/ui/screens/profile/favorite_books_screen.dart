@@ -4,6 +4,7 @@ import 'package:lockedin_frontend/provider/book_provider.dart';
 import 'package:lockedin_frontend/ui/screens/book_summary/book_summary_preview_screen.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/display/book_card.dart';
+import 'package:lockedin_frontend/ui/widgets/display/simple_back_sliver_app_bar.dart';
 import 'package:provider/provider.dart';
 
 class FavoriteBooksScreen extends StatefulWidget {
@@ -49,49 +50,75 @@ class _FavoriteBooksScreenState extends State<FavoriteBooksScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: AppColors.textPrimary),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text(
-          'Favorites',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, fontFamily: 'Quicksand', color: AppColors.textPrimary),
-        ),
-        centerTitle: true,
-      ),
-      body: provider.isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : favorites.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.favorite_border_rounded, size: 48, color: AppColors.grey.withOpacity(0.5)),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'No favorite books yet',
-                    style: TextStyle(fontFamily: 'Quicksand', fontSize: 15, color: AppColors.grey),
-                  ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              itemCount: favorites.length,
-              itemBuilder: (context, index) {
-                final book = favorites[index];
-                return BookCard(
-                  book: book,
-                  averageRating: provider.bookRatings[book.id],
-                  isFavorite: true,
-                  onReadNow: () => _onReadNow(book),
-                  onToggleFavorite: () => _toggleFavorite(book),
-                );
-              },
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: provider.isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
+                      ),
+                    )
+                  : CustomScrollView(
+                      slivers: [
+                        SimpleBackSliverAppBar(title: 'Favorite'),
+
+                        if (favorites.isEmpty)
+                          const SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.favorite_border_rounded,
+                                    size: 48,
+                                    color: AppColors.grey,
+                                  ),
+                                  SizedBox(height: 12),
+                                  Text(
+                                    'No favorite books yet',
+                                    style: TextStyle(
+                                      fontFamily: 'Quicksand',
+                                      fontSize: 15,
+                                      color: AppColors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        else
+                          SliverPadding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            sliver: SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  final book = favorites[index];
+                                  return BookCard(
+                                    book: book,
+                                    averageRating:
+                                        provider.bookRatings[book.id],
+                                    isFavorite: true,
+                                    onReadNow: () => _onReadNow(book),
+                                    onToggleFavorite: () =>
+                                        _toggleFavorite(book),
+                                  );
+                                },
+                                childCount: favorites.length,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
             ),
+          ],
+        ),
+      ),
     );
   }
 }

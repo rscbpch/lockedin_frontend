@@ -84,7 +84,7 @@ class _BookSummaryScreenState extends State<BookSummaryScreen> {
             children: [
               const SizedBox(height: 4),
               SearchBarWidget(controller: _searchController, onSubmitted: _onSearch, onClear: _onClearSearch, hintText: 'Search books'),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               CategoryChips(categories: provider.categories, selectedCategory: _selectedCategory, onSelected: _onCategorySelected),
               const SizedBox(height: 12),
               Expanded(child: _buildBody(provider)),
@@ -109,14 +109,14 @@ class _BookSummaryScreenState extends State<BookSummaryScreen> {
             const SizedBox(height: 12),
             Text(
               'Failed to load books',
-              style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 16), fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+              style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 16), fontWeight: FontWeight.w600, color: AppColors.grey),
             ),
             const SizedBox(height: 8),
             TextButton(
               onPressed: () => provider.loadBooks(search: _searchController.text.isNotEmpty ? _searchController.text : null, category: _selectedCategory, forceRefresh: true),
-              child: const Text(
+              child: Text(
                 'Retry',
-                style: TextStyle(fontFamily: 'Nunito', color: AppColors.primary),
+                style: TextStyle(fontFamily: 'Nunito', color: AppColors.primary, fontSize: Responsive.text(context, size: 16)),
               ),
             ),
           ],
@@ -129,7 +129,7 @@ class _BookSummaryScreenState extends State<BookSummaryScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.menu_book_rounded, color: AppColors.grey, size: 48),
+            Icon(Icons.menu_book_rounded, color: AppColors.grey, size: 40),
             const SizedBox(height: 12),
             Text(
               'No books found',

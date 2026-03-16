@@ -20,6 +20,16 @@ class StreakProvider extends ChangeNotifier {
   bool _sessionActive = false;
   bool get sessionActive => _sessionActive;
 
+  // Once-per-day goal completion notification
+  bool _pendingGoalCompletion = false;
+  DateTime? _goalCompletionDate;
+  bool get hasPendingGoalCompletion => _pendingGoalCompletion;
+
+  void acknowledgeGoalCompletion() {
+    _pendingGoalCompletion = false;
+    notifyListeners();
+  }
+
   /// Local timestamp when the current session started (for live UI timer)
   DateTime? _sessionStartTime;
   DateTime? get sessionStartTime => _sessionStartTime;
@@ -27,29 +37,56 @@ class StreakProvider extends ChangeNotifier {
   /// Returns the current session elapsed seconds (for live display)
   int get currentSessionSeconds {
     if (_sessionStartTime == null || !_sessionActive) return 0;
-    return DateTime.now().difference(_sessionStartTime!).inSeconds;
+
+    final now = DateTime.now();
+    final start = _sessionStartTime!;
+    final todayStart = DateTime(now.year, now.month, now.day);
+
+    // Only count the portion that belongs to today.
+    final effectiveStart = start.isBefore(todayStart) ? todayStart : start;
+    return now.difference(effectiveStart).inSeconds;
   }
 
   // Easy getters
   bool get hasSetGoal => (streak?.dailyGoalSeconds ?? 0) > 0;
+  bool get canUpdateGoal => streak?.canUpdateGoal ?? true;
+  int get goalUpdateDaysRemaining => streak?.goalUpdateDaysRemaining ?? 0;
   int get currentStreak => streak?.currentStreak ?? 0;
   int get longestStreak => streak?.longestStreak ?? 0;
   int get totalGoalDays => streak?.totalGoalDays ?? 0;
   int get dailyGoalSeconds => streak?.dailyGoalSeconds ?? 0;
   int get todayAccumulatedSeconds => streak?.todayAccumulatedSeconds ?? 0;
+  int get todayTrackedSeconds => todayAccumulatedSeconds + currentSessionSeconds;
+  bool get hasCompletedTodayGoal => streak != null && dailyGoalSeconds > 0 && todayTrackedSeconds >= dailyGoalSeconds;
 
-  /// Restore a persisted session start time (call once on app startup).
   Future<void> restoreSession() async {
     final stored = await _storage.read(key: _sessionStartKey);
     if (stored != null) {
       final ts = DateTime.tryParse(stored);
       if (ts != null) {
-        _sessionActive = true;
-        _sessionStartTime = ts;
-        notifyListeners();
-        debugPrint('[StreakProvider] restored session from $ts');
+        final now = DateTime.now();
+        if (_isSameDay(ts, now)) {
+          // Restore the session start time so currentSessionSeconds is correct
+          _sessionActive = true;
+          _sessionStartTime = ts;
+          notifyListeners();
+          debugPrint('[StreakProvider] restored session from $ts');
+
+          // Immediately end and flush it to the backend
+          await endSession();
+          debugPrint('[StreakProvider] flushed restored session to backend');
+        } else {
+          await _storage.delete(key: _sessionStartKey);
+          _sessionActive = false;
+          _sessionStartTime = null;
+          debugPrint('[StreakProvider] discarded stale session from $ts');
+        }
       }
     }
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
   // ---------- FETCH STREAK ----------
@@ -111,6 +148,8 @@ class StreakProvider extends ChangeNotifier {
           totalGoalDays: streak!.totalGoalDays,
           dailyGoalSeconds: minutes * 60,
           todayAccumulatedSeconds: streak!.todayAccumulatedSeconds,
+          canUpdateGoal: false,
+          goalUpdateDaysRemaining: 7,
         );
       }
       debugPrint('[StreakProvider] setDailyGoal success: ${minutes * 60} seconds');
@@ -180,7 +219,6 @@ class StreakProvider extends ChangeNotifier {
   Future<void> endSession() async {
     if (!_sessionActive) return;
 
-    // Immediately stop the UI timer
     _sessionActive = false;
     _sessionStartTime = null;
     _storage.delete(key: _sessionStartKey);
@@ -193,8 +231,15 @@ class StreakProvider extends ChangeNotifier {
       final result = await GoalService.endSession(token: _token!);
       debugPrint('[StreakProvider] session ended: $result');
 
-      // Refresh streak data to get updated accumulated seconds
       await fetchStreak(forceRefresh: true);
+      // Flag goal completion once per calendar day
+      final now = DateTime.now();
+      final todayDate = DateTime(now.year, now.month, now.day);
+      if (hasCompletedTodayGoal && _goalCompletionDate != todayDate) {
+        _goalCompletionDate = todayDate;
+        _pendingGoalCompletion = true;
+      }
+      notifyListeners();
     } catch (e) {
       final msg = e.toString();
       if (msg.contains('UNAUTHORIZED')) {
@@ -213,6 +258,8 @@ class StreakProvider extends ChangeNotifier {
     _token = null;
     _sessionActive = false;
     _sessionStartTime = null;
+    _pendingGoalCompletion = false;
+    _goalCompletionDate = null;
     _storage.delete(key: _sessionStartKey);
     notifyListeners();
   }

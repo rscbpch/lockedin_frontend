@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 
 class ProfileStatsRow extends StatelessWidget {
@@ -19,10 +20,13 @@ class ProfileStatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final followersLabel = (followers == 0 || followers == 1) ? 'Follower' : 'Followers';
+    final followingLabel = (following == 0 || following == 1) ? 'Following' : 'Followings';
+
     final stats = [
       if (postNumber != null) _StatItem(count: '$postNumber', label: 'Posts'),
-      _StatItem(count: '$followers', label: 'Followers', onTap: onFollowersTap),
-      _StatItem(count: '$following', label: 'Following', onTap: onFollowingTap),
+      _StatItem(count: '$followers', label: followersLabel, onTap: onFollowersTap),
+      _StatItem(count: '$following', label: followingLabel, onTap: onFollowingTap),
     ];
 
     return Row(
@@ -53,11 +57,11 @@ class _StatItem extends StatelessWidget {
     final labelWidget = Text(
       label,
       style: TextStyle(
-        fontSize: 13,
+        fontSize: Responsive.text(context, size: 14),
         color: onTap != null ? AppColors.primary : AppColors.grey,
-        decoration: onTap != null
-            ? TextDecoration.underline
-            : TextDecoration.none,
+        // decoration: onTap != null
+        //     ? TextDecoration.underline
+        //     : TextDecoration.none,
         decorationColor: AppColors.primary,
       ),
     );
@@ -66,8 +70,8 @@ class _StatItem extends StatelessWidget {
       children: [
         Text(
           count,
-          style: const TextStyle(
-            fontSize: 18,
+          style: TextStyle(
+            fontSize: Responsive.text(context, size: 18),
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
           ),

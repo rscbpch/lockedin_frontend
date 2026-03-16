@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 
 class StreakBadge extends StatelessWidget {
@@ -15,12 +16,12 @@ class StreakBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(30),
       ),
       child: Text(
-        '🔥 ${streakDays ?? 0} Days Streak',
-        style: const TextStyle(
-          fontSize: 14,
+        '🔥 ${streakDays ?? 0} ${(streakDays ?? 0) == 1 ? 'Day' : 'Days'} streak',
+        style: TextStyle(
+          fontSize: Responsive.text(context, size: 14),
           fontFamily: 'Quicksand',
           fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
+          color: AppColors.textPrimary
         ),
       ),
     );

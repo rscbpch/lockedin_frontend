@@ -102,12 +102,7 @@ class FeatureCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(
-            Responsive.radius(context, size: 12),
-          ),
-        ),
+        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(Responsive.radius(context, size: 12))),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -115,12 +110,7 @@ class FeatureCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               label,
-              style: TextStyle(
-                fontFamily: 'Nunito',
-                fontSize: Responsive.text(context, size: 16),
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
-              ),
+              style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 16), fontWeight: FontWeight.w500, color: AppColors.textPrimary),
             ),
           ],
         ),
@@ -138,13 +128,32 @@ class ProductivityStreakCard extends StatefulWidget {
 
 class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
   Timer? _timer;
+  bool _hasRefreshedOnCompletion = false;
+  DateTime? _lastTrackedDate;
 
   @override
   void initState() {
     super.initState();
-    // Tick every second to update the live session counter
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() {});
+      if (mounted) {
+        setState(() {});
+        final streak = context.read<StreakProvider>();
+
+        // Reset refresh flag each new calendar day
+        final todayDate = DateTime.now();
+        final todayDay = DateTime(todayDate.year, todayDate.month, todayDate.day);
+        if (_lastTrackedDate != null && _lastTrackedDate != todayDay) {
+          _hasRefreshedOnCompletion = false;
+        }
+        _lastTrackedDate = todayDay;
+
+        // Only fetch once when goal is completed, not every second
+        if (streak.hasCompletedTodayGoal && !streak.sessionActive && !_hasRefreshedOnCompletion) {
+          _hasRefreshedOnCompletion = true;
+          streak.fetchStreak(forceRefresh: true);
+        }
+
+      }
     });
   }
 
@@ -154,20 +163,20 @@ class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
     super.dispose();
   }
 
+
   /// Returns day labels starting from Monday of the current week.
   List<String> get _dayLabels => const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-  /// Determines which days of the current week have met the goal,
-  /// based on the currentStreak count going backwards from today.
   List<bool> _weekActivity(int currentStreak, bool todayGoalMet) {
     final now = DateTime.now();
     final todayIndex = now.weekday - 1; // 0-based (Mon=0 .. Sun=6)
 
     final activeDays = List.filled(7, false);
 
-    // Ensure at least 1 so today gets marked when goal is met locally
-    int streakRemaining = todayGoalMet ? (currentStreak < 1 ? 1 : currentStreak) : currentStreak;
-    int startDay = todayGoalMet ? todayIndex : todayIndex - 1;
+    final bool countToday = todayGoalMet && currentStreak > 0;
+
+    int streakRemaining = currentStreak;
+    int startDay = countToday ? todayIndex : todayIndex - 1;
 
     for (int i = startDay; i >= 0 && streakRemaining > 0; i--) {
       activeDays[i] = true;
@@ -192,12 +201,12 @@ class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
     final width = MediaQuery.of(context).size.width;
     final streak = context.watch<StreakProvider>();
 
-    final goalSeconds = streak.dailyGoalSeconds;
-    final accumulated = streak.todayAccumulatedSeconds;
-    final liveSessionSeconds = streak.currentSessionSeconds;
-    final totalToday = accumulated + liveSessionSeconds;
-    final todayGoalMet = goalSeconds > 0 && totalToday >= goalSeconds;
+    final totalToday = streak.todayTrackedSeconds;
+    final todayGoalMet = streak.hasCompletedTodayGoal;
     final weekActive = _weekActivity(streak.currentStreak, todayGoalMet);
+    final streakImagePath = todayGoalMet
+        ? 'assets/images/streak.png'
+        : 'assets/images/bw-streak.png';
 
     return Container(
       width: double.infinity,
@@ -210,96 +219,97 @@ class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Image.asset('assets/images/streak.png', height: width * 0.22),
-          const SizedBox(height: 2),
+          const SizedBox(height: 12),
+
+          // Image with timer overlaid at the bottom
+          Stack(
+            alignment: Alignment.bottomCenter,
+            clipBehavior: Clip.none,
+            children: [
+              Image.asset(streakImagePath, height: width * 0.22),
+
+              // Timer pill — only shown when goal is NOT met
+              if (!todayGoalMet)
+                Positioned(
+                  bottom: -(width * 0.035), // float it slightly below the image
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: streak.sessionActive
+                            ? AppColors.primary.withOpacity(0.3)
+                            : AppColors.grey.withOpacity(0.3),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.06),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: streak.sessionActive ? Colors.green : AppColors.grey,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          _formatSessionTime(totalToday),
+                          style: TextStyle(
+                            fontSize: Responsive.text(context, size: 13),
+                            fontFamily: 'Nunito',
+                            fontWeight: FontWeight.bold,
+                            color: streak.sessionActive ? AppColors.primary : AppColors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+
+          // Extra gap when timer pill is shown so it doesn't overlap the streak number
+          SizedBox(height: todayGoalMet ? 2 : width * 0.045),
+
           Text(
             '${streak.currentStreak}',
-            style: TextStyle(fontSize: Responsive.text(context, size: 32), fontFamily: 'Nunito', fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+            style: TextStyle(
+              fontSize: Responsive.text(context, size: 32),
+              fontFamily: 'Nunito',
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
           ),
-          const Text(
+          
+          Text(
             'Current streak',
-            style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w500, color: AppColors.textPrimary),
+            style: TextStyle(
+              fontFamily: 'Nunito',
+              fontWeight: FontWeight.w500,
+              color: AppColors.textPrimary,
+              fontSize: Responsive.text(context, size: 16)
+            ),
           ),
-          const SizedBox(height: 6),
+          // const SizedBox(height: 8),
 
-          // Goal complete or session timer
-          if (todayGoalMet) ...[
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 24),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.green.withOpacity(0.3)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.check_circle, color: Colors.green, size: 16),
-                  const SizedBox(width: 6),
-                  Text(
-                    "Today's goal complete!",
-                    style: TextStyle(fontSize: Responsive.text(context, size: 12), fontFamily: 'Nunito', fontWeight: FontWeight.bold, color: Colors.green),
-                  ),
-                ],
-              ),
-            ),
-          ] else ...[
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 24),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: streak.sessionActive ? AppColors.primary.withOpacity(0.08) : AppColors.grey.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: streak.sessionActive ? AppColors.primary.withOpacity(0.3) : AppColors.grey.withOpacity(0.3)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 7,
-                    height: 7,
-                    decoration: BoxDecoration(color: streak.sessionActive ? Colors.green : AppColors.grey, shape: BoxShape.circle),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    _formatSessionTime(totalToday),
-                    style: TextStyle(
-                      fontSize: Responsive.text(context, size: 14),
-                      fontFamily: 'Nunito',
-                      fontWeight: FontWeight.bold,
-                      color: streak.sessionActive ? AppColors.primary : AppColors.grey,
-                    ),
-                  ),
-                  const SizedBox(width: 5),
-                  Text(
-                    streak.sessionActive ? 'Active' : 'Paused',
-                    style: TextStyle(
-                      fontSize: Responsive.text(context, size: 11),
-                      fontFamily: 'Quicksand',
-                      fontWeight: FontWeight.w600,
-                      color: streak.sessionActive ? AppColors.primary : AppColors.grey,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          const SizedBox(height: 6),
-
-          // Stats row
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Text(
               'Longest streak: ${streak.longestStreak}',
-              style: TextStyle(
-                fontFamily: 'Nunito'
-              ),
+              style: const TextStyle(fontFamily: 'Nunito'),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
 
           // Weekly day checks
           Padding(

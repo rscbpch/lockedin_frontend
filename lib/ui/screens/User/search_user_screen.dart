@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:lockedin_frontend/ui/screens/User/widget/user_search_tile.dart';
+import 'package:lockedin_frontend/ui/widgets/display/simple_back_sliver_app_bar.dart';
+import 'package:lockedin_frontend/ui/widgets/inputs/search_bar_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lockedin_frontend/provider/user_search_provider.dart';
 import 'package:lockedin_frontend/provider/auth_provider.dart';
 import 'package:lockedin_frontend/services/user_service.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
-
 
 class SearchUserScreen extends StatelessWidget {
   const SearchUserScreen({super.key});
@@ -33,7 +34,18 @@ class _SearchUserViewState extends State<_SearchUserView> {
   final _controller = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_onSearchChanged);
+  }
+
+  void _onSearchChanged() {
+    context.read<UserSearchProvider>().search(_controller.text);
+  }
+
+  @override
   void dispose() {
+    _controller.removeListener(_onSearchChanged); // 👈 clean up listener
     _controller.dispose();
     super.dispose();
   }
@@ -44,75 +56,32 @@ class _SearchUserViewState extends State<_SearchUserView> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Find People',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-            fontFamily: 'Quicksand',
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: Column(
-        children: [
-          _buildSearchBar(context, provider),
-          const SizedBox(height: 8),
-          Expanded(child: _buildBody(provider)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSearchBar(BuildContext context, UserSearchProvider provider) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.backgroundBox,
-          borderRadius: BorderRadius.circular(30),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            SimpleBackSliverAppBar(
+              title: 'Find People',
+              onBack: () => Navigator.pop(context),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: SearchBarWidget(
+                  controller: _controller,
+                  hintText: 'Search by name or username...',
+                  onChanged: provider.search, // 👈 live search
+                  onClear: () {
+                    _controller.clear();
+                    context.read<UserSearchProvider>().clear();
+                  },
+                ),
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 8)),
+            SliverFillRemaining(
+              child: _buildBody(provider),
             ),
           ],
-        ),
-        child: TextField(
-          controller: _controller,
-          onChanged: provider.search,
-          autofocus: true,
-          decoration: InputDecoration(
-            hintText: 'Search by name or username...',
-            hintStyle: const TextStyle(color: AppColors.grey, fontSize: 14),
-            prefixIcon: const Icon(Icons.search, color: AppColors.grey),
-            suffixIcon: _controller.text.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.close,
-                        color: AppColors.grey, size: 18),
-                    onPressed: () {
-                      _controller.clear();
-                      provider.clear();
-                    },
-                  )
-                : null,
-            filled: true,
-            fillColor: AppColors.backgroundBox,
-            contentPadding: const EdgeInsets.symmetric(vertical: 0),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(30),
-              borderSide: BorderSide.none,
-            ),
-          ),
         ),
       ),
     );
@@ -130,8 +99,7 @@ class _SearchUserViewState extends State<_SearchUserView> {
                 color: AppColors.backgroundBox,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.person_search,
-                  size: 48, color: AppColors.grey),
+              child: const Icon(Icons.person_search, size: 48, color: AppColors.grey),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -146,10 +114,7 @@ class _SearchUserViewState extends State<_SearchUserView> {
             const SizedBox(height: 6),
             const Text(
               'Search by name or username',
-              style: TextStyle(
-                  color: AppColors.grey,
-                  fontSize: 13,
-                  fontFamily: 'Quicksand'),
+              style: TextStyle(color: AppColors.grey, fontSize: 13, fontFamily: 'Quicksand'),
             ),
           ],
         ),
@@ -180,10 +145,7 @@ class _SearchUserViewState extends State<_SearchUserView> {
             const SizedBox(height: 12),
             Text(
               'No results for "${_controller.text}"',
-              style: const TextStyle(
-                  color: AppColors.grey,
-                  fontSize: 14,
-                  fontFamily: 'Quicksand'),
+              style: const TextStyle(color: AppColors.grey, fontSize: 14, fontFamily: 'Quicksand'),
             ),
           ],
         ),
@@ -199,9 +161,7 @@ class _SearchUserViewState extends State<_SearchUserView> {
         endIndent: 16,
         color: AppColors.accent,
       ),
-      itemBuilder: (context, index) =>
-          UserSearchTile(user :provider.results[index]),
+      itemBuilder: (context, index) => UserSearchTile(user: provider.results[index]),
     );
   }
-
 }

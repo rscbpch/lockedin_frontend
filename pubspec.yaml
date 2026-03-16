@@ -90,6 +90,7 @@ flutter:
     - assets/images/flashcard.png
     - assets/images/task-breakdown.png
     - assets/images/streak.png
+    - assets/images/bw-streak.png
     - assets/images/forgetPass.png
     - assets/images/otp.png
     - assets/images/coffee.mp4

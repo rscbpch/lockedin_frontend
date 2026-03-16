@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import 'package:provider/provider.dart';
 import 'package:lockedin_frontend/provider/auth_provider.dart';
 import 'package:lockedin_frontend/provider/book_provider.dart';
@@ -32,7 +33,14 @@ void showProfileSettingsDrawer(BuildContext context) {
     ),
     transitionBuilder: (_, animation, __, child) {
       return SlideTransition(
-        position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut)),
+        position: Tween<Offset>(
+          begin: const Offset(1, 0),
+          end: Offset.zero
+        ).animate(
+          CurvedAnimation(
+            parent: animation, curve: Curves.easeOut
+          )
+        ),
         child: child,
       );
     },
@@ -44,12 +52,14 @@ class _ProfileSettingsPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+
     return Align(
       alignment: Alignment.centerRight,
       child: Material(
         color: AppColors.background,
         child: SizedBox(
-          width: MediaQuery.of(context).size.width * 0.78,
+          width: width * 0.78,
           height: double.infinity,
           child: SafeArea(
             child: Padding(
@@ -63,12 +73,21 @@ class _ProfileSettingsPanel extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Settings',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, fontFamily: 'Quicksand', color: AppColors.textPrimary),
+                        style: TextStyle(
+                          fontSize: Responsive.text(context, size: 20),
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Nunito',
+                          color: AppColors.textPrimary
+                        ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close_rounded, color: AppColors.grey),
+                        icon: Icon(
+                          Icons.close_rounded,
+                          color: AppColors.grey,
+                          size: width * 0.06,
+                        ),
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                     ],
@@ -84,7 +103,7 @@ class _ProfileSettingsPanel extends StatelessWidget {
                     iconColor: AppColors.primary,
                     iconBg: AppColors.accent,
                     title: 'Set Daily Goal',
-                    subtitle: 'Change your daily study target',
+                    subtitle: 'Set your study target',
                     onTap: () {
                       Navigator.of(context, rootNavigator: true).pop();
                       Navigator.of(context, rootNavigator: true).push(
@@ -99,7 +118,7 @@ class _ProfileSettingsPanel extends StatelessWidget {
                     },
                   ),
 
-                  const Divider(height: 1, color: Color(0xFFF0EDE8)),
+                  const Divider(height: 4, color: Color(0xFFF0EDE8)),
 
                   // ── Favorites ───────────────────────────────────────────
                   _SettingTile(
@@ -118,7 +137,7 @@ class _ProfileSettingsPanel extends StatelessWidget {
                     },
                   ),
 
-                  const Divider(height: 1, color: Color(0xFFF0EDE8)),
+                  const Divider(height: 4, color: Color(0xFFF0EDE8)),
 
                   // ── Log out ─────────────────────────────────────────────
                   _SettingTile(
@@ -185,13 +204,22 @@ class _SettingTile extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, fontFamily: 'Quicksand', color: titleColor ?? AppColors.textPrimary),
+                      style: TextStyle(
+                        fontSize: Responsive.text(context, size: 16),
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Quicksand',
+                        color: titleColor ?? AppColors.textPrimary
+                      ),
                     ),
                     if (subtitle != null) ...[
                       const SizedBox(height: 2),
                       Text(
                         subtitle!,
-                        style: TextStyle(fontSize: 12, fontFamily: 'Quicksand', color: AppColors.grey),
+                        style: TextStyle(
+                          fontSize: Responsive.text(context, size: 14),
+                          fontFamily: 'Quicksand',
+                          color: AppColors.grey
+                        ),
                       ),
                     ],
                   ],
@@ -199,7 +227,7 @@ class _SettingTile extends StatelessWidget {
               ),
 
               // Chevron
-              Icon(Icons.chevron_right_rounded, color: AppColors.grey.withOpacity(0.6), size: 20),
+              Icon(Icons.chevron_right_rounded, color: AppColors.grey, size: 20),
             ],
           ),
         ),
