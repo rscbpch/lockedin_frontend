@@ -12,7 +12,7 @@ class ProfileAvatar extends StatelessWidget {
   });
 
   void _viewFullScreen(BuildContext context) {
-    Navigator.of(context).push(
+    Navigator.of(context, rootNavigator: true).push(
       PageRouteBuilder(
         opaque: false,
         barrierColor: Colors.black87,

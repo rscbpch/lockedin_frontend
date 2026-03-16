@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/ai_breakdown/widget/assistant_message_bubble.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/ai_breakdown/widget/chat_empty_state.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/ai_breakdown/widget/chat_input_bar.dart';
@@ -195,9 +196,9 @@ class _AiBreakdownScreenState extends State<AiBreakdownScreen> with ActivityTrac
         onPressed: () => context.go('/productivity-hub'),
         icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF1E293B)),
       ),
-      title: const Text(
+      title: Text(
         'Task Breakdown',
-        style: TextStyle(color: Color(0xFF1E293B), fontFamily: 'Nunito', fontSize: 20, fontWeight: FontWeight.w600),
+        style: TextStyle(color: Color(0xFF1E293B), fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 20), fontWeight: FontWeight.w600),
       ),
       actions: [
         IconButton(

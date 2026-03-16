@@ -60,13 +60,16 @@ class _LobbyScreenState extends State<LobbyScreen> {
     try {
       final joined = await provider.joinRoom(room.roomId);
       if (!mounted) return;
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) =>
-              MeetingScreen(room: joined, displayName: _displayName),
-        ),
-      ).then((_) => provider.leaveRoom(room.roomId));
+      Navigator.of(context, rootNavigator: true)
+          .push(
+            MaterialPageRoute(
+              builder: (_) => MeetingScreen(
+                room: joined,
+                displayName: _displayName,
+              ),
+            ),
+          )
+          .then((_) => provider.leaveRoom(room.roomId));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -89,13 +92,16 @@ class _LobbyScreenState extends State<LobbyScreen> {
           final room = await provider.createRoom(name);
           if (!mounted) return;
           Navigator.pop(context);
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) =>
-                  MeetingScreen(room: room, displayName: _displayName),
-            ),
-          ).then((_) => provider.leaveRoom(room.roomId));
+          Navigator.of(context, rootNavigator: true)
+              .push(
+                MaterialPageRoute(
+                  builder: (_) => MeetingScreen(
+                    room: room,
+                    displayName: _displayName,
+                  ),
+                ),
+              )
+              .then((_) => provider.leaveRoom(room.roomId));
         },
       ),
     );

@@ -177,7 +177,7 @@ class _BookSummaryPreviewScreenState extends State<BookSummaryPreviewScreen> wit
       backgroundColor: AppColors.background,
 
       leading: IconButton(
-        icon: const Icon(Icons.chevron_left, size: 28, color: AppColors.textPrimary),
+        icon: const Icon(Icons.chevron_left, size: 32, color: AppColors.textPrimary),
         onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
       ),
 

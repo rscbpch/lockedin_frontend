@@ -7,6 +7,7 @@ import 'package:lockedin_frontend/ui/screens/book_summary/widgets/add_review_bot
 import 'package:lockedin_frontend/ui/screens/book_summary/widgets/review_card.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/actions/long_button.dart';
+import 'package:lockedin_frontend/ui/widgets/display/simple_back_sliver_app_bar.dart';
 import 'package:provider/provider.dart';
 
 class BookSummaryReviewsScreen extends StatefulWidget {
@@ -103,72 +104,13 @@ class _BookSummaryReviewsScreenState extends State<BookSummaryReviewsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      // body: SafeArea(
-      //   child: Column(
-      //     children: [
-      //       Padding(
-      //         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      //         child: Stack(
-      //           alignment: Alignment.center,
-      //           children: [
-      //             Align(
-      //               alignment: Alignment.centerLeft,
-      //               child: IconButton(
-      //                 icon: const Icon(Icons.chevron_left, color: AppColors.textPrimary, size: 28),
-      //                 onPressed: () => Navigator.of(context).pop(),
-      //               ),
-      //             ),
-      //             Text(
-      //               'Reviews',
-      //               style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 18), fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-      //             ),
-      //           ],
-      //         ),
-      //       ),
-      //       Expanded(
-      //         child: _isLoading
-      //             ? const Center(child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2))
-      //             : ListView(
-      //                 padding: const EdgeInsets.symmetric(horizontal: 20),
-      //                 children: [
-      //                   // ─── Rating summary ──────────────────
-      //                   _buildRatingSummary(context),
-      //                   const SizedBox(height: 16),
-      //                   const Divider(height: 1, color: Color(0xFFE8E8E8)),
-      //                   const SizedBox(height: 16),
-      //                   // ─── Reviews list ────────────────────
-      //                   if (_reviews.isEmpty)
-      //                     Padding(
-      //                       padding: const EdgeInsets.only(top: 40),
-      //                       child: Center(
-      //                         child: Text(
-      //                           'No reviews yet. Be the first to review!',
-      //                           style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 14), color: AppColors.grey),
-      //                         ),
-      //                       ),
-      //                     )
-      //                   else
-      //                     ..._reviews.map((review) => ReviewCard(review: review, timeAgoBuilder: _timeAgo)),
-      //                 ],
-      //               ),
-      //       ),
-
-      //       // ─── Bottom button ───────────────────────────────
-      //       Padding(
-      //         padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-      //         child: LongButton(text: 'Add review', onPressed: _showAddReviewBottomSheet),
-      //       ),
-      //     ],
-      //   ),
-      // ),
-
       body: SafeArea(
         child: Column(
           children: [
             Expanded(
               child: CustomScrollView(
                 slivers: [
-                  _buildSliverAppBar(),
+                  const SimpleBackSliverAppBar(title: 'Reviews'),
 
                   SliverToBoxAdapter(
                     child: _isLoading
@@ -255,34 +197,6 @@ class _BookSummaryReviewsScreenState extends State<BookSummaryReviewsScreen> {
           style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 13), color: AppColors.grey),
         ),
       ],
-    );
-  }
-
-  Widget _buildSliverAppBar() {
-    return SliverAppBar(
-      pinned: true,
-      elevation: 0,
-      backgroundColor: AppColors.background,
-      surfaceTintColor: Colors.transparent,
-
-      title: Text(
-        'Reviews',
-        style: TextStyle(
-          fontFamily: 'Nunito',
-          fontSize: Responsive.text(context, size: 18),
-          fontWeight: FontWeight.w700,
-          color: AppColors.textPrimary,
-        ),
-      ),
-
-      leading: IconButton(
-        icon: const Icon(
-          Icons.chevron_left,
-          color: AppColors.textPrimary,
-          size: 28,
-        ),
-        onPressed: () => Navigator.of(context).pop(),
-      ),
     );
   }
 }

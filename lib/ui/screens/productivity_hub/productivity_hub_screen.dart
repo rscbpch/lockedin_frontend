@@ -128,15 +128,7 @@ class ProductivityStreakCard extends StatefulWidget {
 
 class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
   Timer? _timer;
-
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   // Tick every second to update the live session counter
-  //   _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-  //     if (mounted) setState(() {});
-  //   });
-  // }
+  bool _hasRefreshedOnCompletion = false;
 
   @override
   void initState() {
@@ -144,9 +136,10 @@ class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) {
         setState(() {});
-        // Auto-refresh streak from backend when goal is just completed
         final streak = context.read<StreakProvider>();
-        if (streak.hasCompletedTodayGoal && !streak.sessionActive) {
+        // Only fetch once when goal is completed, not every second
+        if (streak.hasCompletedTodayGoal && !streak.sessionActive && !_hasRefreshedOnCompletion) {
+          _hasRefreshedOnCompletion = true;
           streak.fetchStreak(forceRefresh: true);
         }
       }
@@ -161,26 +154,6 @@ class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
 
   /// Returns day labels starting from Monday of the current week.
   List<String> get _dayLabels => const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-  /// Determines which days of the current week have met the goal,
-  /// based on the currentStreak count going backwards from today.
-  // List<bool> _weekActivity(int currentStreak, bool todayGoalMet) {
-  //   final now = DateTime.now();
-  //   final todayIndex = now.weekday - 1; // 0-based (Mon=0 .. Sun=6)
-
-  //   final activeDays = List.filled(7, false);
-
-  //   // Ensure at least 1 so today gets marked when goal is met locally
-  //   int streakRemaining = todayGoalMet ? (currentStreak < 1 ? 1 : currentStreak) : currentStreak;
-  //   int startDay = todayGoalMet ? todayIndex : todayIndex - 1;
-
-  //   for (int i = startDay; i >= 0 && streakRemaining > 0; i--) {
-  //     activeDays[i] = true;
-  //     streakRemaining--;
-  //   }
-
-  //   return activeDays;
-  // }
 
   List<bool> _weekActivity(int currentStreak, bool todayGoalMet) {
     final now = DateTime.now();
@@ -219,6 +192,7 @@ class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
     final totalToday = streak.todayTrackedSeconds;
     final todayGoalMet = streak.hasCompletedTodayGoal;
     final weekActive = _weekActivity(streak.currentStreak, todayGoalMet);
+    final streakImagePath = todayGoalMet ? 'assets/images/streak.png' : 'assets/images/bw-streak.png';
 
     return Container(
       width: double.infinity,
@@ -231,7 +205,7 @@ class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Image.asset('assets/images/streak.png', height: width * 0.22),
+          Image.asset(streakImagePath, height: width * 0.22),
           const SizedBox(height: 2),
           Text(
             '${streak.currentStreak}',
@@ -245,26 +219,22 @@ class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
 
           // Goal complete or session timer
           if (todayGoalMet) ...[
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 24),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.green.withOpacity(0.3)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.check_circle, color: Colors.green, size: 16),
-                  const SizedBox(width: 6),
-                  Text(
-                    "Today's goal complete!",
-                    style: TextStyle(fontSize: Responsive.text(context, size: 12), fontFamily: 'Nunito', fontWeight: FontWeight.bold, color: Colors.green),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.check_circle, color: Colors.green, size: 18),
+                const SizedBox(width: 6),
+                Text(
+                  "Today's goal complete!",
+                  style: TextStyle(
+                    fontSize: Responsive.text(context, size: 14),
+                    fontFamily: 'Nunito',
+                    fontWeight: FontWeight.w600,
+                    color: Colors.green
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ] else ...[
             Container(
@@ -303,14 +273,14 @@ class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
               ),
             ),
           ],
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
 
           // Stats row
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Text('Longest streak: ${streak.longestStreak}', style: TextStyle(fontFamily: 'Nunito')),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
 
           // Weekly day checks
           Padding(
