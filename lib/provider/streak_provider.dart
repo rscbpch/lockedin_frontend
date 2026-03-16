@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:lockedin_frontend/models/user/streak.dart';
@@ -15,6 +17,9 @@ class StreakProvider extends ChangeNotifier {
   Streak? streak;
 
   String? _token;
+  Timer? _liveSessionTicker;
+  bool _isSyncingGoalCompletion = false;
+  DateTime? _goalCompletionSyncedDate;
 
   /// Tracks whether a backend session is currently active
   bool _sessionActive = false;
@@ -54,9 +59,11 @@ class StreakProvider extends ChangeNotifier {
   int get currentStreak => streak?.currentStreak ?? 0;
   int get longestStreak => streak?.longestStreak ?? 0;
   int get totalGoalDays => streak?.totalGoalDays ?? 0;
+
   int get dailyGoalSeconds => streak?.dailyGoalSeconds ?? 0;
   int get todayAccumulatedSeconds => streak?.todayAccumulatedSeconds ?? 0;
   int get todayTrackedSeconds => todayAccumulatedSeconds + currentSessionSeconds;
+
   bool get hasCompletedTodayGoal => streak != null && dailyGoalSeconds > 0 && todayTrackedSeconds >= dailyGoalSeconds;
 
   Future<void> restoreSession() async {
@@ -87,6 +94,84 @@ class StreakProvider extends ChangeNotifier {
 
   bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  DateTime _todayDate() {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day);
+  }
+
+  void _startLiveSessionTicker() {
+    _liveSessionTicker?.cancel();
+    _liveSessionTicker = Timer.periodic(const Duration(seconds: 1), (_) {
+      _handleLiveSessionTick();
+    });
+  }
+
+  void _stopLiveSessionTicker() {
+    _liveSessionTicker?.cancel();
+    _liveSessionTicker = null;
+  }
+
+  void _markGoalCompletedToday() {
+    final todayDate = _todayDate();
+    if (_goalCompletionDate == null || !_isSameDay(_goalCompletionDate!, todayDate)) {
+      _goalCompletionDate = todayDate;
+      _pendingGoalCompletion = true;
+    }
+  }
+
+  void _handleLiveSessionTick() {
+    if (!_sessionActive) return;
+
+    final todayDate = _todayDate();
+    if (_goalCompletionSyncedDate != null && !_isSameDay(_goalCompletionSyncedDate!, todayDate)) {
+      _goalCompletionSyncedDate = null;
+    }
+
+    final alreadySyncedToday = _goalCompletionSyncedDate != null && _isSameDay(_goalCompletionSyncedDate!, todayDate);
+    if (hasCompletedTodayGoal && !alreadySyncedToday && !_isSyncingGoalCompletion) {
+      unawaited(_syncCompletionToBackendAndRefresh());
+    }
+  }
+
+  Future<void> _syncCompletionToBackendAndRefresh() async {
+    if (_isSyncingGoalCompletion) return;
+    _isSyncingGoalCompletion = true;
+
+    try {
+      _token ??= await AuthService.getToken();
+      if (_token == null) return;
+
+      // Flush current active session so backend streak is updated immediately
+      await GoalService.endSession(token: _token!);
+
+      // Pull fresh streak from backend and notify all listening screens
+      await fetchStreak(forceRefresh: true);
+
+      _goalCompletionSyncedDate = _todayDate();
+      if (hasCompletedTodayGoal) {
+        _markGoalCompletedToday();
+      }
+
+      // Continue tracking seamlessly if user is still in an active tracked flow
+      if (_sessionActive) {
+        _sessionStartTime = DateTime.now();
+        await _storage.write(key: _sessionStartKey, value: _sessionStartTime!.toIso8601String());
+        await GoalService.startSession(token: _token!);
+      }
+
+      notifyListeners();
+    } catch (e) {
+      final msg = e.toString();
+      if (msg.contains('UNAUTHORIZED')) {
+        _handleUnauthorized();
+        return;
+      }
+      debugPrint('[StreakProvider] sync completion error: $e');
+    } finally {
+      _isSyncingGoalCompletion = false;
+    }
   }
 
   // ---------- FETCH STREAK ----------
@@ -195,6 +280,7 @@ class StreakProvider extends ChangeNotifier {
     _sessionActive = true;
     _sessionStartTime = DateTime.now();
     await _storage.write(key: _sessionStartKey, value: _sessionStartTime!.toIso8601String());
+    _startLiveSessionTicker();
     notifyListeners();
 
     try {
@@ -209,6 +295,7 @@ class StreakProvider extends ChangeNotifier {
       // Revert if the API call failed
       _sessionActive = false;
       _sessionStartTime = null;
+      _stopLiveSessionTicker();
       await _storage.delete(key: _sessionStartKey);
       notifyListeners();
       debugPrint('[StreakProvider] startSession error: $e');
@@ -221,7 +308,8 @@ class StreakProvider extends ChangeNotifier {
 
     _sessionActive = false;
     _sessionStartTime = null;
-    _storage.delete(key: _sessionStartKey);
+    _stopLiveSessionTicker();
+    await _storage.delete(key: _sessionStartKey);
     notifyListeners();
 
     _token ??= await AuthService.getToken();
@@ -232,12 +320,9 @@ class StreakProvider extends ChangeNotifier {
       debugPrint('[StreakProvider] session ended: $result');
 
       await fetchStreak(forceRefresh: true);
-      // Flag goal completion once per calendar day
-      final now = DateTime.now();
-      final todayDate = DateTime(now.year, now.month, now.day);
-      if (hasCompletedTodayGoal && _goalCompletionDate != todayDate) {
-        _goalCompletionDate = todayDate;
-        _pendingGoalCompletion = true;
+      if (hasCompletedTodayGoal) {
+        _goalCompletionSyncedDate = _todayDate();
+        _markGoalCompletedToday();
       }
       notifyListeners();
     } catch (e) {
@@ -258,8 +343,10 @@ class StreakProvider extends ChangeNotifier {
     _token = null;
     _sessionActive = false;
     _sessionStartTime = null;
+    _stopLiveSessionTicker();
     _pendingGoalCompletion = false;
     _goalCompletionDate = null;
+    _goalCompletionSyncedDate = null;
     _storage.delete(key: _sessionStartKey);
     notifyListeners();
   }

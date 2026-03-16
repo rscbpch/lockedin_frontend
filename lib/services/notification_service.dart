@@ -27,7 +27,6 @@ class NotificationService {
   /// Call once after Firebase.initializeApp() in main()
   static Future<void> initialize() async {
     if (_initialized) return;
-    _initialized = true;
 
     // Background handler
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
@@ -39,10 +38,24 @@ class NotificationService {
         ?.createNotificationChannel(_channel);
 
     // Init local notifications
+    const darwinSettings = DarwinInitializationSettings();
     const initSettings = InitializationSettings(
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      iOS: darwinSettings,
     );
     await _localNotifications.initialize(initSettings);
+
+    await _localNotifications
+      .resolvePlatformSpecificImplementation<
+        IOSFlutterLocalNotificationsPlugin>()
+      ?.requestPermissions(alert: true, badge: true, sound: true);
+
+    await _localNotifications
+      .resolvePlatformSpecificImplementation<
+        MacOSFlutterLocalNotificationsPlugin>()
+      ?.requestPermissions(alert: true, badge: true, sound: true);
+
+    _initialized = true;
 
     // Show notification when app is in FOREGROUND
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -61,6 +74,11 @@ class NotificationService {
               importance: Importance.high,
               priority: Priority.high,
               icon: '@mipmap/ic_launcher',
+            ),
+            iOS: const DarwinNotificationDetails(
+              presentAlert: true,
+              presentBadge: true,
+              presentSound: true,
             ),
           ),
         );
