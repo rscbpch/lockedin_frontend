@@ -1,9 +1,6 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:lockedin_frontend/models/user/follow_user_model.dart';
-import 'package:lockedin_frontend/provider/auth_provider.dart';
-import 'package:lockedin_frontend/services/follow_service.dart';
+import 'package:lockedin_frontend/provider/follow_provider.dart';
 import 'package:lockedin_frontend/ui/screens/profile/widgets/follow_list_tile.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 
@@ -31,41 +28,24 @@ class FollowListSheet extends StatefulWidget {
 }
 
 class _FollowListSheetState extends State<FollowListSheet> {
-  List<FollowUser> _users = [];
-  bool _isLoading = true;
-  String? _error;
-
   @override
   void initState() {
     super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    final auth = context.read<AuthProvider>();
-    final service = FollowService(getAuthToken: () async => auth.token);
-    try {
-      final result = widget.isFollowers
-          ? await service.getFollowers()
-          : await service.getFollowing();
-      if (mounted) {
-        setState(() {
-          _users = result;
-          _isLoading = false;
-        });
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _error = 'Failed to load';
-          _isLoading = false;
-        });
-      }
-    }
+    // Use FollowProvider — already registered in main.dart
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<FollowProvider>().fetchAll();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<FollowProvider>();
+    final users = widget.isFollowers ? provider.followers : provider.following;
+    final isLoading = provider.status == FollowStatus.loading;
+    final error = provider.status == FollowStatus.error
+        ? (provider.errorMessage ?? 'Failed to load')
+        : null;
+
     return DraggableScrollableSheet(
       initialChildSize: 0.5,
       minChildSize: 0.3,
@@ -95,14 +75,26 @@ class _FollowListSheetState extends State<FollowListSheet> {
           ),
           const SizedBox(height: 8),
           const Divider(height: 1, color: AppColors.accent),
-          ..._buildBody(scrollController),
+          ..._buildBody(
+            scrollController: scrollController,
+            isLoading: isLoading,
+            error: error,
+            users: users,
+            provider: provider,
+          ),
         ],
       ),
     );
   }
 
-  List<Widget> _buildBody(ScrollController scrollController) {
-    if (_isLoading) {
+  List<Widget> _buildBody({
+    required ScrollController scrollController,
+    required bool isLoading,
+    required String? error,
+    required List users,
+    required FollowProvider provider,
+  }) {
+    if (isLoading) {
       return const [
         Padding(
           padding: EdgeInsets.all(32),
@@ -111,22 +103,31 @@ class _FollowListSheetState extends State<FollowListSheet> {
       ];
     }
 
-    if (_error != null) {
+    if (error != null) {
       return [
         Padding(
           padding: const EdgeInsets.all(32),
-          child: Text(
-            _error!,
-            style: const TextStyle(
-              color: AppColors.grey,
-              fontFamily: 'Quicksand',
-            ),
+          child: Column(
+            children: [
+              Text(
+                error,
+                style: const TextStyle(
+                  color: AppColors.grey,
+                  fontFamily: 'Quicksand',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () => provider.fetchAll(),
+                child: const Text('Retry'),
+              ),
+            ],
           ),
         ),
       ];
     }
 
-    if (_users.isEmpty) {
+    if (users.isEmpty) {
       return const [
         Padding(
           padding: EdgeInsets.all(32),
@@ -142,8 +143,8 @@ class _FollowListSheetState extends State<FollowListSheet> {
       Expanded(
         child: ListView.builder(
           controller: scrollController,
-          itemCount: _users.length,
-          itemBuilder: (_, i) => FollowListTile(user: _users[i]),
+          itemCount: users.length,
+          itemBuilder: (_, i) => FollowListTile(user: users[i]),
         ),
       ),
     ];

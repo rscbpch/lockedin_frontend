@@ -1,6 +1,14 @@
+import 'dart:async';
+
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:lockedin_frontend/firebase_options.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lockedin_frontend/provider/follow_provider.dart';
+import 'package:lockedin_frontend/services/follow_service.dart';
+import 'package:lockedin_frontend/services/notification_service.dart';
 import 'package:lockedin_frontend/ui/screens/auth/forget_password.dart';
 import 'package:lockedin_frontend/ui/screens/auth/getting_started_screen.dart';
 import 'package:lockedin_frontend/ui/screens/auth/input_otp.dart';
@@ -45,10 +53,30 @@ final GlobalKey<NavigatorState> appRootNavigatorKey = GlobalKey<NavigatorState>(
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await NotificationService.initialize();
+
+  final notificationSettings =
+      await FirebaseMessaging.instance.requestPermission();
+  debugPrint(
+    '🔔 Notification permission: ${notificationSettings.authorizationStatus}',
+  );
+
+  await _logFcmTokenWithRetry();
+
+  FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+    debugPrint('🔄 FCM Token refreshed: $newToken');
+  }, onError: (error) {
+    debugPrint('❌ FCM token refresh error: $error');
+  });
+
   await dotenv.load(fileName: '.env');
 
   final authProvider = AuthProvider();
   await authProvider.initialize();
+  if (authProvider.isAuthenticated) {
+  await NotificationService.saveTokenToBackend(() async => authProvider.token);
+}
 
   final streakProvider = StreakProvider();
   await streakProvider.restoreSession();
@@ -63,13 +91,22 @@ void main() async {
   );
   final pomodoroProvider = PomodoroTimerProvider();
   pomodoroProvider.setStreakProvider(streakProvider);
-  final studyRoomProvider = StudyRoomProvider(StudyRoomApiService(getToken: () => authProvider.token, jaasAppId: dotenv.env['JAAS_APP_ID'] ?? ''));
+  final studyRoomProvider = StudyRoomProvider(
+    StudyRoomApiService(
+      getToken: () => authProvider.token,
+      jaasAppId: dotenv.env['JAAS_APP_ID'] ?? '',
+    ),
+  );
+  final FollowProvider followProvider = FollowProvider(
+    service: FollowService(getAuthToken: () async => authProvider.token),
+  );
 
   AuthProvider.onSessionCleanup = () async {
     await chatProvider.disconnectUser();
     groupChatProvider.reset();
     streakProvider.reset();
     bookProvider.clear();
+    await NotificationService.removeTokenFromBackend(() async => authProvider.token);
   };
   AuthProvider.onForceLogout = () async => authProvider.logout();
 
@@ -83,10 +120,35 @@ void main() async {
         ChangeNotifierProvider.value(value: groupChatProvider),
         ChangeNotifierProvider.value(value: pomodoroProvider),
         ChangeNotifierProvider.value(value: studyRoomProvider),
+        ChangeNotifierProvider.value(value: followProvider),
       ],
       child: MyApp(authProvider: authProvider),
     ),
   );
+}
+
+Future<void> _logFcmTokenWithRetry() async {
+  for (var attempt = 1; attempt <= 3; attempt++) {
+    try {
+      final token =
+          await FirebaseMessaging.instance.getToken().timeout(
+                const Duration(seconds: 12),
+              );
+
+      if (token == null || token.isEmpty) {
+        debugPrint('⚠️ FCM token is null/empty on attempt $attempt');
+      } else {
+        debugPrint('📱 FCM Token: $token');
+        return;
+      }
+    } on TimeoutException {
+      debugPrint('⏱️ Timed out getting FCM token on attempt $attempt');
+    } catch (error) {
+      debugPrint('❌ Error getting FCM token on attempt $attempt: $error');
+    }
+
+    await Future.delayed(const Duration(seconds: 2));
+  }
 }
 
 class MyApp extends StatefulWidget {
@@ -253,6 +315,7 @@ class _MyAppState extends State<MyApp> {
       ],
     );
   }
+
 
   @override
   Widget build(BuildContext context) {

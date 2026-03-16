@@ -10,7 +10,6 @@ import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/actions/long_button.dart';
 import 'package:lockedin_frontend/ui/widgets/display/simple_back_sliver_app_bar.dart';
 import 'package:provider/provider.dart';
-
 import 'package:lockedin_frontend/provider/chat_provider.dart';
 import 'package:lockedin_frontend/ui/screens/chat/channel_screen.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart';

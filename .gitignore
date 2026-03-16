@@ -96,3 +96,6 @@ app.*.map.json
 
 .plist
 .pbxproj
+
+android/app/google-services.json       
+lib/firebase_options.dart   

@@ -93,6 +93,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:lockedin_frontend/models/user/user.dart';
+import 'package:lockedin_frontend/services/notification_service.dart';
 import '../services/auth_service.dart';
 import '../services/user_profile_service.dart';
 
@@ -166,6 +167,7 @@ class AuthProvider extends ChangeNotifier {
       if (response['success'] == true) {
         _token = response['token'] ?? response['data']?['token'];
         _token ??= await AuthService.getToken();
+        await NotificationService.saveTokenToBackend(() async => _token);
         return true;
       } else {
         errorMessage = response['message'] ?? 'Login failed';
