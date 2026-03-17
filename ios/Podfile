@@ -33,29 +33,30 @@ def patch_jitsi_plugin_registration
 
   content = File.read(plugin_swift)
 
-  new_block = <<~SWIFT
-      let flutterViewController = registrar.viewController ?? UIApplication.shared
-            .connectedScenes
-            .compactMap { ($0 as? UIWindowScene)?.keyWindow }
-            .first?.rootViewController ?? UIViewController()
+  replacement = <<~SWIFT
+        let flutterViewController: UIViewController = registrar.viewController
+            ?? UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene })
+                .flatMap({ $0.windows })
+                .first(where: { $0.isKeyWindow })?.rootViewController
+            ?? UIViewController()
   SWIFT
 
-  original_block = /let flutterViewController = UIApplication\.shared\n\s*\.connectedScenes\n\s*\.compactMap \{ \(\$0 as\? UIWindowScene\)\?\.keyWindow \}\n\s*\.first\?\.rootViewController\n\s*guard let flutterViewController = flutterViewController else \{ return \}/m
+  already_patched = /let flutterViewController:\s*UIViewController\s*=\s*registrar\.viewController/m
+  return if content.match?(already_patched)
 
-  already_patched_block = /let flutterViewController = registrar\.viewController \?\? UIApplication\.shared\n\s*\.connectedScenes\n\s*\.compactMap \{ \(\$0 as\? UIWindowScene\)\?\.keyWindow \}\n\s*\.first\?\.rootViewController \?\? UIViewController\(\)/m
+  original_block = /guard\s+let\s+flutterViewController:\s*UIViewController\s*=\s*UIApplication\.shared\.connectedScenes\s*\n\s*\.compactMap\(\{\s*\$0\s+as\?\s+UIWindowScene\s*\}\)\s*\n\s*\.flatMap\(\{\s*\$0\.windows\s*\}\)\s*\n\s*\.first\(where:\s*\{\s*\$0\.isKeyWindow\s*\}\)\?\.rootViewController\s*else\s*\{\s*return\s*\}/m
 
-  patched = content
-  if content.match?(original_block)
-    patched = content.sub(original_block, new_block.rstrip)
-  elsif !content.match?(already_patched_block)
-    puts 'Jitsi plugin registration block not found; skipping patch.'
+  unless content.match?(original_block)
+    puts 'Jitsi registration block not found; skipping patch.'
     return
   end
 
+  patched = content.sub(original_block, replacement.rstrip)
   return if patched == content
 
   File.write(plugin_swift, patched)
-  puts 'Patched jitsi_meet_flutter_sdk iOS registration to avoid early return before event channel setup.'
+  puts 'Patched jitsi_meet_flutter_sdk iOS registration fallback for event channel setup.'
 end
 
 target 'Runner' do

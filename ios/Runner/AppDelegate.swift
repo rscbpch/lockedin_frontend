@@ -14,6 +14,10 @@ import jitsi_meet_flutter_sdk
 
     GeneratedPluginRegistrant.register(with: self)
 
+    DispatchQueue.main.async { [weak self] in
+      self?.retryJitsiRegistrationIfNeeded()
+    }
+
     return super.application(
       application,
       didFinishLaunchingWithOptions: launchOptions
