@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:google_sign_in/google_sign_in.dart';
+import 'dart:io' show Platform;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../config/api_config.dart';
 import '../config/env.dart';
@@ -123,10 +124,16 @@ class AuthService {
 
   static Future<Map<String, dynamic>> login({required String email, required String password}) async {
     try {
-      print("${ApiConfig.login}");
+      // Debug: log computed base URL and full endpoint
+      // ignore: avoid_print
+      print('AuthService.login -> Env.apiBaseUrl: ${Env.apiBaseUrl}');
+      // ignore: avoid_print
+      print('AuthService.login -> ApiConfig.login: ${ApiConfig.login}');
+
       final payload = {'email': email, 'username': email, 'password': password};
       // ignore: avoid_print
       print('AuthService.login -> request body: ${jsonEncode(payload)}');
+
       final response = await http.post(Uri.parse(ApiConfig.login), headers: {'Content-Type': 'application/json'}, body: jsonEncode(payload));
 
       final status = response.statusCode;
@@ -173,28 +180,57 @@ class AuthService {
 
   static Future<Map<String, dynamic>> signInWithGoogle() async {
     try {
-      // For Google Cloud Console (not Firebase), explicitly specify client ID
-      final GoogleSignIn googleSignIn = GoogleSignIn(
-        scopes: ['email', 'profile'],
-        clientId: Env.googleClientId, // Platform-specific client ID
-        serverClientId: Env.googleWebClientId, // Web client ID for backend token verification
-      );
+      // Construct GoogleSignIn carefully: on Android the plugin uses
+      // `google-services.json` and passing a `clientId` may trigger
+      // ApiException(10) if the client SHA/package don't match. Only
+      // pass an explicit `clientId` on platforms that require it (iOS).
+      final GoogleSignIn googleSignIn = Platform.isIOS
+          ? GoogleSignIn(
+              scopes: ['email', 'profile'],
+              clientId: Env.googleClientId,
+              serverClientId: Env.googleWebClientId,
+            )
+          : GoogleSignIn(
+              scopes: ['email', 'profile'],
+              // serverClientId can be provided for backend verification
+              serverClientId: Env.googleWebClientId,
+            );
 
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
       if (googleUser == null) {
+        // User cancelled the Google sign-in UI
+        // ignore: avoid_print
+        print('AuthService.signInWithGoogle -> googleUser is null (user cancelled)');
         return {'success': false, 'message': 'Google sign-in cancelled'};
       }
 
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       final String? idToken = googleAuth.idToken;
+      final String? accessToken = googleAuth.accessToken;
+
+      // Debug: print user info and token presence (don't print tokens in production)
+      // ignore: avoid_print
+      print('AuthService.signInWithGoogle -> googleUser: ${googleUser.displayName} ${googleUser.email}');
+      // ignore: avoid_print
+      print('AuthService.signInWithGoogle -> idToken present: ${idToken != null}, accessToken present: ${accessToken != null}');
 
       if (idToken == null) {
-        return {'success': false, 'message': 'Failed to get Google ID token'};
+        // If idToken is not available, return a useful message for debugging
+        return {
+          'success': false,
+          'message': 'Failed to get Google ID token. Ensure `GOOGLE_CLIENT_ID_WEB` is set and SHA-1 is configured in Google Console.'
+        };
       }
 
       // Send to backend
-      final response = await http.post(Uri.parse('${Env.apiBaseUrl}/auth/google'), headers: {'Content-Type': 'application/json'}, body: jsonEncode({'idToken': idToken}));
+      // Debug: log computed base URL and Google endpoint
+      // ignore: avoid_print
+      print('AuthService.signInWithGoogle -> Env.apiBaseUrl: ${Env.apiBaseUrl}');
+      // ignore: avoid_print
+      print('AuthService.signInWithGoogle -> ApiConfig.googleSignIn: ${ApiConfig.googleSignIn}');
+
+      final response = await http.post(Uri.parse(ApiConfig.googleSignIn), headers: {'Content-Type': 'application/json'}, body: jsonEncode({'idToken': idToken}));
 
       final status = response.statusCode;
       final body = response.body;
@@ -232,8 +268,13 @@ class AuthService {
       }
 
       return {'success': false, 'message': message, 'statusCode': status};
-    } catch (e) {
-      return {'success': false, 'message': e.toString()};
+    } catch (e, st) {
+      // Detailed error logging for sign-in failures
+      // ignore: avoid_print
+      print('AuthService.signInWithGoogle -> exception: $e');
+      // ignore: avoid_print
+      print(st);
+      return {'success': false, 'message': 'Google sign-in error: $e'};
     }
   }
 
