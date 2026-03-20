@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/ai_breakdown/widget/assistant_message_bubble.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/ai_breakdown/widget/chat_empty_state.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/ai_breakdown/widget/chat_input_bar.dart';
@@ -14,6 +13,7 @@ import '../../../../services/ai_breakdown_service.dart';
 import '../../../../utils/activity_tracker.dart';
 import 'history_screen.dart';
 import '../../../theme/app_theme.dart';
+import '../../../widgets/display/simple_back_sliver_app_bar.dart';
 
 class AiBreakdownScreen extends StatefulWidget {
   final String? initialChatId;
@@ -176,55 +176,55 @@ class _AiBreakdownScreenState extends State<AiBreakdownScreen> with ActivityTrac
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: _buildAppBar(),
-      body: Column(
-        children: [
-          Expanded(child: _buildMessageList()),
-          if (_errorMessage != null) ErrorBanner(message: _errorMessage!, onDismiss: () => setState(() => _errorMessage = null)),
-          ChatInputBar(controller: _inputController, onSend: _sendMessage, isLoading: _isLoading),
+      body: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          SimpleBackSliverAppBar(
+            title: 'Task Breakdown',
+            onBack: () => context.go('/productivity-hub'),
+            action: IconButton(
+              onPressed: _openHistory,
+              icon: const Icon(Icons.chat_bubble_outline, color: Color(0xFF1E293B)),
+            ),
+          ),
+          _buildMessageListSliver(),
         ],
       ),
-    );
-  }
-
-  AppBar _buildAppBar() {
-    return AppBar(
-      backgroundColor: AppColors.background,
-      elevation: 0,
-      centerTitle: true,
-      leading: IconButton(
-        onPressed: () => context.go('/productivity-hub'),
-        icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF1E293B)),
-      ),
-      title: Text(
-        'Task Breakdown',
-        style: TextStyle(color: Color(0xFF1E293B), fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 20), fontWeight: FontWeight.w600),
-      ),
-      actions: [
-        IconButton(
-          onPressed: _openHistory,
-          icon: const Icon(Icons.chat_bubble_outline, color: Color(0xFF1E293B)),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_errorMessage != null) ErrorBanner(message: _errorMessage!, onDismiss: () => setState(() => _errorMessage = null)),
+            ChatInputBar(controller: _inputController, onSend: _sendMessage, isLoading: _isLoading),
+          ],
         ),
-      ],
+      ),
     );
   }
 
-  Widget _buildMessageList() {
+  Widget _buildMessageListSliver() {
     if (_messages.isEmpty && !_isLoading) {
-      return const ChatEmptyState();
+      return const SliverFillRemaining(
+        hasScrollBody: false,
+        child: ChatEmptyState(),
+      );
     }
 
-    return ListView.builder(
-      controller: _scrollController,
+    return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      itemCount: _messages.length + (_isLoading ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (index == _messages.length) {
-          return const TypingIndicator();
-        }
-        final msg = _messages[index];
-        return msg.role == 'user' ? UserMessageBubble(content: msg.content) : AssistantMessageBubble(message: msg);
-      },
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            if (index == _messages.length) {
+              return const TypingIndicator();
+            }
+            final msg = _messages[index];
+            return msg.role == 'user' ? UserMessageBubble(content: msg.content) : AssistantMessageBubble(message: msg);
+          },
+          childCount: _messages.length + (_isLoading ? 1 : 0),
+        ),
+      ),
     );
   }
 }

@@ -32,6 +32,8 @@ class PomodoroTimerProvider extends ChangeNotifier with WidgetsBindingObserver {
   int _remainingSeconds = 25 * 60;
   int _pomodoroCount = 0;
   bool _isRunning = false;
+  bool _isPaused = false;
+  bool get isPaused => _isPaused;
 
   Timer? _ticker;
   DateTime? _targetEndTime;
@@ -76,12 +78,66 @@ class PomodoroTimerProvider extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
+  void pauseTimer() {
+    if (!_isRunning) return;
+    _ticker?.cancel();
+    _ticker = null;
+    _targetEndTime = null;
+    _isRunning = false;
+    _isPaused = true;
+    WidgetsBinding.instance.removeObserver(this);
+
+    if (_mode == TimerMode.pomodoro) {
+      _streakProvider?.endSession();
+    }
+
+    notifyListeners();
+  }
+
+  void resumeTimer() {
+    if (!_isPaused) return;
+    _isPaused = false;
+    _isRunning = true;
+    _targetEndTime = DateTime.now().add(Duration(seconds: _remainingSeconds));
+
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      _syncTick();
+    });
+
+    WidgetsBinding.instance.addObserver(this);
+
+    if (_mode == TimerMode.pomodoro) {
+      _streakProvider?.startSession();
+    }
+
+    notifyListeners();
+  }
+
+  void cancelTimer() {
+    _ticker?.cancel();
+    _ticker = null;
+    _targetEndTime = null;
+
+    final wasActive = _isRunning && _mode == TimerMode.pomodoro;
+    _isRunning = false;
+    _isPaused = false;
+    WidgetsBinding.instance.removeObserver(this);
+
+    if (wasActive) {
+      _streakProvider?.endSession();
+    }
+
+    _initializeModeDuration();
+    notifyListeners();
+  }
+
   void stopTimer() {
     final wasRunningPomodoro = _isRunning && _mode == TimerMode.pomodoro;
     _ticker?.cancel();
     _ticker = null;
     _targetEndTime = null;
     _isRunning = false;
+    _isPaused = false;
     WidgetsBinding.instance.removeObserver(this);
 
     // End streak tracking when pomodoro focus is manually stopped
@@ -100,6 +156,7 @@ class PomodoroTimerProvider extends ChangeNotifier with WidgetsBindingObserver {
     _ticker = null;
     _targetEndTime = null;
     _isRunning = false;
+    _isPaused = false;
     WidgetsBinding.instance.removeObserver(this);
 
     if (wasRunningPomodoro) {
@@ -166,10 +223,40 @@ class PomodoroTimerProvider extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
+  // @override
+  // void didChangeAppLifecycleState(AppLifecycleState state) {
+  //   if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
+  //     // App resumed — restore timer if it was paused by lifecycle
+  //     if (_isRunning) {
+  //       _pausedByLifecycle = true;
+  //       _lifecyclePausedRemaining = _remainingSeconds;
+  //       _ticker?.cancel();
+  //       _ticker = null;
+  //       _targetEndTime = null;
+  //       _isRunning = false;
+  //       notifyListeners();
+  //     }
+  //   } else if (state == AppLifecycleState.resumed) {
+  //     // App resumed — restore timer if it was paused by lifecycle
+  //     if (_pausedByLifecycle) {
+  //       _pausedByLifecycle = false;
+  //       if (_lifecyclePausedRemaining > 0) {
+  //         _remainingSeconds = _lifecyclePausedRemaining;
+  //         _isRunning = true;
+  //         _targetEndTime = DateTime.now().add(Duration(seconds: _remainingSeconds));
+  //         _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+  //           _syncTick();
+  //         });
+  //         notifyListeners();
+  //       }
+  //     }
+  //   }
+  // }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
-      // App exited (home button, switched app, etc.) — pause timer
+      // App resumed — restore timer if it was paused by lifecycle
       if (_isRunning) {
         _pausedByLifecycle = true;
         _lifecyclePausedRemaining = _remainingSeconds;
@@ -183,7 +270,7 @@ class PomodoroTimerProvider extends ChangeNotifier with WidgetsBindingObserver {
       // App resumed — restore timer if it was paused by lifecycle
       if (_pausedByLifecycle) {
         _pausedByLifecycle = false;
-        if (_lifecyclePausedRemaining > 0) {
+        if (_lifecyclePausedRemaining > 0 && !_isPaused) {
           _remainingSeconds = _lifecyclePausedRemaining;
           _isRunning = true;
           _targetEndTime = DateTime.now().add(Duration(seconds: _remainingSeconds));

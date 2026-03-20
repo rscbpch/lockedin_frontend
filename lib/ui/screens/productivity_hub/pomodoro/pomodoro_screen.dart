@@ -2,6 +2,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lockedin_frontend/ui/responsive/responsive.dart';
+import 'package:lockedin_frontend/ui/widgets/display/simple_back_sliver_app_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 import '../../../../provider/pomodoro_timer_provider.dart';
@@ -123,6 +125,23 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
     super.dispose();
   }
 
+  void _pauseTimer(PomodoroTimerProvider provider) {
+    provider.pauseTimer();
+    _videoController?.pause();
+  }
+
+  void _resumeTimer(PomodoroTimerProvider provider) {
+    provider.resumeTimer();
+    _videoController?.play();
+  }
+
+  void _cancelTimer(PomodoroTimerProvider provider) {
+    provider.cancelTimer();
+    _videoController?.pause();
+    _videoController?.seekTo(Duration.zero);
+    _syncTimeInputWithProvider(provider, force: true);
+  }
+
   /// ================= VIDEO =================
   void _initializeVideo() async {
     try {
@@ -171,11 +190,6 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
     provider.startTimer();
     _videoController?.seekTo(Duration.zero);
     _videoController?.play();
-  }
-
-  void _stopTimer(PomodoroTimerProvider provider) {
-    provider.stopTimer();
-    _videoController?.pause();
   }
 
   void _syncVideoWithProvider(PomodoroTimerProvider provider) {
@@ -344,18 +358,23 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Your Focus Stats',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Color(0xFF2C1A0E)),
+            style: TextStyle(
+              fontSize: Responsive.text(context, size: 18),
+              fontWeight: FontWeight.w700,
+              fontFamily: 'Nunito',
+              color: AppColors.textPrimary
+            ),
           ),
           const SizedBox(height: 20),
 
           // Row 1: Today + This Week
           Row(
             children: [
-              Expanded(child: _statCard('Today', daily["totalSeconds"] as int? ?? 0, daily["sessions"] as int? ?? 0, Icons.today_rounded, const Color(0xFF6B3F1A))),
+              Expanded(child: _statCard('Today', daily["totalSeconds"] as int? ?? 0, daily["sessions"] as int? ?? 0, Icons.today_rounded)),
               const SizedBox(width: 12),
-              Expanded(child: _statCard('This Week', weekly["totalSeconds"] as int? ?? 0, weekly["sessions"] as int? ?? 0, Icons.date_range_rounded, const Color(0xFF8B5A2B))),
+              Expanded(child: _statCard('This Week', weekly["totalSeconds"] as int? ?? 0, weekly["sessions"] as int? ?? 0, Icons.date_range_rounded)),
             ],
           ),
           const SizedBox(height: 12),
@@ -364,10 +383,10 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
           Row(
             children: [
               Expanded(
-                child: _statCard('This Month', monthly["totalSeconds"] as int? ?? 0, monthly["sessions"] as int? ?? 0, Icons.calendar_month_rounded, const Color(0xFFA67C52)),
+                child: _statCard('This Month', monthly["totalSeconds"] as int? ?? 0, monthly["sessions"] as int? ?? 0, Icons.calendar_month_rounded),
               ),
               const SizedBox(width: 12),
-              Expanded(child: _statCard('All Time', allTime["totalSeconds"] as int? ?? 0, allTime["sessions"] as int? ?? 0, Icons.all_inclusive_rounded, const Color(0xFFC69C6D))),
+              Expanded(child: _statCard('All Time', allTime["totalSeconds"] as int? ?? 0, allTime["sessions"] as int? ?? 0, Icons.all_inclusive_rounded)),
             ],
           ),
         ],
@@ -376,7 +395,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
   }
 
   // Helper: Individual stat card (compact for 2-column grid)
-  Widget _statCard(String label, int totalSeconds, int sessions, IconData icon, Color color) {
+  Widget _statCard(String label, int totalSeconds, int sessions, IconData icon) {
     final hours = totalSeconds ~/ 3600;
     final minutes = (totalSeconds % 3600) ~/ 60;
     final seconds = totalSeconds % 60;
@@ -399,7 +418,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: AppColors.grey),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 8, offset: const Offset(0, 2))],
       ),
       child: Column(
@@ -409,16 +428,21 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
           Row(
             children: [
               Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
-                child: Icon(icon, color: color, size: 20),
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
+                child: Icon(icon, color: AppColors.primary, size: 16),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   label,
-                  style: const TextStyle(fontSize: 12, color: Colors.black54, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    fontSize: Responsive.text(context, size: 16),
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Nunito'
+                  ),
                 ),
               ),
             ],
@@ -428,17 +452,27 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
           // Time display
           Text(
             displayTime,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: Color(0xFF2C1A0E)),
+            style: TextStyle(
+              fontSize: Responsive.text(context, size: 24),
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Nunito'
+            ),
           ),
           const SizedBox(height: 4),
 
           // Sessions badge
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
             child: Text(
-              '$sessions ${sessions == 1 ? 'session' : 'sessions'}',
-              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color),
+              '$sessions ${sessions == 0 || sessions == 1 ? 'session' : 'sessions'}',
+              style: TextStyle(
+                fontSize: Responsive.text(context, size: 12),
+                color: AppColors.primary,
+                fontWeight: FontWeight.w500,
+                fontFamily: 'Nunito'
+              ),
             ),
           ),
         ],
@@ -455,7 +489,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
           padding: EdgeInsets.fromLTRB(20, 8, 20, 0),
           child: Text(
             'Focus time this week',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFF2C1A0E)),
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
           ),
         ),
 
@@ -513,7 +547,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                           Expanded(
                             child: Text(
                               u["_id"]?.toString() ?? '—',
-                              style: TextStyle(fontSize: 14, fontWeight: isTop3 ? FontWeight.w600 : FontWeight.w400, color: const Color(0xFF2C1A0E)),
+                              style: TextStyle(fontSize: 14, fontWeight: isTop3 ? FontWeight.w600 : FontWeight.w400, color: AppColors.textPrimary),
                             ),
                           ),
 
@@ -631,7 +665,6 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
   @override
   Widget build(BuildContext context) {
     final timerProvider = context.watch<PomodoroTimerProvider>();
-    final width = MediaQuery.of(context).size.width;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -641,159 +674,204 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Pomodoro'),
-        centerTitle: true,
-        leading: IconButton(
-          onPressed: () => context.go("/productivity-hub"),
-          icon: Icon(Icons.arrow_back_ios, size: width * 0.06),
-        ),
-        actions: [IconButton(icon: const Icon(Icons.bar_chart_rounded), onPressed: _openTracking)],
-        backgroundColor: AppColors.background,
-        elevation: 0,
-      ),
-
       body: Stack(
         children: [
-          SingleChildScrollView(
-            child: Column(
-              children: [
-                /// ===== ORIGINAL UI (UNCHANGED) =====
-                const SizedBox(height: 20),
-
-                /// ✅ Tabs (no overflow, no crash)
-                Wrap(
-                  spacing: 8,
-                  children: TimerMode.values.map((mode) {
-                    final isSelected = timerProvider.mode == mode;
-                    return ChoiceChip(
-                      label: Text(
-                        _label(mode),
-                        style: TextStyle(color: isSelected ? AppColors.background : AppColors.primary, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal),
-                      ),
-                      selected: isSelected,
-                      backgroundColor: isSelected ? AppColors.primary : AppColors.background,
-                      onSelected: (_) => _switchMode(timerProvider, mode),
-                      selectedColor: AppColors.secondary,
-                      showCheckmark: false, // Remove default checkmark icon
-                    );
-                  }).toList(),
+          SafeArea(
+            child: CustomScrollView(
+              slivers: [
+                SimpleBackSliverAppBar(
+                  title: 'Pomodoro',
+                  onBack: () => context.go('/productivity-hub'),
+                  action: IconButton(
+                    icon: const Icon(Icons.bar_chart_rounded, color: AppColors.textPrimary),
+                    onPressed: _openTracking,
+                  ),
                 ),
-
-                const SizedBox(height: 40),
-
-                /// Circle Timer with Video in Center
-                SizedBox(
-                  width: 260,
-                  height: 260,
-                  child: Stack(
-                    alignment: Alignment.center,
+                SliverToBoxAdapter(
+                  child: Column(
                     children: [
-                      // Progress circle
-                      CustomPaint(
-                        size: const Size(260, 260),
-                        painter: TimerPainter(progress: _progress(timerProvider.totalSeconds, timerProvider.remainingSeconds)),
-                      ),
-                      // Video player in the center
-                      Container(
-                        width: 180,
-                        height: 180,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.black,
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 8, offset: const Offset(0, 4))],
-                        ),
-                        child: ClipOval(
-                          child: _videoHasError
-                              ? Container(
-                                  color: Colors.red[100],
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Icon(Icons.error_outline, color: Colors.red, size: 32),
-                                      const SizedBox(height: 8),
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Text(
-                                          'Video Error:\n$_videoErrorMessage',
-                                          style: const TextStyle(fontSize: 10, color: Colors.red),
-                                          textAlign: TextAlign.center,
-                                          maxLines: 4,
-                                          overflow: TextOverflow.ellipsis,
+                      const SizedBox(height: 20),
+                      Wrap(
+                      spacing: 8,
+                      children: TimerMode.values.map((mode) {
+                        final isSelected = timerProvider.mode == mode;
+                        return InkWell(
+                          onTap: () => _switchMode(timerProvider, mode),
+                          borderRadius: BorderRadius.circular(18),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 180),
+                            curve: Curves.easeOut,
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: isSelected ? AppColors.backgroundBox : Colors.white,
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(color: isSelected ? AppColors.primary : const Color(0xFFDADADA)),
+                            ),
+                            child: Text(
+                              _label(mode),
+                              style: TextStyle(
+                                fontFamily: 'Nunito',
+                                fontSize: Responsive.text(context, size: 13),
+                                color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                      const SizedBox(height: 40),
+                      SizedBox(
+                        width: 260,
+                        height: 260,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            CustomPaint(
+                              size: const Size(260, 260),
+                              painter: TimerPainter(progress: _progress(timerProvider.totalSeconds, timerProvider.remainingSeconds)),
+                            ),
+                            Container(
+                              width: 180,
+                              height: 180,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.black,
+                                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 8, offset: const Offset(0, 4))],
+                              ),
+                              child: ClipOval(
+                                child: _videoHasError
+                                    ? Container(
+                                        color: Colors.red[100],
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            const Icon(Icons.error_outline, color: Colors.red, size: 32),
+                                            const SizedBox(height: 8),
+                                            Padding(
+                                              padding: const EdgeInsets.all(8.0),
+                                              child: Text(
+                                                'Video Error:\n$_videoErrorMessage',
+                                                style: const TextStyle(fontSize: 10, color: Colors.red),
+                                                textAlign: TextAlign.center,
+                                                maxLines: 4,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    : _videoController != null && _videoController!.value.isInitialized
+                                    ? FittedBox(
+                                        fit: BoxFit.cover,
+                                        child: SizedBox(
+                                          width: _videoController!.value.size.width,
+                                          height: _videoController!.value.size.height,
+                                          child: VideoPlayer(_videoController!),
+                                        ),
+                                      )
+                                    : Container(
+                                        color: Colors.grey[300],
+                                        child: const Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            CircularProgressIndicator(color: Colors.brown),
+                                            SizedBox(height: 8),
+                                            Text('Loading video...', style: TextStyle(fontSize: 12, color: Colors.brown)),
+                                          ],
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                )
-                              : _videoController != null && _videoController!.value.isInitialized
-                              ? FittedBox(
-                                  fit: BoxFit.cover,
-                                  child: SizedBox(width: _videoController!.value.size.width, height: _videoController!.value.size.height, child: VideoPlayer(_videoController!)),
-                                )
-                              : Container(
-                                  color: Colors.grey[300],
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
-                                      CircularProgressIndicator(color: Colors.brown),
-                                      SizedBox(height: 8),
-                                      Text('Loading video...', style: TextStyle(fontSize: 12, color: Colors.brown)),
-                                    ],
-                                  ),
-                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
+                      const SizedBox(height: 24),
+                      if (timerProvider.mode == TimerMode.pomodoro)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          decoration: BoxDecoration(color: AppColors.secondary.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
+                          child: Text(
+                            'Pomodoro ${timerProvider.pomodoroCount + 1} of 4',
+                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: AppColors.secondary),
+                          ),
+                        ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(iconSize: 32, icon: const Icon(Icons.remove), onPressed: timerProvider.isRunning ? null : () => _addMinutes(timerProvider, -1)),
+                          SizedBox(
+                            width: 170,
+                            child: TextField(
+                              controller: _timeInputController,
+                              focusNode: _timeInputFocusNode,
+                              enabled: !timerProvider.isRunning,
+                              textAlign: TextAlign.center,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [_timerFormatter],
+                              style: TextStyle(fontSize: Responsive.text(context, size: 36), fontWeight: FontWeight.bold, color: AppColors.textPrimary,),
+                              decoration: const InputDecoration(border: InputBorder.none, isCollapsed: true,  hintText: '25:00', disabledBorder: InputBorder.none),
+                              onSubmitted: (_) => _applyTypedTime(timerProvider),
+                              onEditingComplete: () {
+                                _applyTypedTime(timerProvider);
+                                FocusScope.of(context).unfocus();
+                              },
+                            ),
+                          ),
+                          IconButton(iconSize: 32, icon: const Icon(Icons.add), onPressed: timerProvider.isRunning ? null : () => _addMinutes(timerProvider, 1)),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      if (!timerProvider.isRunning && !timerProvider.isPaused)
+                        ElevatedButton(
+                          onPressed: () => _startTimer(timerProvider),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: AppColors.background,
+                            minimumSize: const Size(160, 48),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            elevation: 0,
+                          ),
+                          child: const Text('Start', style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w700, fontSize: 16)),
+                        ),
+
+                      if (timerProvider.isRunning || timerProvider.isPaused)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            OutlinedButton(
+                              onPressed: () => _cancelTimer(timerProvider),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.textPrimary,
+                                minimumSize: const Size(120, 48),
+                                side: const BorderSide(color: Color(0xFFDADADA)),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              ),
+                              child: const Text('Cancel', style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w700, fontSize: 16)),
+                            ),
+                            const SizedBox(width: 12),
+                            ElevatedButton(
+                              onPressed: timerProvider.isRunning
+                                  ? () => _pauseTimer(timerProvider)
+                                  : () => _resumeTimer(timerProvider),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: AppColors.background,
+                                minimumSize: const Size(120, 48),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                elevation: 0,
+                              ),
+                              child: Text(
+                                timerProvider.isRunning ? 'Pause' : 'Resume',
+                                style: const TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w700, fontSize: 16),
+                              ),
+                            ),
+                          ],
+                        ),
+                      const SizedBox(height: 40),
                     ],
                   ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Cycle counter
-                if (timerProvider.mode == TimerMode.pomodoro)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(color: AppColors.secondary.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
-                    child: Text(
-                      'Pomodoro ${timerProvider.pomodoroCount + 1} of 4',
-                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: AppColors.secondary),
-                    ),
-                  ),
-
-                const SizedBox(height: 12),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(iconSize: 32, icon: const Icon(Icons.remove), onPressed: timerProvider.isRunning ? null : () => _addMinutes(timerProvider, -1)),
-                    SizedBox(
-                      width: 170,
-                      child: TextField(
-                        controller: _timeInputController,
-                        focusNode: _timeInputFocusNode,
-                        enabled: !timerProvider.isRunning,
-                        textAlign: TextAlign.center,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [_timerFormatter],
-                        style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
-                        decoration: const InputDecoration(border: InputBorder.none, isCollapsed: true, hintText: '25:00'),
-                        onSubmitted: (_) => _applyTypedTime(timerProvider),
-                        onEditingComplete: () {
-                          _applyTypedTime(timerProvider);
-                          FocusScope.of(context).unfocus();
-                        },
-                      ),
-                    ),
-                    IconButton(iconSize: 32, icon: const Icon(Icons.add), onPressed: timerProvider.isRunning ? null : () => _addMinutes(timerProvider, 1)),
-                  ],
-                ),
-
-                const SizedBox(height: 24),
-
-                ElevatedButton(
-                  onPressed: timerProvider.isRunning ? () => _stopTimer(timerProvider) : () => _startTimer(timerProvider),
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.background),
-                  child: Text(timerProvider.isRunning ? 'Stop' : 'Start'),
                 ),
               ],
             ),

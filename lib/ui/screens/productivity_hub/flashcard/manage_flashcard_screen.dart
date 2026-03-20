@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lockedin_frontend/services/flashcard_service.dart';
-import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/actions/long_button.dart';
 import 'package:lockedin_frontend/ui/widgets/inputs/text_field.dart';
+import 'package:lockedin_frontend/ui/widgets/display/simple_back_sliver_app_bar.dart';
 
 class CardEntry {
   static int _nextId = 0;
@@ -185,63 +185,62 @@ class _CreateFlashcardScreenState extends State<ManageFlashcardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(
-          _isEditing ? 'Edit Flashcard Set' : 'Create Flashcard Set',
-          style: TextStyle(color: AppColors.textPrimary, fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 22), fontWeight: FontWeight.w500),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          onPressed: () => context.go('/flashcard'),
-          icon: Icon(Icons.arrow_back_ios, size: width * 0.06, color: AppColors.textPrimary),
-        ),
-        actions: [
-          _saving
-              ? const Padding(
-                  padding: EdgeInsets.only(right: 16),
-                  child: Center(
-                    child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.textPrimary)),
-                  ),
-                )
-              : IconButton(
-                  icon: const Icon(Icons.check, color: AppColors.textPrimary),
-                  onPressed: _save,
-                ),
-        ],
-        backgroundColor: AppColors.background,
-        elevation: 0,
-      ),
       body: _formLoading
           ? const Center(child: CircularProgressIndicator())
-          : Form(
-              key: _formKey,
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                children: [
-                  AppTextField(
-                    label: 'Title',
-                    hint: 'Enter title',
-                    controller: _titleController,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) return 'Title is required';
-                      return null;
-                    },
+          : CustomScrollView(
+              slivers: [
+                SimpleBackSliverAppBar(
+                  title: _isEditing ? 'Edit Flashcard Set' : 'Create Flashcard Set',
+                  onBack: () => context.go('/flashcard'),
+                  action: _saving
+                      ? const SizedBox(
+                          width: 48,
+                          height: 48,
+                          child: Center(
+                            child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.textPrimary)),
+                          ),
+                        )
+                      : IconButton(
+                          icon: const Icon(Icons.check, color: AppColors.textPrimary),
+                          onPressed: _save,
+                        ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      const SizedBox(height: 8),
+                      Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            AppTextField(
+                              label: 'Title',
+                              hint: 'Enter title',
+                              controller: _titleController,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) return 'Title is required';
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 20),
+                            ..._cards.asMap().entries.map(
+                              (entry) => Padding(
+                                padding: const EdgeInsets.only(bottom: 16),
+                                child: _FlashcardEntryCard(entry: entry.value, index: entry.key + 1, onRemove: _cards.length > 1 ? () => _removeCard(entry.key) : null),
+                              ),
+                            ),
+                            LongButton(text: 'Add card', isOutlined: true, onPressed: _addCard),
+                            const SizedBox(height: 32),
+                          ],
+                        ),
+                      ),
+                    ]),
                   ),
-                  const SizedBox(height: 20),
-                  ..._cards.asMap().entries.map(
-                    (entry) => Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: _FlashcardEntryCard(entry: entry.value, index: entry.key + 1, onRemove: _cards.length > 1 ? () => _removeCard(entry.key) : null),
-                    ),
-                  ),
-                  LongButton(text: 'Add card', isOutlined: true, onPressed: _addCard),
-                  const SizedBox(height: 32),
-                ],
-              ),
+                ),
+              ],
             ),
     );
   }
@@ -257,7 +256,7 @@ class _FlashcardEntryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(color: AppColors.backgroundBox, borderRadius: BorderRadius.circular(16)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -281,7 +280,7 @@ class _FlashcardEntryCard extends StatelessWidget {
             label: 'Question',
             hint: 'Enter question',
             filled: true,
-            fillColor: AppColors.backgroundBox,
+            fillColor: AppColors.background,
             validator: (value) {
               if (value == null || value.trim().isEmpty) return 'Question is required';
               return null;
@@ -293,7 +292,7 @@ class _FlashcardEntryCard extends StatelessWidget {
             label: 'Answer',
             hint: 'Enter answer',
             filled: true,
-            fillColor: AppColors.backgroundBox,
+            fillColor: AppColors.background,
             validator: (value) {
               if (value == null || value.trim().isEmpty) return 'Answer is required';
               return null;

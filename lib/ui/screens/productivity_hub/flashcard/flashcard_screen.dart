@@ -4,6 +4,7 @@ import 'package:lockedin_frontend/services/flashcard_service.dart';
 import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/actions/square_button.dart';
+import 'package:lockedin_frontend/ui/widgets/display/simple_back_sliver_app_bar.dart';
 import 'package:lockedin_frontend/utils/activity_tracker.dart';
 
 class FlashcardScreen extends StatefulWidget {
@@ -43,61 +44,44 @@ class _FlashcardState extends State<FlashcardScreen> with ActivityTracker {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(
-          'Flashcard',
-          style: TextStyle(color: AppColors.textPrimary, fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 24), fontWeight: FontWeight.w500),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          onPressed: () => context.go('/productivity-hub'),
-          icon: Icon(Icons.arrow_back_ios, size: width * 0.06, color: AppColors.textPrimary),
-        ),
-        backgroundColor: AppColors.background,
-        elevation: 0,
-      ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 16, right: 8),
         child: SquareButton(icon: Icons.add, onPressed: () => context.go('/flashcard/create')),
       ),
-      body: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            children: [
-              if (_loading)
-                Expanded(child: Center(child: CircularProgressIndicator()))
-              else if (_error != null)
-                Expanded(
-                  child: Center(
-                    child: Text(_error ?? 'An error occurred', style: TextStyle(color: AppColors.textPrimary)),
-                  ),
-                )
-              else if (_sets.isEmpty)
-                Expanded(
-                  child: Center(
-                    child: Text('No flashcard sets found', style: TextStyle(color: AppColors.textPrimary)),
-                  ),
-                )
-              else
-                Expanded(
-                  child: ListView.separated(
-                    itemCount: _sets.length,
-                    separatorBuilder: (_, _) => SizedBox(height: 12),
-                    itemBuilder: (context, i) {
-                      final s = _sets[i];
-                      return FlashcardTiles(flashcardId: s.id, flashcardTitle: s.title, cardsNumber: s.cardCount);
-                    },
-                  ),
-                ),
-            ],
-          ),
-        ),
+      body: CustomScrollView(
+        slivers: [
+          SimpleBackSliverAppBar(title: 'Flashcard', onBack: () => context.go('/productivity-hub')),
+          if (_loading)
+            const SliverFillRemaining(hasScrollBody: false, child: Center(child: CircularProgressIndicator()))
+          else if (_error != null)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Text(_error ?? 'An error occurred', style: TextStyle(color: AppColors.textPrimary)),
+              ),
+            )
+          else if (_sets.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Text('No flashcard sets found', style: TextStyle(color: AppColors.textPrimary)),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              sliver: SliverList.separated(
+                itemCount: _sets.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, i) {
+                  final s = _sets[i];
+                  return FlashcardTiles(flashcardId: s.id, flashcardTitle: s.title, cardsNumber: s.cardCount);
+                },
+              ),
+            ),
+        ],
       ),
     );
   }

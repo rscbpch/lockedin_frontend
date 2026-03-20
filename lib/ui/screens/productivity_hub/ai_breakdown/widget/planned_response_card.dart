@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import '../../../../../models/productivity_tools/task_breakdown/breakdown_step.dart';
 import '../../../../theme/app_theme.dart';
 
@@ -46,8 +47,8 @@ class _StepItem extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 26,
-            height: 26,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               color: AppColors.primary,
               borderRadius: BorderRadius.circular(8),
@@ -55,11 +56,11 @@ class _StepItem extends StatelessWidget {
             child: Center(
               child: Text(
                 '${step.step}',
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white,
                   fontFamily: 'Nunito',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
+                  fontSize: Responsive.text(context, size: 16),
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
@@ -71,20 +72,21 @@ class _StepItem extends StatelessWidget {
               children: [
                 Text(
                   step.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Color(0xFF1E293B),
                     fontFamily: 'Nunito',
-                    fontSize: 14,
+                    fontSize: Responsive.text(context, size: 16),
                     fontWeight: FontWeight.w700,
+                    height: 1.3
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   step.description,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Color(0xFF64748B),
-                    fontFamily: 'Nunito',
-                    fontSize: 13,
+                    fontFamily: 'Quicksand',
+                    fontSize: Responsive.text(context, size: 14),
                     fontWeight: FontWeight.w400,
                     height: 1.4,
                   ),

@@ -8,7 +8,7 @@ import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import 'package:lockedin_frontend/ui/screens/book_summary/widgets/add_review_bottom_sheet.dart';
 import 'package:lockedin_frontend/ui/screens/book_summary/widgets/preview_header.dart';
 import 'package:lockedin_frontend/ui/screens/book_summary/widgets/preview_rating_section.dart';
-import 'package:lockedin_frontend/ui/screens/book_summary/book_summary_reviews.dart';
+import 'package:lockedin_frontend/ui/screens/book_summary/book_summary_reviews_screen.dart';
 import 'package:lockedin_frontend/ui/screens/book_summary/widgets/preview_reviews_section.dart';
 import 'package:lockedin_frontend/ui/screens/book_summary/widgets/preview_summary_section.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';

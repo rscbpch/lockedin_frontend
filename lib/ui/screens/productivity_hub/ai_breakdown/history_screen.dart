@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:lockedin_frontend/ui/responsive/responsive.dart';
+import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import '../../../../services/ai_breakdown_service.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -29,8 +31,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
-      decoration: const BoxDecoration(
-        color: Color(0xFFEFF6FF),
+      decoration: BoxDecoration(
+        color: AppColors.background,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
@@ -58,13 +60,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Widget _buildTitle() {
-    return const Text(
+    return Text(
       'History',
       style: TextStyle(
-        color: Color(0xFF1E293B),
         fontFamily: 'Nunito',
-        fontSize: 20,
-        fontWeight: FontWeight.w700,
+        fontSize: Responsive.text(context, size: 18),
+        fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary
       ),
     );
   }
@@ -75,7 +77,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+            child: CircularProgressIndicator(color: AppColors.primary),
           );
         }
 
@@ -86,12 +88,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
               children: [
                 const Icon(Icons.error_outline, color: Color(0xFFEF4444), size: 32),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Failed to load history',
                   style: TextStyle(
                     color: Color(0xFF94A3B8),
                     fontFamily: 'Nunito',
-                    fontSize: 15,
+                    fontSize: Responsive.text(context, size: 16),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -99,11 +101,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   onPressed: () => setState(() {
                     _chatsFuture = widget.service.getChats();
                   }),
-                  child: const Text(
+                  child: Text(
                     'Try again',
                     style: TextStyle(
-                      color: Color(0xFF3B82F6),
+                      color: AppColors.grey,
                       fontFamily: 'Nunito',
+                      fontSize: Responsive.text(context, size: 14)
                     ),
                   ),
                 ),
@@ -115,13 +118,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
         final chats = snapshot.data ?? [];
 
         if (chats.isEmpty) {
-          return const Center(
+          return Center(
             child: Text(
               'No chat history yet',
               style: TextStyle(
-                color: Color(0xFF94A3B8),
+                color: AppColors.grey,
                 fontFamily: 'Nunito',
-                fontSize: 15,
+                fontSize: Responsive.text(context, size: 16),
               ),
             ),
           );
@@ -140,16 +143,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
               title: Text(
                 chat['title'] ?? 'Untitled',
-                style: const TextStyle(
+                style: TextStyle(
                   color: Color(0xFF1E293B),
                   fontFamily: 'Nunito',
-                  fontSize: 15,
+                  fontSize: Responsive.text(context, size: 16),
                   fontWeight: FontWeight.w500,
                 ),
               ),
               trailing: const Icon(
                 Icons.chevron_right,
-                color: Color(0xFFCBD5E1),
+                color: AppColors.grey,
               ),
               onTap: () => widget.onChatSelected(chat['_id'] as String),
             );

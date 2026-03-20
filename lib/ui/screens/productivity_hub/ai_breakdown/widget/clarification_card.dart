@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:lockedin_frontend/ui/responsive/responsive.dart';
+import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 
 class ClarificationCard extends StatelessWidget {
   final String? question;
@@ -24,7 +26,7 @@ class ClarificationCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
               Icon(Icons.help_outline, color: Color(0xFFF59E0B), size: 16),
               SizedBox(width: 6),
@@ -33,7 +35,7 @@ class ClarificationCard extends StatelessWidget {
                 style: TextStyle(
                   color: Color(0xFFF59E0B),
                   fontFamily: 'Nunito',
-                  fontSize: 13,
+                  fontSize: Responsive.text(context, size: 16),
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -42,10 +44,10 @@ class ClarificationCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             question ?? 'Could you provide more details?',
-            style: const TextStyle(
-              color: Color(0xFF334155),
+            style:TextStyle(
+              color: AppColors.textSecondary,
               fontFamily: 'Nunito',
-              fontSize: 14,
+              fontSize: Responsive.text(context, size: 14),
               height: 1.5,
             ),
           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 
 class ErrorBanner extends StatelessWidget {
   final String message;
@@ -26,10 +27,10 @@ class ErrorBanner extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Color(0xFFDC2626),
                 fontFamily: 'Nunito',
-                fontSize: 13,
+                fontSize: Responsive.text(context, size: 16),
               ),
             ),
           ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lockedin_frontend/models/user/search_user_model.dart';
 import 'package:lockedin_frontend/provider/user_search_provider.dart';
+import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import 'package:lockedin_frontend/ui/screens/profile/user_other_profile_screen.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:provider/provider.dart';
@@ -28,7 +29,7 @@ class UserSearchTile extends StatelessWidget {
         }
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: Row(
           children: [
             CircleAvatar(
@@ -57,11 +58,11 @@ class UserSearchTile extends StatelessWidget {
                     children: [
                       Text(
                         name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          fontSize: 15,
+                          fontSize: Responsive.text(context, size: 16),
                           color: AppColors.textPrimary,
-                          fontFamily: 'Quicksand',
+                          fontFamily: 'Nunito',
                         ),
                       ),
                       if (user.isFollowing) ...[
