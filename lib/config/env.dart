@@ -45,7 +45,30 @@ import 'dart:io' show Platform;
 
 class Env {
   static String get apiBaseUrl {
-    return dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000/api';
+    final raw = dotenv.env['API_BASE_URL'] ?? 'https://lockedinbackend-production.up.railway.app/api';
+
+    try {
+      final uri = Uri.parse(raw);
+      // If the path already contains an `api` segment, return as-is
+      if (uri.pathSegments.contains('api')) return raw;
+
+      // Otherwise append `/api` preserving existing path and query
+      final newPath = uri.path.isEmpty || uri.path == '/' ? '/api' : (uri.path.endsWith('/') ? '${uri.path}api' : '${uri.path}/api');
+      final fixed = Uri(
+        scheme: uri.scheme,
+        userInfo: uri.userInfo,
+        host: uri.host,
+        port: uri.hasPort ? uri.port : null,
+        path: newPath,
+        query: uri.query,
+        fragment: uri.fragment,
+      ).toString();
+
+      return fixed;
+    } catch (_) {
+      // If parsing fails, fall back to raw value
+      return raw;
+    }
   }
 
   static String? get googleClientId {
