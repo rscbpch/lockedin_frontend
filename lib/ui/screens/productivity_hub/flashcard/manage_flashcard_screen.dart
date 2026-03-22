@@ -5,6 +5,7 @@ import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/actions/long_button.dart';
 import 'package:lockedin_frontend/ui/widgets/inputs/text_field.dart';
 import 'package:lockedin_frontend/ui/widgets/display/simple_back_sliver_app_bar.dart';
+import 'package:lockedin_frontend/utils/activity_tracker.dart';
 
 class CardEntry {
   static int _nextId = 0;
@@ -28,7 +29,7 @@ class ManageFlashcardScreen extends StatefulWidget {
   State<ManageFlashcardScreen> createState() => _CreateFlashcardScreenState();
 }
 
-class _CreateFlashcardScreenState extends State<ManageFlashcardScreen> {
+class _CreateFlashcardScreenState extends State<ManageFlashcardScreen> with ActivityTracker {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _titleController = TextEditingController();
   List<CardEntry> _cards = [CardEntry()];

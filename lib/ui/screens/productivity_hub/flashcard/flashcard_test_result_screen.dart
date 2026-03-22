@@ -5,8 +5,9 @@ import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/actions/long_button.dart';
 import 'package:lockedin_frontend/ui/widgets/display/simple_back_sliver_app_bar.dart';
+import 'package:lockedin_frontend/utils/activity_tracker.dart';
 
-class FlashcardTestResultScreen extends StatelessWidget {
+class FlashcardTestResultScreen extends StatefulWidget {
   final int correctCount;
   final int wrongCount;
   final int totalCards;
@@ -25,14 +26,19 @@ class FlashcardTestResultScreen extends StatelessWidget {
   });
 
   @override
+  State<FlashcardTestResultScreen> createState() => _FlashcardTestResultScreenState();
+}
+
+class _FlashcardTestResultScreenState extends State<FlashcardTestResultScreen> with ActivityTracker {
+  @override
   Widget build(BuildContext context) {
-    final percentage = totalCards > 0 ? (correctCount / totalCards * 100).round() : 0;
+    final percentage = widget.totalCards > 0 ? (widget.correctCount / widget.totalCards * 100).round() : 0;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: CustomScrollView(
         slivers: [
-          SimpleBackSliverAppBar(title: 'Test Result', onBack: () => context.go('/flashcard/$setId')),
+          SimpleBackSliverAppBar(title: 'Test Result', onBack: () => context.go('/flashcard/${widget.setId}')),
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             sliver: SliverList(
@@ -42,7 +48,7 @@ class FlashcardTestResultScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 Center(
                   child: Text(
-                    '$correctCount/$totalCards',
+                    '${widget.correctCount}/${widget.totalCards}',
                     style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 20), fontWeight: FontWeight.w500, color: AppColors.textPrimary),
                   ),
                 ),
@@ -85,16 +91,16 @@ class FlashcardTestResultScreen extends StatelessWidget {
                 // ),
                 const SizedBox(height: 32),
                 // card list
-                ...List.generate(cards.length, (i) {
-                  final isCorrect = i < results.length ? results[i] : false;
+                ...List.generate(widget.cards.length, (i) {
+                  final isCorrect = i < widget.results.length ? widget.results[i] : false;
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 16),
-                    child: _ResultCard(index: i + 1, question: cards[i].front, definition: cards[i].back, isCorrect: isCorrect),
+                    child: _ResultCard(index: i + 1, question: widget.cards[i].front, definition: widget.cards[i].back, isCorrect: isCorrect),
                   );
                 }),
                 const SizedBox(height: 8),
                 // actions
-                LongButton(text: 'Retake Test', onPressed: () => context.go('/flashcard/$setId/test')),
+                LongButton(text: 'Retake Test', onPressed: () => context.go('/flashcard/${widget.setId}/test')),
                 const SizedBox(height: 12),
                 LongButton(text: 'Back to Flashcard', isOutlined: true, onPressed: () => context.go('/flashcard')),
                 const SizedBox(height: 32),

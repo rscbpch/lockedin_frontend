@@ -6,6 +6,7 @@ import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/actions/long_button.dart';
 import 'package:lockedin_frontend/ui/widgets/display/simple_back_sliver_app_bar.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/flashcard/widgets/flip_card.dart';
+import 'package:lockedin_frontend/utils/activity_tracker.dart';
 
 class FlashcardViewScreen extends StatefulWidget {
   final String setId;
@@ -15,7 +16,7 @@ class FlashcardViewScreen extends StatefulWidget {
   State<FlashcardViewScreen> createState() => _FlashcardViewScreenState();
 }
 
-class _FlashcardViewScreenState extends State<FlashcardViewScreen> {
+class _FlashcardViewScreenState extends State<FlashcardViewScreen> with ActivityTracker {
   FlashcardSet? _viewSet;
   bool _viewLoading = true;
   String? _viewError;

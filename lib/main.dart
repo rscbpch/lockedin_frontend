@@ -80,7 +80,15 @@ void main() async {
 
   final streakProvider = StreakProvider();
   await streakProvider.restoreSession();
+  
   final bookProvider = BookProvider();
+
+  if (authProvider.isAuthenticated) {
+    bookProvider.loadBooks();
+    bookProvider.loadCategories();
+    bookProvider.loadFavorites();
+  }
+
   final chatProvider = ChatProvider(
     streamClient: streamClient,
     chatService: ChatService(getAuthToken: () async => authProvider.token),

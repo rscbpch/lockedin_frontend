@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lockedin_frontend/provider/pomodoro_timer_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:lockedin_frontend/provider/streak_provider.dart';
 
@@ -15,7 +14,6 @@ import 'package:lockedin_frontend/provider/streak_provider.dart';
 mixin ActivityTracker<T extends StatefulWidget> on State<T> {
   bool _tracking = false;
   StreakProvider? _streakRef;
-  PomodoroTimerProvider? _pomodoroRef;
 
   @override
   void initState() {
@@ -35,24 +33,15 @@ mixin ActivityTracker<T extends StatefulWidget> on State<T> {
     if (_tracking) return;
     _tracking = true;
     _streakRef = context.read<StreakProvider>();
-    _pomodoroRef = context.read<PomodoroTimerProvider>();
-    _streakRef!.startSession();
+    _streakRef!.startSessionFrom(StreakSessionSource.activity);
     debugPrint('[ActivityTracker] started for ${widget.runtimeType}');
   }
 
   void stopTracking() {
     if (!_tracking) return;
     _tracking = false;
-
-    final keepTrackingForPomodoroFocus = _pomodoroRef?.isRunning == true && _pomodoroRef?.mode == TimerMode.pomodoro;
-    if (!keepTrackingForPomodoroFocus) {
-      _streakRef?.endSession();
-      debugPrint('[ActivityTracker] stopped for ${widget.runtimeType}');
-    } else {
-      debugPrint('[ActivityTracker] skip stop for ${widget.runtimeType} (pomodoro focus still running)');
-    }
-
-    _pomodoroRef = null;
+    _streakRef?.endSessionFrom(StreakSessionSource.activity);
+    debugPrint('[ActivityTracker] stopped for ${widget.runtimeType}');
     _streakRef = null;
   }
 }

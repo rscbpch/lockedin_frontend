@@ -8,6 +8,7 @@ class Streak {
   final int todayAccumulatedSeconds;
   final bool canUpdateGoal;
   final int goalUpdateDaysRemaining;
+  final DateTime? lastGoalMetDate;
 
   Streak({
     required this.id,
@@ -19,6 +20,7 @@ class Streak {
     required this.todayAccumulatedSeconds,
     required this.canUpdateGoal,
     required this.goalUpdateDaysRemaining,
+    this.lastGoalMetDate,
   });
 
   factory Streak.fromJson(Map<String, dynamic> json) {
@@ -32,6 +34,9 @@ class Streak {
       todayAccumulatedSeconds: json['todayAccumulatedSeconds'] ?? 0,
       canUpdateGoal: json['canUpdateGoal'] ?? true,
       goalUpdateDaysRemaining: json['goalUpdateDaysRemaining'] ?? 0,
+      lastGoalMetDate: json['lastGoalMetDate'] != null
+        ? DateTime.parse(json['lastGoalMetDate']).toLocal()
+        : null,
     );
   }
 }

@@ -10,6 +10,11 @@ class AppTextField extends StatefulWidget {
   final TextInputType keyboardType;
   final bool filled;
   final Color? fillColor;
+  final bool autofocus;
+  final int? maxLength;
+  final ValueChanged<String>? onSubmitted;
+  final ValueChanged<String>? onChanged;
+  final String? errorText;
 
   const AppTextField({
     super.key,
@@ -21,6 +26,11 @@ class AppTextField extends StatefulWidget {
     this.keyboardType = TextInputType.text,
     this.filled = false,
     this.fillColor,
+    this.autofocus = false,
+    this.maxLength,
+    this.onSubmitted,
+    this.onChanged,
+    this.errorText,
   });
 
   @override
@@ -40,16 +50,23 @@ class _AppTextFieldState extends State<AppTextField> {
         const SizedBox(height: 6),
         TextFormField(
           controller: widget.controller,
+          autofocus: widget.autofocus,
+          maxLength: widget.maxLength,
           keyboardType: widget.keyboardType,
           obscureText: widget.isPassword ? _obscureText : false,
           validator: widget.validator,
           autovalidateMode: AutovalidateMode.onUserInteraction,
-          onChanged: (_) => setState(() {}),
+          onFieldSubmitted: widget.onSubmitted,
+          onChanged: (value) {
+            widget.onChanged?.call(value);
+            setState(() {});
+          },
           cursorColor: AppColors.textPrimary,
           style: const TextStyle(fontSize: 16, color: AppColors.textPrimary, fontFamily: 'Nunito'),
           decoration: InputDecoration(
             labelText: widget.label,
             hintText: widget.hint,
+            errorText: widget.errorText,
             floatingLabelBehavior: FloatingLabelBehavior.always,
             suffixIcon: _buildSuffixIcon(hasText),
             labelStyle: const TextStyle(color: AppColors.textPrimary, fontFamily: 'Nunito'),

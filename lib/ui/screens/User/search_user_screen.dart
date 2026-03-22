@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lockedin_frontend/ui/responsive/responsive.dart';
-import 'package:lockedin_frontend/ui/screens/User/widget/user_search_tile.dart';
+import 'package:lockedin_frontend/ui/screens/user/widget/user_search_tile.dart';
 import 'package:lockedin_frontend/ui/widgets/display/simple_back_sliver_app_bar.dart';
 import 'package:lockedin_frontend/ui/widgets/inputs/search_bar_widget.dart';
 import 'package:provider/provider.dart';

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:lockedin_frontend/ui/responsive/responsive.dart';
+import 'package:lockedin_frontend/ui/widgets/actions/long_button.dart';
+import 'package:lockedin_frontend/ui/widgets/inputs/text_field.dart';
 import '../../../theme/app_theme.dart';
 
 class CreateRoomSheet extends StatefulWidget {
@@ -41,7 +44,6 @@ class _CreateRoomSheetState extends State<CreateRoomSheet> {
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        border: Border(top: BorderSide(color: AppColors.primary.withOpacity(0.2))),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -49,7 +51,8 @@ class _CreateRoomSheetState extends State<CreateRoomSheet> {
         children: [
           Center(
             child: Container(
-              width: 36, height: 4,
+              width: 36,
+              height: 4,
               decoration: BoxDecoration(
                 color: AppColors.primary.withOpacity(0.5),
                 borderRadius: BorderRadius.circular(2),
@@ -60,95 +63,63 @@ class _CreateRoomSheetState extends State<CreateRoomSheet> {
           Text(
             'NEW SESSION',
             style: TextStyle(
-              color: AppColors.accent,
-              fontSize: 10,
-              letterSpacing: 2,
+              color: AppColors.primary,
+              fontSize: Responsive.text(context, size: 12),
               fontWeight: FontWeight.w700,
+              fontFamily: 'Nunito'
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Create a Room',
             style: TextStyle(
               color: AppColors.textPrimary,
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
+              fontSize: Responsive.text(context, size: 18),
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Nunito'
             ),
           ),
-          const SizedBox(height: 4),
+          // const SizedBox(height: 2),
           Text(
             'Start a focused session — up to 10 participants.',
-            style: TextStyle(color: AppColors.grey, fontSize: 13),
+            style: TextStyle(
+              color: AppColors.grey,
+              fontSize: Responsive.text(context, size: 12),
+              fontFamily: 'Quicksand',
+              fontWeight: FontWeight.w500
+            ),
           ),
           const SizedBox(height: 20),
-          TextField(
+          AppTextField(
+            label: 'Room Name',
+            hint: 'e.g. Physics Study Group',
             controller: _controller,
             autofocus: true,
             maxLength: 60,
             onSubmitted: (_) => _submit(),
-            style: const TextStyle(color: AppColors.textPrimary, fontSize: 15),
-            cursorColor: AppColors.accent,
-            decoration: InputDecoration(
-              hintText: 'e.g. Physics Study Group',
-              hintStyle: TextStyle(color: AppColors.grey),
-              errorText: _error,
-              filled: true,
-              fillColor: AppColors.backgroundBox,
-              counterStyle: TextStyle(color: AppColors.grey, fontSize: 10),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: AppColors.primary.withOpacity(0.2)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: AppColors.primary.withOpacity(0.2)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: AppColors.accent),
-              ),
-              errorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: AppColors.primary.withOpacity(0.2)),
-              ),
-            ),
+            onChanged: (_) {
+              if (_error != null) setState(() => _error = null);
+            },
+            errorText: _error,
+            filled: true,
+            fillColor: AppColors.backgroundBox,
           ),
           const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
-                child: OutlinedButton(
+                child: LongButton(
+                  text: 'Cancel',
+                  isOutlined: true,
                   onPressed: _loading ? null : () => Navigator.pop(context),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.grey,
-                    side: BorderSide(color: AppColors.primary.withOpacity(0.2)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  child: const Text('Cancel'),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 flex: 2,
-                child: ElevatedButton(
+                child: LongButton(
+                  text: _loading ? 'Creating...' : 'Create & Join',
                   onPressed: _loading ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.accent,
-                    foregroundColor: Colors.black,
-                    disabledBackgroundColor: AppColors.accent.withOpacity(0.4),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    elevation: 0,
-                    textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-                  ),
-                  child: _loading
-                      ? const SizedBox(
-                          width: 18, height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
-                        )
-                      : const Text('Create & Join'),
                 ),
               ),
             ],

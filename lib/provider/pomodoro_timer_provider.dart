@@ -72,7 +72,7 @@ class PomodoroTimerProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     // Start streak tracking when pomodoro focus starts
     if (_mode == TimerMode.pomodoro) {
-      _streakProvider?.startSession();
+      _streakProvider?.startSessionFrom(StreakSessionSource.pomodoro);
     }
 
     notifyListeners();
@@ -88,7 +88,7 @@ class PomodoroTimerProvider extends ChangeNotifier with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
 
     if (_mode == TimerMode.pomodoro) {
-      _streakProvider?.endSession();
+      _streakProvider?.endSessionFrom(StreakSessionSource.pomodoro);
     }
 
     notifyListeners();
@@ -107,7 +107,7 @@ class PomodoroTimerProvider extends ChangeNotifier with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
 
     if (_mode == TimerMode.pomodoro) {
-      _streakProvider?.startSession();
+      _streakProvider?.startSessionFrom(StreakSessionSource.pomodoro);
     }
 
     notifyListeners();
@@ -124,7 +124,7 @@ class PomodoroTimerProvider extends ChangeNotifier with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
 
     if (wasActive) {
-      _streakProvider?.endSession();
+      _streakProvider?.endSessionFrom(StreakSessionSource.pomodoro);
     }
 
     _initializeModeDuration();
@@ -142,7 +142,7 @@ class PomodoroTimerProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     // End streak tracking when pomodoro focus is manually stopped
     if (wasRunningPomodoro) {
-      _streakProvider?.endSession();
+      _streakProvider?.endSessionFrom(StreakSessionSource.pomodoro);
     }
 
     notifyListeners();
@@ -160,7 +160,7 @@ class PomodoroTimerProvider extends ChangeNotifier with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
 
     if (wasRunningPomodoro) {
-      _streakProvider?.endSession();
+      _streakProvider?.endSessionFrom(StreakSessionSource.pomodoro);
     }
 
     _mode = mode;
@@ -293,7 +293,7 @@ class PomodoroTimerProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     if (_mode == TimerMode.pomodoro) {
       // End streak tracking when pomodoro completes
-      _streakProvider?.endSession();
+      _streakProvider?.endSessionFrom(StreakSessionSource.pomodoro);
       unawaited(PomodoroService.createSession(durationSeconds: _totalSeconds, type: 'focus'));
       _pomodoroCount++;
       if (_pomodoroCount % 4 == 0) {

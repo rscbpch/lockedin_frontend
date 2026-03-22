@@ -128,32 +128,34 @@ class ProductivityStreakCard extends StatefulWidget {
 
 class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
   Timer? _timer;
-  bool _hasRefreshedOnCompletion = false;
-  DateTime? _lastTrackedDate;
+  // bool _hasRefreshedOnCompletion = false;
+  // DateTime? _lastTrackedDate;
 
   @override
   void initState() {
     super.initState();
+    // _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+    //   if (mounted) {
+    //     setState(() {});
+    //     final streak = context.read<StreakProvider>();
+
+    //     // Reset refresh flag each new calendar day
+    //     final todayDate = DateTime.now();
+    //     final todayDay = DateTime(todayDate.year, todayDate.month, todayDate.day);
+    //     if (_lastTrackedDate != null && _lastTrackedDate != todayDay) {
+    //       _hasRefreshedOnCompletion = false;
+    //     }
+    //     _lastTrackedDate = todayDay;
+
+    //     // Only fetch once when goal is completed, not every second
+    //     if (streak.hasCompletedTodayGoal && !streak.sessionActive && !_hasRefreshedOnCompletion) {
+    //       _hasRefreshedOnCompletion = true;
+    //       streak.fetchStreak(forceRefresh: true);
+    //     }
+    //   }
+    // });
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) {
-        setState(() {});
-        final streak = context.read<StreakProvider>();
-
-        // Reset refresh flag each new calendar day
-        final todayDate = DateTime.now();
-        final todayDay = DateTime(todayDate.year, todayDate.month, todayDate.day);
-        if (_lastTrackedDate != null && _lastTrackedDate != todayDay) {
-          _hasRefreshedOnCompletion = false;
-        }
-        _lastTrackedDate = todayDay;
-
-        // Only fetch once when goal is completed, not every second
-        if (streak.hasCompletedTodayGoal && !streak.sessionActive && !_hasRefreshedOnCompletion) {
-          _hasRefreshedOnCompletion = true;
-          streak.fetchStreak(forceRefresh: true);
-        }
-
-      }
+      if (mounted) setState(() {});
     });
   }
 
@@ -162,7 +164,6 @@ class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
     _timer?.cancel();
     super.dispose();
   }
-
 
   /// Returns day labels starting from Monday of the current week.
   List<String> get _dayLabels => const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -204,9 +205,10 @@ class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
     final totalToday = streak.todayTrackedSeconds;
     final todayGoalMet = streak.hasCompletedTodayGoal;
     final weekActive = _weekActivity(streak.currentStreak, todayGoalMet);
+    final sessionActive = streak.sessionActive;
     final streakImagePath = todayGoalMet
-        ? 'assets/images/streak.png'
-        : 'assets/images/bw-streak.png';
+      ? 'assets/images/streak.png'
+      : 'assets/images/bw-streak.png';
 
     return Container(
       width: double.infinity,
@@ -229,7 +231,7 @@ class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
               Image.asset(streakImagePath, height: width * 0.22),
 
               // Timer pill — only shown when goal is NOT met
-              if (!todayGoalMet)
+              if (sessionActive || !todayGoalMet)
                 Positioned(
                   bottom: -(width * 0.035), // float it slightly below the image
                   child: Container(
@@ -237,18 +239,8 @@ class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: streak.sessionActive
-                            ? AppColors.primary.withOpacity(0.3)
-                            : AppColors.grey.withOpacity(0.3),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.06),
-                          blurRadius: 4,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
+                      border: Border.all(color: streak.sessionActive ? AppColors.primary.withOpacity(0.3) : AppColors.grey.withOpacity(0.3)),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 4, offset: const Offset(0, 1))],
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -256,10 +248,7 @@ class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
                         Container(
                           width: 6,
                           height: 6,
-                          decoration: BoxDecoration(
-                            color: streak.sessionActive ? Colors.green : AppColors.grey,
-                            shape: BoxShape.circle,
-                          ),
+                          decoration: BoxDecoration(color: streak.sessionActive ? Colors.green : AppColors.grey, shape: BoxShape.circle),
                         ),
                         const SizedBox(width: 5),
                         Text(
@@ -283,25 +272,15 @@ class _ProductivityStreakCardState extends State<ProductivityStreakCard> {
 
           Text(
             '${streak.currentStreak}',
-            style: TextStyle(
-              fontSize: Responsive.text(context, size: 32),
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-            ),
+            style: TextStyle(fontSize: Responsive.text(context, size: 32), fontFamily: 'Nunito', fontWeight: FontWeight.bold, color: AppColors.textPrimary),
           ),
-          
+
           Text(
             'Current streak',
-            style: TextStyle(
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.w500,
-              color: AppColors.textPrimary,
-              fontSize: Responsive.text(context, size: 16)
-            ),
+            style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w500, color: AppColors.textPrimary, fontSize: Responsive.text(context, size: 16)),
           ),
-          // const SizedBox(height: 8),
 
+          // const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Text(

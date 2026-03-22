@@ -190,14 +190,20 @@ class _AiBreakdownScreenState extends State<AiBreakdownScreen> with ActivityTrac
           _buildMessageListSliver(),
         ],
       ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (_errorMessage != null) ErrorBanner(message: _errorMessage!, onDismiss: () => setState(() => _errorMessage = null)),
-            ChatInputBar(controller: _inputController, onSend: _sendMessage, isLoading: _isLoading),
-          ],
+      bottomNavigationBar: AnimatedPadding(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: SafeArea(
+          top: false,
+          bottom: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_errorMessage != null) ErrorBanner(message: _errorMessage!, onDismiss: () => setState(() => _errorMessage = null)),
+              ChatInputBar(controller: _inputController, onSend: _sendMessage, isLoading: _isLoading),
+            ],
+          ),
         ),
       ),
     );
@@ -205,25 +211,19 @@ class _AiBreakdownScreenState extends State<AiBreakdownScreen> with ActivityTrac
 
   Widget _buildMessageListSliver() {
     if (_messages.isEmpty && !_isLoading) {
-      return const SliverFillRemaining(
-        hasScrollBody: false,
-        child: ChatEmptyState(),
-      );
+      return const SliverFillRemaining(hasScrollBody: false, child: ChatEmptyState());
     }
 
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       sliver: SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            if (index == _messages.length) {
-              return const TypingIndicator();
-            }
-            final msg = _messages[index];
-            return msg.role == 'user' ? UserMessageBubble(content: msg.content) : AssistantMessageBubble(message: msg);
-          },
-          childCount: _messages.length + (_isLoading ? 1 : 0),
-        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          if (index == _messages.length) {
+            return const TypingIndicator();
+          }
+          final msg = _messages[index];
+          return msg.role == 'user' ? UserMessageBubble(content: msg.content) : AssistantMessageBubble(message: msg);
+        }, childCount: _messages.length + (_isLoading ? 1 : 0)),
       ),
     );
   }
