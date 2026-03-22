@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lockedin_frontend/models/user/follow_user_model.dart';
+import 'package:lockedin_frontend/models/user/search_user_model.dart';
 import 'package:lockedin_frontend/provider/follow_provider.dart';
+import 'package:lockedin_frontend/ui/screens/profile/user_other_profile_screen.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 
 class FollowListTile extends StatelessWidget {
@@ -19,36 +21,46 @@ class FollowListTile extends StatelessWidget {
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-      leading: CircleAvatar(
-        radius: 22,
-        backgroundColor: const Color(0xFFF5E6D8),
-        backgroundImage:
-            user.avatar.isNotEmpty ? NetworkImage(user.avatar) : null,
-        child: user.avatar.isEmpty
-            ? Text(
-                name.isNotEmpty ? name[0].toUpperCase() : '?',
-                style: const TextStyle(
-                  color: AppColors.primary,
-                  fontFamily: 'Quicksand',
-                  fontWeight: FontWeight.w600,
-                ),
-              )
-            : null,
-      ),
-      title: Text(
-        name,
-        style: const TextStyle(
-          fontWeight: FontWeight.w600,
-          fontFamily: 'Quicksand',
-          color: AppColors.textPrimary,
+      leading: GestureDetector(
+        onTap: () => _openUserProfile(context, provider, isFollowing),
+        child: CircleAvatar(
+          radius: 22,
+          backgroundColor: const Color(0xFFF5E6D8),
+          backgroundImage: user.avatar.isNotEmpty
+              ? NetworkImage(user.avatar)
+              : null,
+          child: user.avatar.isEmpty
+              ? Text(
+                  name.isNotEmpty ? name[0].toUpperCase() : '?',
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontFamily: 'Quicksand',
+                    fontWeight: FontWeight.w600,
+                  ),
+                )
+              : null,
         ),
       ),
-      subtitle: Text(
-        '@${user.username}',
-        style: const TextStyle(
-          fontSize: 12,
-          color: AppColors.grey,
-          fontFamily: 'Quicksand',
+      title: GestureDetector(
+        onTap: () => _openUserProfile(context, provider, isFollowing),
+        child: Text(
+          name,
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Quicksand',
+            color: AppColors.textPrimary,
+          ),
+        ),
+      ),
+      subtitle: GestureDetector(
+        onTap: () => _openUserProfile(context, provider, isFollowing),
+        child: Text(
+          '@${user.username}',
+          style: const TextStyle(
+            fontSize: 12,
+            color: AppColors.grey,
+            fontFamily: 'Quicksand',
+          ),
         ),
       ),
       trailing: Row(
@@ -57,8 +69,7 @@ class FollowListTile extends StatelessWidget {
           // Mutual badge
           if (isMutual) ...[
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
                 color: AppColors.accent,
                 borderRadius: BorderRadius.circular(20),
@@ -90,7 +101,9 @@ class FollowListTile extends StatelessWidget {
                   onTap: () => _handleFollowTap(context, provider, isFollowing),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 6),
+                      horizontal: 14,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: isFollowing
                           ? Colors.transparent
@@ -116,6 +129,35 @@ class FollowListTile extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _openUserProfile(
+    BuildContext context,
+    FollowProvider provider,
+    bool isFollowing,
+  ) async {
+    final mappedUser = SearchUserResult(
+      id: user.id,
+      username: user.username,
+      displayName: user.displayName,
+      bio: '',
+      avatar: user.avatar,
+      isFollowing: isFollowing,
+      followers: 0,
+      following: 0,
+      streak: null,
+    );
+
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => UserOtherProfileScreen(user: mappedUser),
+      ),
+    );
+
+    if (context.mounted) {
+      await provider.fetchAll();
+    }
   }
 
   Future<void> _handleFollowTap(
