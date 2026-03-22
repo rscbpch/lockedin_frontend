@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'assistant_avatar_icon.dart';
 
 class TypingIndicator extends StatelessWidget {
@@ -77,7 +78,7 @@ class _TypingDotsState extends State<_TypingDots>
                   width: 7,
                   height: 7,
                   decoration: const BoxDecoration(
-                    color: Color(0xFF3B82F6),
+                    color: AppColors.primary,
                     shape: BoxShape.circle,
                   ),
                 ),

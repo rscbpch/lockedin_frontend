@@ -9,11 +9,14 @@ class AppSnackBar {
     String? actionLabel,
     VoidCallback? onAction,
   }) {
+    final padding = MediaQuery.of(context).padding;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
         backgroundColor: Colors.transparent,
         elevation: 0,
+        margin: EdgeInsets.only(bottom: 16, left: padding.left, right: padding.right),
         content: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(

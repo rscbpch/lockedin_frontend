@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import '../../../../theme/app_theme.dart';
 
 class UserMessageBubble extends StatelessWidget {
@@ -29,10 +30,10 @@ class UserMessageBubble extends StatelessWidget {
             ),
             child: Text(
               content,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Color(0xFF334155),
                 fontFamily: 'Nunito',
-                fontSize: 14,
+                fontSize: Responsive.text(context, size: 16),
                 fontWeight: FontWeight.w500,
               ),
             ),

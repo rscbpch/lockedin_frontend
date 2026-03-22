@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import '../../../../models/study_room/study_room.dart';
 import '../../../theme/app_theme.dart';
 
@@ -67,10 +68,11 @@ class RoomCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         room.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textPrimary,
                           fontWeight: FontWeight.w700,
-                          fontSize: 14,
+                          fontSize: Responsive.text(context, size: 30),
+                          fontFamily: 'Nunito'
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),

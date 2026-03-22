@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import '../../../../theme/app_theme.dart';
 
 class ChatEmptyState extends StatelessWidget {
@@ -16,7 +17,7 @@ class ChatEmptyState extends StatelessWidget {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color:  AppColors.secondary.withOpacity(0.2),
+                color: AppColors.grey,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -26,13 +27,13 @@ class ChatEmptyState extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'Let AI help you breakdown any task with just a few prompts',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Color(0xFF64748B),
+                color: AppColors.grey,
                 fontFamily: 'Nunito',
-                fontSize: 16,
+                fontSize: Responsive.text(context, size: 16),
                 fontWeight: FontWeight.w500,
                 height: 1.5,
               ),

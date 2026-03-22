@@ -26,10 +26,7 @@ class BookProvider extends ChangeNotifier {
 
   /// Load books from API. Uses cache if already fetched and [forceRefresh] is false.
   Future<void> loadBooks({String? search, String? category, bool forceRefresh = false}) async {
-    // Use cached data if available and no filters/search applied and not forcing refresh
-    if (_hasFetchedBooks && !forceRefresh && search == null && category == null) {
-      return;
-    }
+    if (_hasFetchedBooks && !forceRefresh && search == null && category == null) return;
 
     _isLoading = true;
     _error = null;
@@ -38,29 +35,33 @@ class BookProvider extends ChangeNotifier {
     try {
       final books = await BookService.getBooks(search: search, category: category);
 
-      final ratings = <int, double>{};
-      for (final book in books) {
-        // Preserve existing cached ratings to avoid re-fetching
+      // ✅ Fetch all reviews in parallel
+      final reviewFutures = books.map((book) async {
         if (_bookRatings.containsKey(book.id) && !forceRefresh) {
-          ratings[book.id] = _bookRatings[book.id]!;
-          continue;
+          return MapEntry(book.id, _bookRatings[book.id]!);
         }
         try {
           final reviews = await BookService.getBookReviews(book.id);
           if (reviews.isNotEmpty) {
             final avg = reviews.map((r) => r.rating).reduce((a, b) => a + b) / reviews.length;
-            ratings[book.id] = avg;
+            return MapEntry(book.id, avg);
           }
         } catch (_) {}
+        return null;
+      });
+
+      final results = await Future.wait(reviewFutures);
+      final ratings = <int, double>{};
+      for (final entry in results) {
+        if (entry != null) ratings[entry.key] = entry.value;
       }
 
       _books = books;
       _bookRatings = ratings;
       _hasFetchedBooks = (search == null && category == null);
-      _isLoading = false;
-      notifyListeners();
     } catch (e) {
       _error = e.toString();
+    } finally {
       _isLoading = false;
       notifyListeners();
     }

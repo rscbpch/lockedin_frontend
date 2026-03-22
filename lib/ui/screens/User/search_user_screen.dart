@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:lockedin_frontend/ui/screens/User/widget/user_search_tile.dart';
+import 'package:lockedin_frontend/ui/responsive/responsive.dart';
+import 'package:lockedin_frontend/ui/screens/user/widget/user_search_tile.dart';
 import 'package:lockedin_frontend/ui/widgets/display/simple_back_sliver_app_bar.dart';
 import 'package:lockedin_frontend/ui/widgets/inputs/search_bar_widget.dart';
 import 'package:provider/provider.dart';
@@ -99,22 +100,26 @@ class _SearchUserViewState extends State<_SearchUserView> {
                 color: AppColors.backgroundBox,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.person_search, size: 48, color: AppColors.grey),
+              child: const Icon(Icons.person_search, size: 40, color: AppColors.grey),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Find people to follow',
               style: TextStyle(
                 color: AppColors.textPrimary,
-                fontSize: 16,
+                fontSize: Responsive.text(context, size: 16),
                 fontWeight: FontWeight.w600,
-                fontFamily: 'Quicksand',
+                fontFamily: 'Nunito',
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Search by name or username',
-              style: TextStyle(color: AppColors.grey, fontSize: 13, fontFamily: 'Quicksand'),
+              style: TextStyle(
+                color: AppColors.grey,
+                fontSize: Responsive.text(context, size: 14),
+                fontFamily: 'Quicksand'
+              ),
             ),
           ],
         ),
@@ -131,7 +136,7 @@ class _SearchUserViewState extends State<_SearchUserView> {
       return Center(
         child: Text(
           provider.errorMessage ?? 'Something went wrong',
-          style: const TextStyle(color: Colors.red, fontSize: 14),
+          style: TextStyle(color: Colors.red, fontSize: Responsive.text(context, size: 16)),
         ),
       );
     }
@@ -141,11 +146,11 @@ class _SearchUserViewState extends State<_SearchUserView> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.search_off, size: 48, color: AppColors.grey),
+            const Icon(Icons.search_off, size: 40, color: AppColors.grey),
             const SizedBox(height: 12),
             Text(
               'No results for "${_controller.text}"',
-              style: const TextStyle(color: AppColors.grey, fontSize: 14, fontFamily: 'Quicksand'),
+              style: TextStyle(color: AppColors.grey, fontSize: Responsive.text(context, size: 16), fontFamily: 'Quicksand'),
             ),
           ],
         ),
@@ -157,9 +162,9 @@ class _SearchUserViewState extends State<_SearchUserView> {
       itemCount: provider.results.length,
       separatorBuilder: (_, __) => const Divider(
         height: 1,
-        indent: 72,
+        indent: 16,
         endIndent: 16,
-        color: AppColors.accent,
+        // color: AppColors.primary,
       ),
       itemBuilder: (context, index) => UserSearchTile(user: provider.results[index]),
     );

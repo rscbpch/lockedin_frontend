@@ -210,6 +210,7 @@ class _UserOwnProfileScreenState extends State<UserOwnProfileScreen> {
                       onPressed: () {
                         showModalBottomSheet(
                           context: context,
+                          useRootNavigator: true,
                           isScrollControlled: true,
                           isDismissible: false,
                           enableDrag: false,

@@ -111,10 +111,13 @@ class _BookSummaryReviewsScreenState extends State<BookSummaryReviewsScreen> {
               context.read<BookProvider>().updateRating(widget.bookId, _averageRating);
 
               if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(existingReview == null ? 'Review submitted!' : 'Review updated!')));
+              AppSnackBar.show(
+                context,
+                message: existingReview == null ? 'Review submitted!' : 'Review updated!'
+              );
             } catch (e) {
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red.shade400));
+                AppSnackBar.show(context, message: e.toString());
               }
               rethrow;
             }
@@ -149,7 +152,7 @@ class _BookSummaryReviewsScreenState extends State<BookSummaryReviewsScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red.shade400));
+      AppSnackBar.show(context, message: e.toString());
     }
   }
 
@@ -163,7 +166,7 @@ class _BookSummaryReviewsScreenState extends State<BookSummaryReviewsScreen> {
       AppSnackBar.show(context, message: 'Review restored');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red.shade400));
+      AppSnackBar.show(context, message: e.toString());
     }
   }
 
@@ -273,8 +276,14 @@ class _BookSummaryReviewsScreenState extends State<BookSummaryReviewsScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(5, (i) {
-            return Icon(i < _averageRating.round() ? Icons.star : Icons.star_border, color: const Color(0xFFFFB800), size: 32);
-          }),
+                if (i < _averageRating.floor()) {
+                  return Icon(Icons.star, color: const Color(0xFFFFB800), size: Responsive.icon(context, size: 28));
+                }
+                if (_averageRating - i >= 0.5) {
+                  return Icon(Icons.star_half, color: const Color(0xFFFFB800), size: Responsive.icon(context, size: 28));
+                }
+                return Icon(Icons.star_border, color: const Color(0xFFFFB800), size: Responsive.icon(context, size: 28));
+              }),
         ),
         const SizedBox(height: 6),
         Text(
@@ -316,7 +325,7 @@ class _FilterChipButton extends StatelessWidget {
         curve: Curves.easeOut,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary.withValues(alpha: 0.12) : Colors.white,
+          color: selected ? AppColors.backgroundBox : Colors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(color: selected ? AppColors.primary : const Color(0xFFDADADA)),
         ),

@@ -7,6 +7,7 @@ import 'package:lockedin_frontend/ui/responsive/responsive.dart';
 import 'package:lockedin_frontend/ui/screens/productivity_hub/todo_list/todo_task_modal.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/actions/square_button.dart';
+import 'package:lockedin_frontend/ui/widgets/display/simple_back_sliver_app_bar.dart';
 import 'package:lockedin_frontend/ui/widgets/pickers/date_picker.dart';
 import 'package:lockedin_frontend/utils/activity_tracker.dart';
 
@@ -101,25 +102,138 @@ class _TodoListScreenState extends State<TodoListScreen> with ActivityTracker {
     );
   }
 
+  // @override
+  // Widget build(BuildContext context) {
+  //   final width = MediaQuery.of(context).size.width;
+
+  //   return Scaffold(
+  //     backgroundColor: AppColors.background,
+  //     appBar: AppBar(
+  //       title: Text(
+  //         'To-do List',
+  //         style: TextStyle(color: AppColors.textPrimary, fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 24), fontWeight: FontWeight.w500),
+  //       ),
+  //       centerTitle: true,
+  //       leading: IconButton(
+  //         onPressed: () => context.go('/productivity-hub'),
+  //         icon: Icon(Icons.arrow_back_ios, size: width * 0.06, color: AppColors.textPrimary),
+  //       ),
+  //       backgroundColor: AppColors.background,
+  //       elevation: 0,
+  //     ),
+  //     floatingActionButton: Padding(
+  //       padding: const EdgeInsets.only(bottom: 16, right: 8),
+  //       child: SquareButton(
+  //         icon: Icons.add,
+  //         onPressed: () {
+  //           TodoTaskModal.showCreate(context, selectedDate: _selectedDate, onChanged: _loadTasks);
+  //         },
+  //       ),
+  //     ),
+  //     body: SafeArea(
+  //       child: Padding(
+  //         padding: EdgeInsets.symmetric(horizontal: 16),
+  //         child: Column(
+  //           crossAxisAlignment: CrossAxisAlignment.start,
+  //           children: [
+  //             Row(
+  //               children: [
+  //                 Text(
+  //                   _getMonthName(_selectedDate.month),
+  //                   style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 18), fontWeight: FontWeight.w500, color: AppColors.textPrimary),
+  //                 ),
+  //                 const Spacer(),
+  //                 IconButton(
+  //                   padding: EdgeInsets.zero,
+  //                   constraints: const BoxConstraints(),
+  //                   onPressed: () => _showDatePicker(context),
+  //                   icon: Icon(FeatherIcons.calendar, size: width * 0.05, color: AppColors.textPrimary),
+  //                 ),
+  //               ],
+  //             ),
+  //             const SizedBox(height: 16),
+  //             _buildWeekCalendar(),
+  //             const SizedBox(height: 24),
+  //             Expanded(child: _buildTaskList()),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
+  // Widget _buildTaskList() {
+  //   if (_isLoading) {
+  //     return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+  //   }
+
+  //   if (_error != null) {
+  //     return Center(
+  //       child: Column(
+  //         mainAxisSize: MainAxisSize.min,
+  //         children: [
+  //           Text(
+  //             'Failed to load tasks',
+  //             style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 16), color: AppColors.textPrimary.withOpacity(0.7)),
+  //           ),
+  //           const SizedBox(height: 12),
+  //           TextButton(
+  //             onPressed: _loadTasks,
+  //             child: Text(
+  //               'Retry',
+  //               style: TextStyle(fontFamily: 'Nunito', color: AppColors.textPrimary),
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     );
+  //   }
+
+  //   final pendingTasks = _getPendingTasks();
+  //   final completedTasks = _getCompletedTasks();
+
+  //   if (pendingTasks.isEmpty && completedTasks.isEmpty) {
+  //     return Center(
+  //       child: Text(
+  //         'No tasks for this day',
+  //         style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 16), color: AppColors.textPrimary.withOpacity(0.7)),
+  //       ),
+  //     );
+  //   }
+
+  //   return ListView(
+  //     children: [
+  //       ...pendingTasks.map((task) => _buildTaskItem(task)),
+  //       if (completedTasks.isNotEmpty) ...[
+  //         const SizedBox(height: 8),
+  //         GestureDetector(
+  //           onTap: () {
+  //             setState(() {
+  //               _showCompletedTasks = !_showCompletedTasks;
+  //             });
+  //           },
+  //           child: Row(
+  //             children: [
+  //               Icon(_showCompletedTasks ? FeatherIcons.chevronDown : FeatherIcons.chevronRight, size: 18, color: AppColors.textPrimary.withOpacity(0.7)),
+  //               const SizedBox(width: 8),
+  //               Text(
+  //                 '${completedTasks.length} Completed',
+  //                 style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 14), fontWeight: FontWeight.w500, color: AppColors.textPrimary.withOpacity(0.7)),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         const SizedBox(height: 12),
+  //         if (_showCompletedTasks) ...completedTasks.map((task) => _buildTaskItem(task)),
+  //       ],
+  //     ],
+  //   );
+  // }
+
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(
-          'To-do List',
-          style: TextStyle(color: AppColors.textPrimary, fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 24), fontWeight: FontWeight.w500),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          onPressed: () => context.go('/productivity-hub'),
-          icon: Icon(Icons.arrow_back_ios, size: width * 0.06, color: AppColors.textPrimary),
-        ),
-        backgroundColor: AppColors.background,
-        elevation: 0,
-      ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 16, right: 8),
         child: SquareButton(
@@ -130,60 +244,77 @@ class _TodoListScreenState extends State<TodoListScreen> with ActivityTracker {
         ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    _getMonthName(_selectedDate.month),
-                    style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 18), fontWeight: FontWeight.w500, color: AppColors.textPrimary),
+        child: CustomScrollView(
+          slivers: [
+            SimpleBackSliverAppBar(
+              title: 'To-do List',
+              onBack: () => context.go('/productivity-hub'),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Text(
+                        _getMonthName(_selectedDate.month),
+                        style: TextStyle(
+                          fontFamily: 'Nunito',
+                          fontSize: Responsive.text(context, size: 18),
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () => _showDatePicker(context),
+                        icon: Icon(FeatherIcons.calendar, size: MediaQuery.of(context).size.width * 0.05, color: AppColors.textPrimary),
+                      ),
+                    ],
                   ),
-                  const Spacer(),
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    onPressed: () => _showDatePicker(context),
-                    icon: Icon(FeatherIcons.calendar, size: width * 0.05, color: AppColors.textPrimary),
-                  ),
-                ],
+                  const SizedBox(height: 16),
+                  _buildWeekCalendar(),
+                  const SizedBox(height: 24),
+                ]),
               ),
-              const SizedBox(height: 16),
-              _buildWeekCalendar(),
-              const SizedBox(height: 24),
-              Expanded(child: _buildTaskList()),
-            ],
-          ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              sliver: _buildTaskListSliver(),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildTaskList() {
+  Widget _buildTaskListSliver() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+      return const SliverFillRemaining(
+        child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      );
     }
 
     if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Failed to load tasks',
-              style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 16), color: AppColors.textPrimary.withOpacity(0.7)),
-            ),
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: _loadTasks,
-              child: Text(
-                'Retry',
-                style: TextStyle(fontFamily: 'Nunito', color: AppColors.textPrimary),
+      return SliverFillRemaining(
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Failed to load tasks',
+                style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 16), color: AppColors.textPrimary.withOpacity(0.7)),
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: _loadTasks,
+                child: Text('Retry', style: TextStyle(fontFamily: 'Nunito', color: AppColors.textPrimary)),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -192,40 +323,40 @@ class _TodoListScreenState extends State<TodoListScreen> with ActivityTracker {
     final completedTasks = _getCompletedTasks();
 
     if (pendingTasks.isEmpty && completedTasks.isEmpty) {
-      return Center(
-        child: Text(
-          'No tasks for this day',
-          style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 16), color: AppColors.textPrimary.withOpacity(0.7)),
+      return SliverFillRemaining(
+        child: Center(
+          child: Text(
+            'No tasks for this day',
+            style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 16), color: AppColors.textPrimary.withOpacity(0.7)),
+          ),
         ),
       );
     }
 
-    return ListView(
-      children: [
-        ...pendingTasks.map((task) => _buildTaskItem(task)),
-        if (completedTasks.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                _showCompletedTasks = !_showCompletedTasks;
-              });
-            },
-            child: Row(
-              children: [
-                Icon(_showCompletedTasks ? FeatherIcons.chevronDown : FeatherIcons.chevronRight, size: 18, color: AppColors.textPrimary.withOpacity(0.7)),
-                const SizedBox(width: 8),
-                Text(
-                  '${completedTasks.length} Completed',
-                  style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 14), fontWeight: FontWeight.w500, color: AppColors.textPrimary.withOpacity(0.7)),
-                ),
-              ],
-            ),
+    final List<Widget> items = [
+      ...pendingTasks.map((task) => _buildTaskItem(task)),
+      if (completedTasks.isNotEmpty) ...[
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: () => setState(() => _showCompletedTasks = !_showCompletedTasks),
+          child: Row(
+            children: [
+              Icon(_showCompletedTasks ? FeatherIcons.chevronDown : FeatherIcons.chevronRight, size: 18, color: AppColors.textPrimary.withOpacity(0.7)),
+              const SizedBox(width: 8),
+              Text(
+                '${completedTasks.length} Completed',
+                style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 14), fontWeight: FontWeight.w500, color: AppColors.textPrimary.withOpacity(0.7)),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          if (_showCompletedTasks) ...completedTasks.map((task) => _buildTaskItem(task)),
-        ],
+        ),
+        const SizedBox(height: 12),
+        if (_showCompletedTasks) ...completedTasks.map((task) => _buildTaskItem(task)),
       ],
+    ];
+
+    return SliverList(
+      delegate: SliverChildListDelegate(items),
     );
   }
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lockedin_frontend/ui/responsive/responsive.dart';
-import 'package:lockedin_frontend/ui/screens/User/search_user_screen.dart';
+import 'package:lockedin_frontend/ui/screens/user/search_user_screen.dart';
 import 'package:lockedin_frontend/ui/widgets/actions/square_button.dart';
 import 'package:lockedin_frontend/ui/widgets/inputs/search_bar_widget.dart';
 import 'package:provider/provider.dart';
@@ -331,16 +331,7 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
   Widget _buildLoadingState() {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF0F4FF),
-        elevation: 0,
-        title: const Text(
-          'Chats',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-      ),
-      body: const Center(child: CircularProgressIndicator()),
+      body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
     );
   }
 
