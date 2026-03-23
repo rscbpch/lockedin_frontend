@@ -546,7 +546,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                           // Username
                           Expanded(
                             child: Text(
-                              u["_id"]?.toString() ?? '—',
+                              u["user"]?["username"]?.toString() ?? u["user"]?["displayName"]?.toString() ?? '—',
                               style: TextStyle(fontSize: 14, fontWeight: isTop3 ? FontWeight.w600 : FontWeight.w400, color: AppColors.textPrimary),
                             ),
                           ),
