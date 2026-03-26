@@ -357,4 +357,42 @@ class AuthService {
       return {'success': false, 'message': e.toString()};
     }
   }
+
+  static Future<Map<String, dynamic>> verifyEmailOTP({
+    required String email,
+    required String otp,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse(ApiConfig.verifyEmailOTP),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'otp': otp}),
+      );
+ 
+      final status = response.statusCode;
+      final body = response.body;
+      print('AuthService.verifyEmailOTP -> status: $status body: $body');
+ 
+      dynamic parsed;
+      try { parsed = jsonDecode(body); } catch (_) { parsed = null; }
+ 
+      if (status >= 200 && status < 300) {
+        if (parsed is Map<String, dynamic>) {
+          if (parsed.containsKey('success')) return parsed;
+          return {'success': true, 'message': parsed['message'] ?? 'Email verified'};
+        }
+        return {'success': true, 'message': 'Email verified'};
+      }
+ 
+      String message = 'Verification failed';
+      if (parsed is Map && parsed['message'] != null) {
+        message = parsed['message'].toString();
+      } else if (body.isNotEmpty) {
+        message = body;
+      }
+      return {'success': false, 'message': message, 'statusCode': status};
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
 }
