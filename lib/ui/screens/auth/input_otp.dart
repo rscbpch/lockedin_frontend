@@ -6,9 +6,19 @@ import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 import 'package:lockedin_frontend/ui/widgets/actions/long_button.dart';
 import 'package:lockedin_frontend/utils/network_helper.dart';
 
+enum OTPMode { verifyEmail, forgotPassword }
+
 class OTPScreen extends StatelessWidget {
   final String email;
-  const OTPScreen({super.key, required this.email});
+  /// Use [OTPMode.verifyEmail] after registration.
+  /// Use [OTPMode.forgotPassword] from the forgot-password flow (default).
+  final OTPMode mode;
+
+  const OTPScreen({
+    super.key,
+    required this.email,
+    this.mode = OTPMode.forgotPassword,
+  });
 
   Future<void> _showNetworkDiagnosis(BuildContext context, String email) async {
     showDialog(
@@ -31,8 +41,7 @@ class OTPScreen extends StatelessWidget {
     final message = await NetworkHelper.getConnectionIssueMessage();
 
     if (context.mounted) {
-      Navigator.of(context).pop(); // Close loading dialog
-      
+      Navigator.of(context).pop();
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -43,17 +52,14 @@ class OTPScreen extends StatelessWidget {
             children: [
               Text(message),
               const SizedBox(height: 16),
-              Text(
-                'Technical Details:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
+              const Text('Technical Details:', style: TextStyle(fontWeight: FontWeight.bold)),
               Text('Internet: ${diagnosis['internetConnection'] ? '✓' : '✗'}'),
               Text('Server: ${diagnosis['serverConnection'] ? '✓' : '✗'}'),
               Text('API URL: ${diagnosis['apiBaseUrl']}'),
               if (diagnosis['serverMessage'] != null)
                 Text('Details: ${diagnosis['serverMessage']}'),
               const SizedBox(height: 16),
-              Text('For email: $email', style: TextStyle(fontWeight: FontWeight.w500)),
+              Text('For email: $email', style: const TextStyle(fontWeight: FontWeight.w500)),
             ],
           ),
           actions: [
@@ -69,6 +75,8 @@ class OTPScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isVerify = mode == OTPMode.verifyEmail;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -84,7 +92,6 @@ class OTPScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    /// Back Button
                     IconButton(
                       onPressed: () => context.pop(),
                       icon: const Icon(Icons.arrow_back_ios),
@@ -92,7 +99,6 @@ class OTPScreen extends StatelessWidget {
 
                     const SizedBox(height: 16),
 
-                    /// Image
                     Center(
                       child: Image.asset(
                         'assets/images/otp.png',
@@ -102,10 +108,9 @@ class OTPScreen extends StatelessWidget {
 
                     const SizedBox(height: 24),
 
-                    /// Title
-                    const Text(
-                      "Enter OTP",
-                      style: TextStyle(
+                    Text(
+                      isVerify ? "Verify Email" : "Enter OTP",
+                      style: const TextStyle(
                         fontFamily: 'Quicksand',
                         fontSize: 28,
                         fontWeight: FontWeight.w600,
@@ -115,7 +120,6 @@ class OTPScreen extends StatelessWidget {
 
                     const SizedBox(height: 8),
 
-                    /// Subtitle
                     Text(
                       "6 digit OTP has been sent to $email",
                       style: const TextStyle(
@@ -127,18 +131,42 @@ class OTPScreen extends StatelessWidget {
 
                     const SizedBox(height: 32),
 
-                    /// OTP FORM
                     OTPForm(
                       email: email,
-                      onSubmit: (otp) {
-                        context.go(
-                          '/reset-password/${Uri.encodeComponent(email)}/${Uri.encodeComponent(otp)}',
-                        );
+                      submitLabel: isVerify ? 'Verify Email' : 'Enter OTP',
+                      onSubmit: (otp) async {
+                        if (isVerify) {
+                          // ── Email verification flow ──────────────────────
+                          final result = await AuthService.verifyEmailOTP(
+                            email: email,
+                            otp: otp,
+                          );
+                          if (!context.mounted) return;
+                          if (result['success'] == true) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Email verified! Please log in.'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                            context.go('/login');
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(result['message'] ?? 'Invalid OTP'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        } else {
+                          // ── Forgot password flow (original behaviour) ────
+                          context.go(
+                            '/reset-password/${Uri.encodeComponent(email)}/${Uri.encodeComponent(otp)}',
+                          );
+                        }
                       },
                       onResend: () async {
-                        final result =
-                            await AuthService.sendOTP(email: email);
-
+                        final result = await AuthService.sendOTP(email: email);
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
@@ -146,15 +174,11 @@ class OTPScreen extends StatelessWidget {
                                 result['message'] ??
                                     (result['success'] ? 'OTP sent successfully' : 'Failed to send OTP'),
                               ),
-                              backgroundColor: result['success']
-                                  ? Colors.green
-                                  : Colors.red,
-                              action: !result['success'] 
+                              backgroundColor: result['success'] == true ? Colors.green : Colors.red,
+                              action: result['success'] != true
                                   ? SnackBarAction(
                                       label: 'Diagnose',
-                                      onPressed: () async {
-                                        await _showNetworkDiagnosis(context, email);
-                                      },
+                                      onPressed: () => _showNetworkDiagnosis(context, email),
                                     )
                                   : null,
                             ),
@@ -175,14 +199,18 @@ class OTPScreen extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+
 class OTPForm extends StatefulWidget {
   final String email;
+  final String submitLabel;
   final void Function(String otp)? onSubmit;
   final Future<void> Function()? onResend;
 
   const OTPForm({
     super.key,
     required this.email,
+    this.submitLabel = 'Enter OTP',
     this.onSubmit,
     this.onResend,
   });
@@ -204,12 +232,10 @@ class _OTPFormState extends State<OTPForm> {
   Timer? _timer;
   int _secondsLeft = resendSeconds;
   bool _isResending = false;
+  bool _isSubmitting = false;
 
-  bool get isFormValid =>
-      _controllers.every((c) => c.text.isNotEmpty);
-
-  String get otpValue =>
-      _controllers.map((c) => c.text).join();
+  bool get isFormValid => _controllers.every((c) => c.text.isNotEmpty);
+  String get otpValue => _controllers.map((c) => c.text).join();
 
   @override
   void initState() {
@@ -223,12 +249,8 @@ class _OTPFormState extends State<OTPForm> {
   @override
   void dispose() {
     _timer?.cancel();
-    for (var c in _controllers) {
-      c.dispose();
-    }
-    for (var f in _focusNodes) {
-      f.dispose();
-    }
+    for (var c in _controllers) c.dispose();
+    for (var f in _focusNodes) f.dispose();
     super.dispose();
   }
 
@@ -258,14 +280,21 @@ class _OTPFormState extends State<OTPForm> {
       await widget.onResend?.call();
       _startCountdown();
     } finally {
-      if (mounted) {
-        setState(() => _isResending = false);
-      }
+      if (mounted) setState(() => _isResending = false);
     }
   }
 
-  String _formatTime(int s) =>
-      '00:${s.toString().padLeft(2, '0')}';
+  Future<void> _handleSubmit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isSubmitting = true);
+    try {
+      await Future.microtask(() => widget.onSubmit?.call(otpValue));
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  String _formatTime(int s) => '00:${s.toString().padLeft(2, '0')}';
 
   @override
   Widget build(BuildContext context) {
@@ -276,7 +305,6 @@ class _OTPFormState extends State<OTPForm> {
       key: _formKey,
       child: Column(
         children: [
-          /// OTP INPUTS
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(otpLength, (index) {
@@ -289,26 +317,17 @@ class _OTPFormState extends State<OTPForm> {
                   keyboardType: TextInputType.number,
                   textAlign: TextAlign.center,
                   maxLength: 1,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   decoration: InputDecoration(
                     counterText: '',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(
-                        color: AppColors.primary,
-                        width: 2,
-                      ),
+                      borderSide: const BorderSide(color: AppColors.primary, width: 2),
                     ),
                   ),
                   onChanged: (v) => _onChanged(v, index),
-                  validator: (v) =>
-                      v == null || v.isEmpty ? '' : null,
+                  validator: (v) => (v == null || v.isEmpty) ? '' : null,
                 ),
               );
             }),
@@ -316,31 +335,18 @@ class _OTPFormState extends State<OTPForm> {
 
           const SizedBox(height: 32),
 
-          /// SUBMIT
           LongButton(
-            text: 'Enter OTP',
-            onPressed: isFormValid
-                ? () {
-                    if (_formKey.currentState!.validate()) {
-                      widget.onSubmit?.call(otpValue);
-                    }
-                  }
-                : null,
+            text: _isSubmitting ? 'Please wait...' : widget.submitLabel,
+            onPressed: (isFormValid && !_isSubmitting) ? _handleSubmit : null,
           ),
 
           const SizedBox(height: 16),
 
-          /// RESEND
           OutlinedButton(
-            onPressed:
-                (_secondsLeft > 0 || _isResending)
-                    ? null
-                    : _handleResend,
+            onPressed: (_secondsLeft > 0 || _isResending) ? null : _handleResend,
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(double.infinity, 50),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               side: const BorderSide(color: AppColors.primary),
             ),
             child: Text(

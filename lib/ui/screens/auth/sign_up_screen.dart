@@ -64,7 +64,8 @@ class SignUpScreen extends StatelessWidget {
                         if (!context.mounted) return;
 
                         if (success) {
-                          context.go('/productivity-hub');
+                          // ✅ Redirect to OTP screen for email verification
+                          context.go('/verify-email/${Uri.encodeComponent(email)}');
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
@@ -77,50 +78,21 @@ class SignUpScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        const Expanded(
-                          child: Divider(
-                            color: AppColors.textPrimary,
-                            thickness: 1,
-                          ),
-                        ),
+                        const Expanded(child: Divider(color: AppColors.textPrimary, thickness: 1)),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Text(
-                            'or',
-                            style: TextStyle(
-                              fontFamily: 'Nunito',
-                              fontSize: 16,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
+                          child: Text('or', style: TextStyle(fontFamily: 'Nunito', fontSize: 16, color: AppColors.textPrimary)),
                         ),
-                        const Expanded(
-                          child: Divider(
-                            color: AppColors.textPrimary,
-                            thickness: 1,
-                          ),
-                        ),
+                        const Expanded(child: Divider(color: AppColors.textPrimary, thickness: 1)),
                       ],
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
-                          "Already have an account?",
-                          style: TextStyle(fontSize: 12, fontFamily: 'Nunito'),
-                        ),
+                        const Text("Already have an account?", style: TextStyle(fontSize: 12, fontFamily: 'Nunito')),
                         GestureDetector(
-                          onTap: () {
-                            context.go('/login');
-                          },
-                          child: Text(
-                            " Login",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                              fontFamily: 'Nunito',
-                            ),
-                          ),
+                          onTap: () => context.go('/login'),
+                          child: const Text(" Login", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, fontFamily: 'Nunito')),
                         ),
                       ],
                     ),
@@ -132,26 +104,20 @@ class SignUpScreen extends StatelessWidget {
                         onPressed: () async {
                           final authProvider = context.read<AuthProvider>();
                           final success = await authProvider.signInWithGoogle();
-                          
+                          if (!context.mounted) return;
                           if (success) {
                             context.go('/productivity-hub');
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(authProvider.errorMessage ?? 'Google sign-in failed'),
-                              ),
+                              SnackBar(content: Text(authProvider.errorMessage ?? 'Google sign-in failed')),
                             );
                           }
                         },
                         isOutlined: true,
-                        icon: Image.asset(
-                          "assets/images/google.png",
-                          height: 24,
-                          width: 24,
-                        ),
+                        icon: Image.asset("assets/images/google.png", height: 24, width: 24),
                       ),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                   ],
                 ),
               ),
@@ -165,7 +131,6 @@ class SignUpScreen extends StatelessWidget {
 
 class SignUpForm extends StatefulWidget {
   final void Function(String email, String username, String password, String confirmPassword)? onSubmit;
-
   const SignUpForm({super.key, this.onSubmit});
 
   @override
@@ -174,18 +139,15 @@ class SignUpForm extends StatefulWidget {
 
 class _SignUpFormState extends State<SignUpForm> {
   final _formKey = GlobalKey<FormState>();
-
   final emailController = TextEditingController();
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmController = TextEditingController();
-  
   bool agree = false;
-  
+
   @override
   void initState() {
     super.initState();
-    // Update form state when any controller changes so `isFormValid` is recalculated
     emailController.addListener(_onFieldChanged);
     usernameController.addListener(_onFieldChanged);
     passwordController.addListener(_onFieldChanged);
@@ -194,24 +156,23 @@ class _SignUpFormState extends State<SignUpForm> {
 
   void _onFieldChanged() => setState(() {});
 
-  bool get isFormValid {
-    return agree &&
-        emailController.text.isNotEmpty &&
-        usernameController.text.isNotEmpty &&
-        passwordController.text.isNotEmpty &&
-        confirmController.text.isNotEmpty;
-  }
+  bool get isFormValid =>
+      agree &&
+      emailController.text.isNotEmpty &&
+      usernameController.text.isNotEmpty &&
+      passwordController.text.isNotEmpty &&
+      confirmController.text.isNotEmpty;
 
   @override
   void dispose() {
-    emailController.dispose();
-    usernameController.dispose();
-    passwordController.dispose();
-    confirmController.dispose();
     emailController.removeListener(_onFieldChanged);
     usernameController.removeListener(_onFieldChanged);
     passwordController.removeListener(_onFieldChanged);
     confirmController.removeListener(_onFieldChanged);
+    emailController.dispose();
+    usernameController.dispose();
+    passwordController.dispose();
+    confirmController.dispose();
     super.dispose();
   }
 
@@ -228,74 +189,51 @@ class _SignUpFormState extends State<SignUpForm> {
             controller: emailController,
             keyboardType: TextInputType.emailAddress,
             validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Email is required';
-              }
-              if (!value.contains('@') || !value.contains('.')) {
-                return 'Enter a valid email address';
-              }
+              if (value == null || value.trim().isEmpty) return 'Email is required';
+              if (!value.contains('@') || !value.contains('.')) return 'Enter a valid email address';
               return null;
             },
           ),
-
           const SizedBox(height: 10),
-
           AppTextField(
             label: 'Username',
             hint: 'Enter your username',
             controller: usernameController,
             validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Username is required';
-              }
-              if (value.length < 3) {
-                return 'At least 3 characters';
-              }
+              if (value == null || value.isEmpty) return 'Username is required';
+              if (value.length < 3) return 'At least 3 characters';
               return null;
             },
           ),
-
           const SizedBox(height: 10),
-
           AppTextField(
             label: 'Password',
             hint: 'Enter your password',
             controller: passwordController,
             isPassword: true,
             validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Password is required';
-              }
-              if (value.length < 8) {
-                return 'At least 8 characters';
-              }
+              if (value == null || value.isEmpty) return 'Password is required';
+              if (value.length < 8) return 'At least 8 characters';
               return null;
             },
           ),
-
           const SizedBox(height: 10),
-
           AppTextField(
             label: 'Confirm Password',
             hint: 'Enter your password again',
             controller: confirmController,
             isPassword: true,
             validator: (value) {
-              if (value != passwordController.text) {
-                return 'Passwords do not match';
-              }
+              if (value != passwordController.text) return 'Passwords do not match';
               return null;
             },
           ),
-
           const SizedBox(height: 10),
-
           AgreementCheckbox(
             value: agree,
             text: 'I agree with the terms and conditions',
             onChanged: (v) => setState(() => agree = v ?? false),
           ),
-
           const SizedBox(height: 12),
           LongButton(
             text: auth.isLoading ? 'Signing Up...' : 'Sign Up',
@@ -307,7 +245,7 @@ class _SignUpFormState extends State<SignUpForm> {
                         emailController.text,
                         usernameController.text,
                         passwordController.text,
-                        confirmController.text
+                        confirmController.text,
                       );
                     }
                   },

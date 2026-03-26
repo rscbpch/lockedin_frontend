@@ -47,40 +47,49 @@ import 'provider/study_room_provider.dart';
 import 'services/study_room_api_service.dart';
 import 'ui/screens/study_room/lobby_screen.dart';
 
-final StreamChatClient streamClient = StreamChatClient(dotenv.env['STREAM_API_KEY'] ?? '', logLevel: Level.OFF);
+final StreamChatClient streamClient = StreamChatClient(
+  dotenv.env['STREAM_API_KEY'] ?? '',
+  logLevel: Level.OFF,
+);
 
-final GlobalKey<NavigatorState> appRootNavigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> appRootNavigatorKey =
+    GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await NotificationService.initialize();
 
-  final notificationSettings =
-      await FirebaseMessaging.instance.requestPermission();
+  final notificationSettings = await FirebaseMessaging.instance
+      .requestPermission();
   debugPrint(
     '🔔 Notification permission: ${notificationSettings.authorizationStatus}',
   );
 
   await _logFcmTokenWithRetry();
 
-  FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
-    debugPrint('🔄 FCM Token refreshed: $newToken');
-  }, onError: (error) {
-    debugPrint('❌ FCM token refresh error: $error');
-  });
+  FirebaseMessaging.instance.onTokenRefresh.listen(
+    (newToken) {
+      debugPrint('🔄 FCM Token refreshed: $newToken');
+    },
+    onError: (error) {
+      debugPrint('❌ FCM token refresh error: $error');
+    },
+  );
 
   await dotenv.load(fileName: '.env');
 
   final authProvider = AuthProvider();
   await authProvider.initialize();
   if (authProvider.isAuthenticated) {
-  await NotificationService.saveTokenToBackend(() async => authProvider.token);
-}
+    await NotificationService.saveTokenToBackend(
+      () async => authProvider.token,
+    );
+  }
 
   final streakProvider = StreakProvider();
   await streakProvider.restoreSession();
-  
+
   final bookProvider = BookProvider();
 
   if (authProvider.isAuthenticated) {
@@ -114,7 +123,9 @@ void main() async {
     groupChatProvider.reset();
     streakProvider.reset();
     bookProvider.clear();
-    await NotificationService.removeTokenFromBackend(() async => authProvider.token);
+    await NotificationService.removeTokenFromBackend(
+      () async => authProvider.token,
+    );
   };
   AuthProvider.onForceLogout = () async => authProvider.logout();
 
@@ -138,10 +149,9 @@ void main() async {
 Future<void> _logFcmTokenWithRetry() async {
   for (var attempt = 1; attempt <= 3; attempt++) {
     try {
-      final token =
-          await FirebaseMessaging.instance.getToken().timeout(
-                const Duration(seconds: 12),
-              );
+      final token = await FirebaseMessaging.instance.getToken().timeout(
+        const Duration(seconds: 12),
+      );
 
       if (token == null || token.isEmpty) {
         debugPrint('⚠️ FCM token is null/empty on attempt $attempt');
@@ -172,7 +182,17 @@ class _MyAppState extends State<MyApp> {
 
   static const _authPaths = {'/', '/login', '/register', '/forget-password'};
 
-  static const _protectedPaths = {'/study-room', '/productivity-hub', '/books', '/profile', '/todo-list', '/pomodoro', '/flashcard', '/task-breakdown', '/chat'};
+  static const _protectedPaths = {
+    '/study-room',
+    '/productivity-hub',
+    '/books',
+    '/profile',
+    '/todo-list',
+    '/pomodoro',
+    '/flashcard',
+    '/task-breakdown',
+    '/chat',
+  };
 
   @override
   void initState() {
@@ -198,7 +218,8 @@ class _MyAppState extends State<MyApp> {
         // ── Auth routes ──────────────────────────────
         GoRoute(
           path: '/',
-          pageBuilder: (_, s) => const NoTransitionPage(child: GettingStartedScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: GettingStartedScreen()),
         ),
         GoRoute(
           path: '/login',
@@ -210,7 +231,8 @@ class _MyAppState extends State<MyApp> {
         ),
         GoRoute(
           path: '/forget-password',
-          pageBuilder: (_, s) => const NoTransitionPage(child: ForgetPasswordScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: ForgetPasswordScreen()),
         ),
         GoRoute(
           path: '/OTP/:email',
@@ -230,6 +252,15 @@ class _MyAppState extends State<MyApp> {
           },
         ),
 
+        GoRoute(
+          path: '/verify-email/:email',
+          builder: (context, state) => OTPScreen(
+            email: Uri.decodeComponent(state.pathParameters['email']!),
+            mode: OTPMode
+                .verifyEmail, // ← new param; forgot-password keeps default
+          ),
+        ),
+
         // ── Main tabs with navbar ──────────────────────
         ShellRoute(
           builder: (context, state, child) {
@@ -238,19 +269,23 @@ class _MyAppState extends State<MyApp> {
           routes: [
             GoRoute(
               path: '/study-room',
-              pageBuilder: (_, s) => const NoTransitionPage(child: LobbyScreen()),
+              pageBuilder: (_, s) =>
+                  const NoTransitionPage(child: LobbyScreen()),
             ),
             GoRoute(
               path: '/productivity-hub',
-              pageBuilder: (_, s) => const NoTransitionPage(child: ProductivityHubScreen()),
+              pageBuilder: (_, s) =>
+                  const NoTransitionPage(child: ProductivityHubScreen()),
             ),
             GoRoute(
               path: '/books',
-              pageBuilder: (_, s) => const NoTransitionPage(child: BookSummaryScreen()),
+              pageBuilder: (_, s) =>
+                  const NoTransitionPage(child: BookSummaryScreen()),
             ),
             GoRoute(
               path: '/profile',
-              pageBuilder: (_, s) => const NoTransitionPage(child: UserOwnProfileScreen()),
+              pageBuilder: (_, s) =>
+                  const NoTransitionPage(child: UserOwnProfileScreen()),
             ),
           ],
         ),
@@ -258,31 +293,38 @@ class _MyAppState extends State<MyApp> {
         // ── Chat route ──────────────────────────────
         GoRoute(
           path: '/chat',
-          pageBuilder: (_, s) => const NoTransitionPage(child: ChannelListScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: ChannelListScreen()),
         ),
 
         // ── Productivity tools routes ──────────────────────────────
         GoRoute(
           path: '/todo-list',
-          pageBuilder: (_, s) => const NoTransitionPage(child: TodoListScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: TodoListScreen()),
         ),
         GoRoute(
           path: '/pomodoro',
-          pageBuilder: (_, s) => const NoTransitionPage(child: PomodoroScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: PomodoroScreen()),
         ),
         GoRoute(
           path: '/flashcard',
-          pageBuilder: (_, s) => const NoTransitionPage(child: FlashcardScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: FlashcardScreen()),
         ),
         GoRoute(
           path: '/flashcard/create',
-          pageBuilder: (_, s) => const NoTransitionPage(child: ManageFlashcardScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: ManageFlashcardScreen()),
         ),
         GoRoute(
           path: '/flashcard/edit/:id',
           pageBuilder: (_, s) {
             final id = s.pathParameters['id'] ?? '';
-            return NoTransitionPage(child: ManageFlashcardScreen(editSetId: id));
+            return NoTransitionPage(
+              child: ManageFlashcardScreen(editSetId: id),
+            );
           },
         ),
         GoRoute(
@@ -318,12 +360,12 @@ class _MyAppState extends State<MyApp> {
         ),
         GoRoute(
           path: '/task-breakdown',
-          pageBuilder: (_, s) => const NoTransitionPage(child: AiBreakdownScreen()),
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: AiBreakdownScreen()),
         ),
       ],
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -343,14 +385,20 @@ class _MyAppState extends State<MyApp> {
         ),
       ),
 
-      localizationsDelegates: const [GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       supportedLocales: const [Locale('en')],
 
       builder: (context, child) {
         return StreamChat(
           client: streamClient,
           streamChatThemeData: StreamChatAppTheme.theme,
-          child: _StreakCompletionHost(child: _PomodoroPromptHost(child: child!)),
+          child: _StreakCompletionHost(
+            child: _PomodoroPromptHost(child: child!),
+          ),
         );
       },
     );
@@ -396,8 +444,12 @@ class _StreakCompletionHostState extends State<_StreakCompletionHost> {
     showDialog<void>(
       context: rootContext,
       useRootNavigator: true,
-      builder: (_) =>
-          const AppAlertDialog(title: '🔥 Streak Goal Completed!', message: "Great job! You've hit your daily study goal. Keep the streak alive!", confirmLabel: 'Okay'),
+      builder: (_) => const AppAlertDialog(
+        title: '🔥 Streak Goal Completed!',
+        message:
+            "Great job! You've hit your daily study goal. Keep the streak alive!",
+        confirmLabel: 'Okay',
+      ),
     ).whenComplete(() {
       if (mounted) {
         setState(() => _isDialogOpen = false);
@@ -460,7 +512,11 @@ class _PomodoroPromptHostState extends State<_PomodoroPromptHost> {
     _showPrompt(context, provider, prompt);
   }
 
-  void _showPrompt(BuildContext context, PomodoroTimerProvider provider, PomodoroCompletionPrompt prompt) {
+  void _showPrompt(
+    BuildContext context,
+    PomodoroTimerProvider provider,
+    PomodoroCompletionPrompt prompt,
+  ) {
     final rootContext = appRootNavigatorKey.currentContext;
     if (rootContext == null) {
       _isDialogOpen = false;
@@ -474,7 +530,12 @@ class _PomodoroPromptHostState extends State<_PomodoroPromptHost> {
           context: rootContext,
           useRootNavigator: true,
           barrierDismissible: false,
-          builder: (ctx) => AppAlertDialog(title: prompt.title, message: prompt.message, cancelLabel: 'Later', confirmLabel: 'Continue'),
+          builder: (ctx) => AppAlertDialog(
+            title: prompt.title,
+            message: prompt.message,
+            cancelLabel: 'Later',
+            confirmLabel: 'Continue',
+          ),
         )
         .then((result) {
           if (result == true) {
