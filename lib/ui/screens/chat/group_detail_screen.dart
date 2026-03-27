@@ -3,9 +3,11 @@ import 'package:provider/provider.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 import 'package:lockedin_frontend/models/chat/group_model.dart';
 import 'package:lockedin_frontend/models/user/follow_user_model.dart';
+import 'package:lockedin_frontend/models/user/search_user_model.dart';
 import 'package:lockedin_frontend/provider/auth_provider.dart';
 import 'package:lockedin_frontend/provider/group_chat_provider.dart';
 import 'package:lockedin_frontend/services/follow_service.dart';
+import 'package:lockedin_frontend/ui/screens/profile/user_other_profile_screen.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 
 class GroupDetailsScreen extends StatefulWidget {
@@ -175,34 +177,39 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
           final isOwner = member.id == _group!.ownerId.toString();
           final isMe = member.id == currentUserId;
 
-          return ListTile(
-            leading: CircleAvatar(
-              backgroundColor: AppColors.accent,
-              backgroundImage: member.avatar != null
-                  ? NetworkImage(member.avatar!)
+          return GestureDetector(
+            onTap: !isMe
+                ? () => _openUserProfile(member)
+                : null,
+            child: ListTile(
+              leading: CircleAvatar(
+                backgroundColor: AppColors.accent,
+                backgroundImage: member.avatar != null
+                    ? NetworkImage(member.avatar!)
+                    : null,
+                child: member.avatar == null
+                    ? Text(member.name[0].toUpperCase(),
+                        style: const TextStyle(color: AppColors.primary))
+                    : null,
+              ),
+              title: Text(
+                '${member.name}${isMe ? ' (You)' : ''}',
+                style: const TextStyle(
+                    color: AppColors.textPrimary, fontWeight: FontWeight.w500),
+              ),
+              subtitle: isOwner
+                  ? const Text('Owner',
+                      style:
+                          TextStyle(color: AppColors.primary, fontSize: 12))
                   : null,
-              child: member.avatar == null
-                  ? Text(member.name[0].toUpperCase(),
-                      style: const TextStyle(color: AppColors.primary))
+              trailing: _isOwner && !isMe
+                  ? IconButton(
+                      icon: const Icon(Icons.remove_circle_outline,
+                          color: Colors.red),
+                      onPressed: () => _confirmRemoveMember(member),
+                    )
                   : null,
             ),
-            title: Text(
-              '${member.name}${isMe ? ' (You)' : ''}',
-              style: const TextStyle(
-                  color: AppColors.textPrimary, fontWeight: FontWeight.w500),
-            ),
-            subtitle: isOwner
-                ? const Text('Owner',
-                    style:
-                        TextStyle(color: AppColors.primary, fontSize: 12))
-                : null,
-            trailing: _isOwner && !isMe
-                ? IconButton(
-                    icon: const Icon(Icons.remove_circle_outline,
-                        color: Colors.red),
-                    onPressed: () => _confirmRemoveMember(member),
-                  )
-                : null,
           );
         }),
       ],
@@ -241,6 +248,25 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
       leading: const Icon(Icons.delete_forever, color: Colors.red),
       title: const Text('Delete Group', style: TextStyle(color: Colors.red)),
       onTap: () => _confirmDelete(),
+    );
+  }
+
+  void _openUserProfile(GroupMemberModel member) {
+    final searchUserResult = SearchUserResult(
+      id: member.id,
+      username: member.username,
+      displayName: member.displayName ?? member.username,
+      bio: '',
+      avatar: member.avatar ?? '',
+      isFollowing: false,
+      followers: 0,
+      following: 0,
+    );
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => UserOtherProfileScreen(user: searchUserResult),
+      ),
     );
   }
 
