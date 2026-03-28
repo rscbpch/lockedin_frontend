@@ -62,10 +62,7 @@ class _ProfileSettingsPanel extends StatelessWidget {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
-              'Continue',
-              style: TextStyle(color: Colors.red),
-            ),
+            child: const Text('Continue', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -77,7 +74,9 @@ class _ProfileSettingsPanel extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Final confirmation'),
-        content: const Text('Are you sure you want to permanently delete your account?'),
+        content: const Text(
+          'Are you sure you want to permanently delete your account?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
