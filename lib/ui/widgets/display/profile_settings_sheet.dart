@@ -35,12 +35,8 @@ void showProfileSettingsDrawer(BuildContext context) {
       return SlideTransition(
         position: Tween<Offset>(
           begin: const Offset(1, 0),
-          end: Offset.zero
-        ).animate(
-          CurvedAnimation(
-            parent: animation, curve: Curves.easeOut
-          )
-        ),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut)),
         child: child,
       );
     },
@@ -49,6 +45,81 @@ void showProfileSettingsDrawer(BuildContext context) {
 
 class _ProfileSettingsPanel extends StatelessWidget {
   const _ProfileSettingsPanel();
+
+  Future<bool> _showDeleteVerificationDialog(BuildContext context) async {
+    final firstConfirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete account?'),
+        content: const Text(
+          'This action is permanent. Your profile, progress, and account data cannot be recovered.',
+          style: TextStyle(height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(
+              'Continue',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (firstConfirm != true) return false;
+
+    final finalConfirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Final confirmation'),
+        content: const Text('Are you sure you want to permanently delete your account?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('No'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(
+              'Yes, delete',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return finalConfirm == true;
+  }
+
+  Future<void> _handleDeleteAccount(BuildContext context) async {
+    final shouldDelete = await _showDeleteVerificationDialog(context);
+    if (!shouldDelete || !context.mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    final ok = await context.read<AuthProvider>().deleteAccount();
+    if (!context.mounted) return;
+
+    if (ok) {
+      Navigator.of(context, rootNavigator: true).pop();
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Account deleted successfully')),
+      );
+      context.go('/');
+      return;
+    }
+
+    final message =
+        context.read<AuthProvider>().errorMessage ?? 'Failed to delete account';
+    messenger.showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +150,7 @@ class _ProfileSettingsPanel extends StatelessWidget {
                           fontSize: Responsive.text(context, size: 20),
                           fontWeight: FontWeight.w600,
                           fontFamily: 'Nunito',
-                          color: AppColors.textPrimary
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       IconButton(
@@ -108,11 +179,25 @@ class _ProfileSettingsPanel extends StatelessWidget {
                       Navigator.of(context, rootNavigator: true).pop();
                       Navigator.of(context, rootNavigator: true).push(
                         PageRouteBuilder(
-                          pageBuilder: (_, animation, __) => ChangeNotifierProvider.value(value: context.read<StreakProvider>(), child: const GoalSelectionScreen()),
-                          transitionsBuilder: (_, animation, __, child) => SlideTransition(
-                            position: Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut)),
-                            child: child,
-                          ),
+                          pageBuilder: (_, animation, __) =>
+                              ChangeNotifierProvider.value(
+                                value: context.read<StreakProvider>(),
+                                child: const GoalSelectionScreen(),
+                              ),
+                          transitionsBuilder: (_, animation, __, child) =>
+                              SlideTransition(
+                                position:
+                                    Tween<Offset>(
+                                      begin: const Offset(0, 1),
+                                      end: Offset.zero,
+                                    ).animate(
+                                      CurvedAnimation(
+                                        parent: animation,
+                                        curve: Curves.easeOut,
+                                      ),
+                                    ),
+                                child: child,
+                              ),
                         ),
                       );
                     },
@@ -131,7 +216,10 @@ class _ProfileSettingsPanel extends StatelessWidget {
                       Navigator.of(context, rootNavigator: true).pop();
                       Navigator.of(context, rootNavigator: true).push(
                         MaterialPageRoute(
-                          builder: (_) => ChangeNotifierProvider.value(value: context.read<BookProvider>(), child: const FavoriteBooksScreen()),
+                          builder: (_) => ChangeNotifierProvider.value(
+                            value: context.read<BookProvider>(),
+                            child: const FavoriteBooksScreen(),
+                          ),
                         ),
                       );
                     },
@@ -151,6 +239,19 @@ class _ProfileSettingsPanel extends StatelessWidget {
                       await context.read<AuthProvider>().logout();
                       if (context.mounted) context.go('/');
                     },
+                  ),
+
+                  const Divider(height: 4, color: Color(0xFFF0EDE8)),
+
+                  // ── Delete account ─────────────────────────────────────
+                  _SettingTile(
+                    icon: Icons.delete_forever_rounded,
+                    iconColor: Colors.red,
+                    iconBg: const Color(0xFFFFEEEE),
+                    title: 'Delete Account',
+                    subtitle: 'Permanently remove your account',
+                    titleColor: Colors.red,
+                    onTap: () => _handleDeleteAccount(context),
                   ),
 
                   const Spacer(),
@@ -175,7 +276,15 @@ class _SettingTile extends StatelessWidget {
   final Color? titleColor;
   final VoidCallback onTap;
 
-  const _SettingTile({required this.icon, required this.iconColor, required this.iconBg, required this.title, this.subtitle, this.titleColor, required this.onTap});
+  const _SettingTile({
+    required this.icon,
+    required this.iconColor,
+    required this.iconBg,
+    required this.title,
+    this.subtitle,
+    this.titleColor,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -192,7 +301,10 @@ class _SettingTile extends StatelessWidget {
               Container(
                 width: 42,
                 height: 42,
-                decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 child: Icon(icon, color: iconColor, size: 20),
               ),
               const SizedBox(width: 14),
@@ -208,7 +320,7 @@ class _SettingTile extends StatelessWidget {
                         fontSize: Responsive.text(context, size: 16),
                         fontWeight: FontWeight.w600,
                         fontFamily: 'Quicksand',
-                        color: titleColor ?? AppColors.textPrimary
+                        color: titleColor ?? AppColors.textPrimary,
                       ),
                     ),
                     if (subtitle != null) ...[
@@ -218,7 +330,7 @@ class _SettingTile extends StatelessWidget {
                         style: TextStyle(
                           fontSize: Responsive.text(context, size: 14),
                           fontFamily: 'Quicksand',
-                          color: AppColors.grey
+                          color: AppColors.grey,
                         ),
                       ),
                     ],
@@ -227,7 +339,11 @@ class _SettingTile extends StatelessWidget {
               ),
 
               // Chevron
-              Icon(Icons.chevron_right_rounded, color: AppColors.grey, size: 20),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.grey,
+                size: 20,
+              ),
             ],
           ),
         ),
