@@ -266,7 +266,6 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
               child: Column(
                 children: [
                   const SizedBox(height: 10),
-
                   // Drag handle
                   Container(
                     width: 40,
@@ -485,11 +484,16 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(20, 8, 20, 0),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
           child: Text(
             'Focus time this week',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+            style: TextStyle(
+              fontSize: Responsive.text(context, size: 18),
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+              fontFamily: 'Nunito'
+            ),
           ),
         ),
 
@@ -497,17 +501,25 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 10, 20, 4),
           child: Row(
-            children: const [
+            children: [
               SizedBox(width: 28),
               Expanded(
                 child: Text(
                   'Users',
-                  style: TextStyle(fontSize: 12, color: Colors.black45, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    fontSize: Responsive.text(context, size: 14),
+                    color: AppColors.grey,
+                    fontWeight: FontWeight.w600  
+                  ),
                 ),
               ),
               Text(
                 'Hours Focused',
-                style: TextStyle(fontSize: 12, color: Colors.black45, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  fontSize: Responsive.text(context, size: 14),
+                  color: AppColors.grey,
+                  fontWeight: FontWeight.w600  
+                ),
               ),
             ],
           ),
@@ -517,8 +529,8 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
 
         Expanded(
           child: _ranking.isEmpty
-              ? const Center(
-                  child: Text('No data yet', style: TextStyle(color: Colors.black38)),
+              ? Center(
+                  child: Text('No data yet', style: TextStyle(color: AppColors.grey, fontFamily: 'Nunito')),
                 )
               : ListView.separated(
                   padding: const EdgeInsets.only(bottom: 16),
@@ -531,7 +543,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                     final isTop3 = i < 3;
 
                     return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                       child: Row(
                         children: [
                           // Rank number
@@ -539,7 +551,12 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                             width: 28,
                             child: Text(
                               '${i + 1}',
-                              style: TextStyle(fontSize: 14, fontWeight: isTop3 ? FontWeight.w700 : FontWeight.w500, color: isTop3 ? const Color(0xFF6B3F1A) : Colors.black45),
+                              style: TextStyle(
+                                fontSize: Responsive.text(context, size: 16),
+                                fontWeight: isTop3 ? FontWeight.w700 : FontWeight.w500,
+                                color: isTop3 ? AppColors.primary : AppColors.textPrimary,
+                                fontFamily: 'Quicksand'
+                              ),
                             ),
                           ),
 
@@ -547,12 +564,25 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                           Expanded(
                             child: Text(
                               u["user"]?["username"]?.toString() ?? u["user"]?["displayName"]?.toString() ?? '—',
-                              style: TextStyle(fontSize: 14, fontWeight: isTop3 ? FontWeight.w600 : FontWeight.w400, color: AppColors.textPrimary),
+                              style: TextStyle(
+                                fontSize: Responsive.text(context, size: 16),
+                                fontWeight: isTop3 ? FontWeight.w700 : FontWeight.w500,
+                                color: isTop3 ? AppColors.primary : AppColors.textPrimary,
+                                fontFamily: 'Quicksand'
+                              ),
                             ),
                           ),
 
                           // Time
-                          Text(displayTime, style: const TextStyle(fontSize: 14, color: Colors.black54)),
+                          Text(
+                            displayTime,
+                            style: TextStyle(
+                              fontSize: Responsive.text(context, size: 16),
+                              fontWeight: FontWeight.w500,
+                              color: isTop3 ? AppColors.primary : AppColors.textPrimary,
+                              fontFamily: 'Quicksand'
+                            )
+                          ),
                         ],
                       ),
                     );
@@ -711,7 +741,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                               _label(mode),
                               style: TextStyle(
                                 fontFamily: 'Nunito',
-                                fontSize: Responsive.text(context, size: 13),
+                                fontSize: Responsive.text(context, size: 14),
                                 color: isSelected ? AppColors.primary : AppColors.textPrimary,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -793,7 +823,11 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                           decoration: BoxDecoration(color: AppColors.secondary.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
                           child: Text(
                             'Pomodoro ${timerProvider.pomodoroCount + 1} of 4',
-                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: AppColors.secondary),
+                            style: TextStyle(
+                              fontSize: Responsive.text(context, size: 10),
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.secondary
+                            ),
                           ),
                         ),
                       const SizedBox(height: 12),
@@ -833,7 +867,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                             elevation: 0,
                           ),
-                          child: const Text('Start', style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w700, fontSize: 16)),
+                          child: Text('Start', style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w700, fontSize: Responsive.text(context, size: 16))),
                         ),
 
                       if (timerProvider.isRunning || timerProvider.isPaused)
@@ -848,7 +882,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                                 side: const BorderSide(color: Color(0xFFDADADA)),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                               ),
-                              child: const Text('Cancel', style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w700, fontSize: 16)),
+                              child: Text('Cancel', style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w700, fontSize: Responsive.text(context, size: 16))),
                             ),
                             const SizedBox(width: 12),
                             ElevatedButton(
@@ -864,7 +898,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                               ),
                               child: Text(
                                 timerProvider.isRunning ? 'Pause' : 'Resume',
-                                style: const TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w700, fontSize: 16),
+                                style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w700, fontSize: Responsive.text(context, size: 16)),
                               ),
                             ),
                           ],

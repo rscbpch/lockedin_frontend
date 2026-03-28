@@ -9,11 +9,15 @@ class StreamChatAppTheme {
           messageBackgroundColor: AppColors.primary,
           messageTextStyle: const TextStyle(
             color: Colors.white,
-            fontSize: 14,
+            fontSize: 16,
+            fontFamily: 'Quicksand',
+            fontWeight: FontWeight.w500
           ),
           createdAtStyle: TextStyle(
-            color: Colors.white.withOpacity(0.7),
-            fontSize: 11,
+            color: AppColors.grey,
+            fontSize: 12,
+            fontFamily: 'Quicksand',
+            fontWeight: FontWeight.w500
           ),
         ),
 
@@ -22,11 +26,15 @@ class StreamChatAppTheme {
           messageBackgroundColor: AppColors.backgroundBox,
           messageTextStyle: const TextStyle(
             color: AppColors.textPrimary,
-            fontSize: 14,
+            fontSize: 16,
+            fontFamily: 'Quicksand',
+            fontWeight: FontWeight.w500
           ),
           createdAtStyle: const TextStyle(
             color: AppColors.grey,
-            fontSize: 11,
+            fontSize: 12,
+            fontFamily: 'Quicksand',
+            fontWeight: FontWeight.w500
           ),
         ),
 
@@ -38,12 +46,40 @@ class StreamChatAppTheme {
         // ✅ Input bar
         messageInputTheme: StreamMessageInputThemeData(
           inputBackgroundColor: AppColors.background,
-          borderRadius: BorderRadius.circular(24),
-          inputTextStyle: const TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 14,
+          borderRadius: BorderRadius.circular(40),
+          
+          // Match the outline border style
+          inputDecoration: InputDecoration(
+            hintText: 'Type a message',
+            hintStyle: const TextStyle(
+              fontFamily: 'Quicksand',
+              color: AppColors.grey,
+              fontSize: 16,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(40),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(40),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(40),
+              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+            filled: true,
+            fillColor: AppColors.background,
           ),
-          sendButtonColor: AppColors.primary,
+          
+          inputTextStyle: const TextStyle(
+            fontFamily: 'Quicksand',
+            color: AppColors.textPrimary,
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+          
           actionButtonColor: AppColors.secondary,
         ),
 
