@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lockedin_frontend/models/book_summary/book_review.dart';
+import 'package:lockedin_frontend/models/user/search_user_model.dart';
 import 'package:lockedin_frontend/ui/responsive/responsive.dart';
+import 'package:lockedin_frontend/ui/screens/profile/user_other_profile_screen.dart';
 import 'package:lockedin_frontend/ui/theme/app_theme.dart';
 
 class ReviewCard extends StatelessWidget {
@@ -25,71 +27,89 @@ class ReviewCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: AppColors.backgroundBox,
-                backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
-                child: avatarUrl == null
-                    ? Text(
-                        initials,
-                        style: TextStyle(fontFamily: 'Nunito', color: AppColors.primary, fontWeight: FontWeight.w500, fontSize: Responsive.text(context, size: 18)),
-                      )
+              GestureDetector(
+                onTap: review.user != null
+                    ? () async {
+                        final searchUserResult = SearchUserResult(
+                          id: review.user!.id,
+                          username: review.user!.username,
+                          displayName: review.user!.displayName,
+                          bio: '',
+                          avatar: review.user!.avatar ?? '',
+                          isFollowing: false,
+                          followers: 0,
+                          following: 0,
+                        );
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => UserOtherProfileScreen(user: searchUserResult),
+                          ),
+                        );
+                      }
                     : null,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            displayName,
-                            style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 16), fontWeight: FontWeight.w500, color: AppColors.textPrimary),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: List.generate(5, (i) {
-                              return Icon(i < review.rating ? Icons.star : Icons.star_border, color: const Color(0xFFFFB800), size: 16);
-                            }),
-                          ),
-                        ],
-                      ),
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: AppColors.backgroundBox,
+                      backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                      child: avatarUrl == null
+                          ? Text(
+                              initials,
+                              style: TextStyle(fontFamily: 'Nunito', color: AppColors.primary, fontWeight: FontWeight.w500, fontSize: Responsive.text(context, size: 18)),
+                            )
+                          : null,
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
                     Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          timeAgoBuilder(review.createdAt),
-                          style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 12), color: AppColors.grey),
+                          displayName,
+                          style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 16), fontWeight: FontWeight.w500, color: AppColors.textPrimary),
                         ),
-                        if (onEdit != null || onDelete != null) ...[
-                          const SizedBox(height: 4),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (onEdit != null)
-                                GestureDetector(
-                                  onTap: onEdit,
-                                  child: Icon(Icons.edit_outlined, size: 20, color: AppColors.grey),
-                                ),
-                              if (onEdit != null && onDelete != null)
-                                const SizedBox(width: 8),
-                              if (onDelete != null)
-                                GestureDetector(
-                                  onTap: onDelete,
-                                  child: Icon(Icons.delete_outline, size: 20, color: Colors.red.shade400),
-                                ),
-                            ],
-                          ),
-                        ],
+                        const SizedBox(height: 4),
+                        Row(
+                          children: List.generate(5, (i) {
+                            return Icon(i < review.rating ? Icons.star : Icons.star_border, color: const Color(0xFFFFB800), size: 16);
+                          }),
+                        ),
                       ],
                     ),
                   ],
                 ),
+              ),
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    timeAgoBuilder(review.createdAt),
+                    style: TextStyle(fontFamily: 'Nunito', fontSize: Responsive.text(context, size: 12), color: AppColors.grey),
+                  ),
+                  if (onEdit != null || onDelete != null) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (onEdit != null)
+                          GestureDetector(
+                            onTap: onEdit,
+                            child: Icon(Icons.edit_outlined, size: 20, color: AppColors.grey),
+                          ),
+                        if (onEdit != null && onDelete != null)
+                          const SizedBox(width: 8),
+                        if (onDelete != null)
+                          GestureDetector(
+                            onTap: onDelete,
+                            child: Icon(Icons.delete_outline, size: 20, color: Colors.red.shade400),
+                          ),
+                      ],
+                    ),
+                  ],
+                ],
               ),
             ],
           ),

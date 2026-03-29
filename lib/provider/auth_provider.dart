@@ -348,4 +348,38 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // ---------- DELETE ACCOUNT ----------
+  Future<bool> deleteAccount() async {
+    if (_isLoggingOut) return false;
+
+    _token ??= await AuthService.getToken();
+    if (_token == null) {
+      errorMessage = 'Not authenticated';
+      notifyListeners();
+      return false;
+    }
+
+    isLoading = true;
+    errorMessage = null;
+    notifyListeners();
+
+    try {
+      final response = await AuthService.deleteAccount(token: _token!);
+      if (response['success'] == true) {
+        await logout();
+        return true;
+      }
+
+      errorMessage =
+          response['message']?.toString() ?? 'Failed to delete account';
+      return false;
+    } catch (e) {
+      errorMessage = e.toString();
+      return false;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
 }

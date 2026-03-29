@@ -67,7 +67,9 @@ class AuthService {
       String? token;
       if (responseData['token'] != null) {
         token = responseData['token'];
-      } else if (responseData['data'] != null && responseData['data'] is Map && responseData['data']['token'] != null) {
+      } else if (responseData['data'] != null &&
+          responseData['data'] is Map &&
+          responseData['data']['token'] != null) {
         token = responseData['data']['token'];
       }
 
@@ -77,12 +79,22 @@ class AuthService {
     }
   }
 
-  static Future<Map<String, dynamic>> register({required String email, required String username, required String password, required String confirmPassword}) async {
+  static Future<Map<String, dynamic>> register({
+    required String email,
+    required String username,
+    required String password,
+    required String confirmPassword,
+  }) async {
     try {
       final response = await http.post(
         Uri.parse(ApiConfig.register),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'username': username, 'password': password, 'confirmPassword': confirmPassword}),
+        body: jsonEncode({
+          'email': email,
+          'username': username,
+          'password': password,
+          'confirmPassword': confirmPassword,
+        }),
       );
 
       final status = response.statusCode;
@@ -122,7 +134,10 @@ class AuthService {
     }
   }
 
-  static Future<Map<String, dynamic>> login({required String email, required String password}) async {
+  static Future<Map<String, dynamic>> login({
+    required String email,
+    required String password,
+  }) async {
     try {
       // Debug: log computed base URL and full endpoint
       // ignore: avoid_print
@@ -134,7 +149,11 @@ class AuthService {
       // ignore: avoid_print
       print('AuthService.login -> request body: ${jsonEncode(payload)}');
 
-      final response = await http.post(Uri.parse(ApiConfig.login), headers: {'Content-Type': 'application/json'}, body: jsonEncode(payload));
+      final response = await http.post(
+        Uri.parse(ApiConfig.login),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(payload),
+      );
 
       final status = response.statusCode;
       final body = response.body;
@@ -152,7 +171,9 @@ class AuthService {
 
       if (status >= 200 && status < 300) {
         // Persist token + userId
-        final token = (parsed is Map<String, dynamic>) ? (parsed['token'] ?? parsed['data']?['token']) : null;
+        final token = (parsed is Map<String, dynamic>)
+            ? (parsed['token'] ?? parsed['data']?['token'])
+            : null;
         if (token != null) {
           await _saveCredentials(token as String);
         }
@@ -201,36 +222,52 @@ class AuthService {
       if (googleUser == null) {
         // User cancelled the Google sign-in UI
         // ignore: avoid_print
-        print('AuthService.signInWithGoogle -> googleUser is null (user cancelled)');
+        print(
+          'AuthService.signInWithGoogle -> googleUser is null (user cancelled)',
+        );
         return {'success': false, 'message': 'Google sign-in cancelled'};
       }
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
       final String? idToken = googleAuth.idToken;
       final String? accessToken = googleAuth.accessToken;
 
       // Debug: print user info and token presence (don't print tokens in production)
       // ignore: avoid_print
-      print('AuthService.signInWithGoogle -> googleUser: ${googleUser.displayName} ${googleUser.email}');
+      print(
+        'AuthService.signInWithGoogle -> googleUser: ${googleUser.displayName} ${googleUser.email}',
+      );
       // ignore: avoid_print
-      print('AuthService.signInWithGoogle -> idToken present: ${idToken != null}, accessToken present: ${accessToken != null}');
+      print(
+        'AuthService.signInWithGoogle -> idToken present: ${idToken != null}, accessToken present: ${accessToken != null}',
+      );
 
       if (idToken == null) {
         // If idToken is not available, return a useful message for debugging
         return {
           'success': false,
-          'message': 'Failed to get Google ID token. Ensure `GOOGLE_CLIENT_ID_WEB` is set and SHA-1 is configured in Google Console.'
+          'message':
+              'Failed to get Google ID token. Ensure `GOOGLE_CLIENT_ID_WEB` is set and SHA-1 is configured in Google Console.',
         };
       }
 
       // Send to backend
       // Debug: log computed base URL and Google endpoint
       // ignore: avoid_print
-      print('AuthService.signInWithGoogle -> Env.apiBaseUrl: ${Env.apiBaseUrl}');
+      print(
+        'AuthService.signInWithGoogle -> Env.apiBaseUrl: ${Env.apiBaseUrl}',
+      );
       // ignore: avoid_print
-      print('AuthService.signInWithGoogle -> ApiConfig.googleSignIn: ${ApiConfig.googleSignIn}');
+      print(
+        'AuthService.signInWithGoogle -> ApiConfig.googleSignIn: ${ApiConfig.googleSignIn}',
+      );
 
-      final response = await http.post(Uri.parse(ApiConfig.googleSignIn), headers: {'Content-Type': 'application/json'}, body: jsonEncode({'idToken': idToken}));
+      final response = await http.post(
+        Uri.parse(ApiConfig.googleSignIn),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'idToken': idToken}),
+      );
 
       final status = response.statusCode;
       final body = response.body;
@@ -247,7 +284,9 @@ class AuthService {
 
       if (status >= 200 && status < 300) {
         // Persist token + userId
-        final token = (parsed is Map<String, dynamic>) ? (parsed['token'] ?? parsed['data']?['token']) : null;
+        final token = (parsed is Map<String, dynamic>)
+            ? (parsed['token'] ?? parsed['data']?['token'])
+            : null;
         if (token != null) {
           await _saveCredentials(token as String);
         }
@@ -280,7 +319,11 @@ class AuthService {
 
   static Future<Map<String, dynamic>> sendOTP({required String email}) async {
     try {
-      final response = await http.post(Uri.parse(ApiConfig.sendOTP), headers: {'Content-Type': 'application/json'}, body: jsonEncode({'email': email}));
+      final response = await http.post(
+        Uri.parse(ApiConfig.sendOTP),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email}),
+      );
 
       final status = response.statusCode;
       final body = response.body;
@@ -298,7 +341,10 @@ class AuthService {
       if (status >= 200 && status < 300) {
         if (parsed is Map<String, dynamic>) {
           if (parsed.containsKey('success')) return parsed;
-          return {'success': true, 'message': parsed['message'] ?? 'OTP sent successfully'};
+          return {
+            'success': true,
+            'message': parsed['message'] ?? 'OTP sent successfully',
+          };
         }
         return {'success': true, 'message': 'OTP sent successfully'};
       }
@@ -316,12 +362,20 @@ class AuthService {
     }
   }
 
-  static Future<Map<String, dynamic>> resetPasswordWithOTP({required String email, required String otp, required String newPassword}) async {
+  static Future<Map<String, dynamic>> resetPasswordWithOTP({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
     try {
       final response = await http.post(
         Uri.parse(ApiConfig.resetPasswordWithOTP),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'otp': otp, 'newPassword': newPassword}),
+        body: jsonEncode({
+          'email': email,
+          'otp': otp,
+          'newPassword': newPassword,
+        }),
       );
 
       final status = response.statusCode;
@@ -340,12 +394,105 @@ class AuthService {
       if (status >= 200 && status < 300) {
         if (parsed is Map<String, dynamic>) {
           if (parsed.containsKey('success')) return parsed;
-          return {'success': true, 'message': parsed['message'] ?? 'Password reset successfully'};
+          return {
+            'success': true,
+            'message': parsed['message'] ?? 'Password reset successfully',
+          };
         }
         return {'success': true, 'message': 'Password reset successfully'};
       }
 
       String message = 'Failed to reset password';
+      if (parsed is Map && parsed['message'] != null) {
+        message = parsed['message'].toString();
+      } else if (body.isNotEmpty) {
+        message = body;
+      }
+
+      return {'success': false, 'message': message, 'statusCode': status};
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> verifyEmailOTP({
+    required String email,
+    required String otp,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse(ApiConfig.verifyEmailOTP),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'otp': otp}),
+      );
+
+      final status = response.statusCode;
+      final body = response.body;
+      print('AuthService.verifyEmailOTP -> status: $status body: $body');
+
+      dynamic parsed;
+      try {
+        parsed = jsonDecode(body);
+      } catch (_) {
+        parsed = null;
+      }
+
+      if (status >= 200 && status < 300) {
+        if (parsed is Map<String, dynamic>) {
+          if (parsed.containsKey('success')) return parsed;
+          return {
+            'success': true,
+            'message': parsed['message'] ?? 'Email verified',
+          };
+        }
+        return {'success': true, 'message': 'Email verified'};
+      }
+
+      String message = 'Verification failed';
+      if (parsed is Map && parsed['message'] != null) {
+        message = parsed['message'].toString();
+      } else if (body.isNotEmpty) {
+        message = body;
+      }
+      return {'success': false, 'message': message, 'statusCode': status};
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> deleteAccount({
+    required String token,
+  }) async {
+    try {
+      final response = await http.delete(
+        Uri.parse(ApiConfig.deleteAccount),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      final status = response.statusCode;
+      final body = response.body;
+
+      dynamic parsed;
+      try {
+        parsed = jsonDecode(body);
+      } catch (_) {
+        parsed = null;
+      }
+
+      if (status >= 200 && status < 300) {
+        if (parsed is Map<String, dynamic>) {
+          return {
+            'success': true,
+            'message': parsed['message'] ?? 'Account deleted successfully',
+          };
+        }
+        return {'success': true, 'message': 'Account deleted successfully'};
+      }
+
+      String message = 'Failed to delete account';
       if (parsed is Map && parsed['message'] != null) {
         message = parsed['message'].toString();
       } else if (body.isNotEmpty) {
