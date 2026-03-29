@@ -1,5 +1,5 @@
 # Uncomment this line to define a global platform for your project
-# platform :ios, '13.0'
+platform :ios, '15.1'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -27,6 +27,37 @@ require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelpe
 
 flutter_ios_podfile_setup
 
+def patch_jitsi_plugin_registration
+  plugin_swift = File.expand_path('.symlinks/plugins/jitsi_meet_flutter_sdk/ios/Classes/JitsiMeetPlugin.swift', __dir__)
+  return unless File.exist?(plugin_swift)
+
+  content = File.read(plugin_swift)
+
+  new_block = <<~SWIFT
+      let flutterViewController = registrar.viewController ?? UIApplication.shared
+            .connectedScenes
+            .compactMap { ($0 as? UIWindowScene)?.keyWindow }
+            .first?.rootViewController ?? UIViewController()
+  SWIFT
+
+  original_block = /let flutterViewController = UIApplication\.shared\n\s*\.connectedScenes\n\s*\.compactMap \{ \(\$0 as\? UIWindowScene\)\?\.keyWindow \}\n\s*\.first\?\.rootViewController\n\s*guard let flutterViewController = flutterViewController else \{ return \}/m
+
+  already_patched_block = /let flutterViewController = registrar\.viewController \?\? UIApplication\.shared\n\s*\.connectedScenes\n\s*\.compactMap \{ \(\$0 as\? UIWindowScene\)\?\.keyWindow \}\n\s*\.first\?\.rootViewController \?\? UIViewController\(\)/m
+
+  patched = content
+  if content.match?(original_block)
+    patched = content.sub(original_block, new_block.rstrip)
+  elsif !content.match?(already_patched_block)
+    puts 'Jitsi plugin registration block not found; skipping patch.'
+    return
+  end
+
+  return if patched == content
+
+  File.write(plugin_swift, patched)
+  puts 'Patched jitsi_meet_flutter_sdk iOS registration to avoid early return before event channel setup.'
+end
+
 target 'Runner' do
   use_frameworks!
 
@@ -37,7 +68,14 @@ target 'Runner' do
 end
 
 post_install do |installer|
+  patch_jitsi_plugin_registration
+
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+    target.build_configurations.each do |config|
+      if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 15.1
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.1'
+      end
+    end
   end
 end

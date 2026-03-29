@@ -1,0 +1,360 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:google_sign_in/google_sign_in.dart';
+import 'dart:io' show Platform;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../config/api_config.dart';
+import '../config/env.dart';
+
+const _storage = FlutterSecureStorage();
+
+/// Decode the payload of a JWT without verification (for extracting userId).
+Map<String, dynamic> _decodeJwtPayload(String token) {
+  final parts = token.split('.');
+  if (parts.length != 3) throw Exception('Invalid JWT');
+  final payload = parts[1];
+  final normalized = base64Url.normalize(payload);
+  return jsonDecode(utf8.decode(base64Url.decode(normalized)));
+}
+
+/// Check whether a JWT has expired by inspecting its `exp` claim.
+bool isTokenExpired(String token) {
+  try {
+    final payload = _decodeJwtPayload(token);
+    final exp = payload['exp'];
+    if (exp == null) return true;
+    final expiry = DateTime.fromMillisecondsSinceEpoch(exp * 1000);
+    // Consider expired if less than 30 seconds remaining
+    return DateTime.now().isAfter(expiry.subtract(const Duration(seconds: 30)));
+  } catch (_) {
+    return true;
+  }
+}
+
+/// Persist token + userId into secure storage.
+Future<void> _saveCredentials(String token) async {
+  await _storage.write(key: 'token', value: token);
+  final payload = _decodeJwtPayload(token);
+  final userId = payload['id']?.toString();
+  if (userId != null) {
+    await _storage.write(key: 'userId', value: userId);
+  }
+}
+
+class AuthService {
+  // Use a class-level storage instance for the methods below
+  static const _storage = FlutterSecureStorage();
+
+  static Future<String?> getToken() async {
+    // Tries 'auth_token' first (set by _saveToken), falls back to 'token' (set by _saveCredentials)
+    String? token = await _storage.read(key: 'auth_token');
+    token ??= await _storage.read(key: 'token');
+    return token;
+  }
+
+  static Future<String?> getUserId() async {
+    return _storage.read(key: 'userId');
+  }
+
+  static Future<void> clearToken() async {
+    await _storage.delete(key: 'auth_token');
+    await _storage.delete(key: 'token');
+    await _storage.delete(key: 'userId');
+  }
+
+  static Future<void> _saveToken(dynamic responseData) async {
+    if (responseData is Map) {
+      String? token;
+      if (responseData['token'] != null) {
+        token = responseData['token'];
+      } else if (responseData['data'] != null && responseData['data'] is Map && responseData['data']['token'] != null) {
+        token = responseData['data']['token'];
+      }
+
+      if (token != null) {
+        await _storage.write(key: 'auth_token', value: token);
+      }
+    }
+  }
+
+  static Future<Map<String, dynamic>> register({required String email, required String username, required String password, required String confirmPassword}) async {
+    try {
+      final response = await http.post(
+        Uri.parse(ApiConfig.register),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'username': username, 'password': password, 'confirmPassword': confirmPassword}),
+      );
+
+      final status = response.statusCode;
+      final body = response.body;
+      // Log for debugging
+      // ignore: avoid_print
+      print('AuthService.register -> status: $status body: $body');
+
+      // Try to parse JSON response, but tolerate non-JSON error bodies
+      dynamic parsed;
+      try {
+        parsed = jsonDecode(body);
+      } catch (_) {
+        parsed = null;
+      }
+
+      if (status >= 200 && status < 300) {
+        if (parsed is Map<String, dynamic>) {
+          await _saveToken(parsed);
+          if (parsed.containsKey('success')) return parsed;
+          return {'success': true, 'data': parsed};
+        }
+        return {'success': true, 'data': parsed};
+      }
+
+      String message = 'Registration failed';
+      if (parsed is Map && parsed['message'] != null) {
+        message = parsed['message'].toString();
+      } else if (body.isNotEmpty) {
+        message = body;
+      }
+
+      return {'success': false, 'message': message, 'statusCode': status};
+    } catch (e) {
+      // Network or other error (DNS, connection refused, TLS, etc.)
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> login({required String email, required String password}) async {
+    try {
+      // Debug: log computed base URL and full endpoint
+      // ignore: avoid_print
+      print('AuthService.login -> Env.apiBaseUrl: ${Env.apiBaseUrl}');
+      // ignore: avoid_print
+      print('AuthService.login -> ApiConfig.login: ${ApiConfig.login}');
+
+      final payload = {'email': email, 'username': email, 'password': password};
+      // ignore: avoid_print
+      print('AuthService.login -> request body: ${jsonEncode(payload)}');
+
+      final response = await http.post(Uri.parse(ApiConfig.login), headers: {'Content-Type': 'application/json'}, body: jsonEncode(payload));
+
+      final status = response.statusCode;
+      final body = response.body;
+
+      // Log for debugging
+      // ignore: avoid_print
+      print('AuthService.login -> status: $status body: $body');
+
+      dynamic parsed;
+      try {
+        parsed = jsonDecode(body);
+      } catch (_) {
+        parsed = null;
+      }
+
+      if (status >= 200 && status < 300) {
+        // Persist token + userId
+        final token = (parsed is Map<String, dynamic>) ? (parsed['token'] ?? parsed['data']?['token']) : null;
+        if (token != null) {
+          await _saveCredentials(token as String);
+        }
+
+        if (parsed is Map<String, dynamic>) {
+          await _saveToken(parsed);
+          if (parsed.containsKey('success')) return parsed;
+          return {'success': true, 'data': parsed};
+        }
+        return {'success': true, 'data': parsed};
+      }
+
+      String message = 'Login failed';
+      if (parsed is Map && parsed['message'] != null) {
+        message = parsed['message'].toString();
+      } else if (body.isNotEmpty) {
+        message = body;
+      }
+
+      return {'success': false, 'message': message, 'statusCode': status};
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> signInWithGoogle() async {
+    try {
+      // Construct GoogleSignIn carefully: on Android the plugin uses
+      // `google-services.json` and passing a `clientId` may trigger
+      // ApiException(10) if the client SHA/package don't match. Only
+      // pass an explicit `clientId` on platforms that require it (iOS).
+      final GoogleSignIn googleSignIn = Platform.isIOS
+          ? GoogleSignIn(
+              scopes: ['email', 'profile'],
+              clientId: Env.googleClientId,
+              serverClientId: Env.googleWebClientId,
+            )
+          : GoogleSignIn(
+              scopes: ['email', 'profile'],
+              // serverClientId can be provided for backend verification
+              serverClientId: Env.googleWebClientId,
+            );
+
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+
+      if (googleUser == null) {
+        // User cancelled the Google sign-in UI
+        // ignore: avoid_print
+        print('AuthService.signInWithGoogle -> googleUser is null (user cancelled)');
+        return {'success': false, 'message': 'Google sign-in cancelled'};
+      }
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final String? idToken = googleAuth.idToken;
+      final String? accessToken = googleAuth.accessToken;
+
+      // Debug: print user info and token presence (don't print tokens in production)
+      // ignore: avoid_print
+      print('AuthService.signInWithGoogle -> googleUser: ${googleUser.displayName} ${googleUser.email}');
+      // ignore: avoid_print
+      print('AuthService.signInWithGoogle -> idToken present: ${idToken != null}, accessToken present: ${accessToken != null}');
+
+      if (idToken == null) {
+        // If idToken is not available, return a useful message for debugging
+        return {
+          'success': false,
+          'message': 'Failed to get Google ID token. Ensure `GOOGLE_CLIENT_ID_WEB` is set and SHA-1 is configured in Google Console.'
+        };
+      }
+
+      // Send to backend
+      // Debug: log computed base URL and Google endpoint
+      // ignore: avoid_print
+      print('AuthService.signInWithGoogle -> Env.apiBaseUrl: ${Env.apiBaseUrl}');
+      // ignore: avoid_print
+      print('AuthService.signInWithGoogle -> ApiConfig.googleSignIn: ${ApiConfig.googleSignIn}');
+
+      final response = await http.post(Uri.parse(ApiConfig.googleSignIn), headers: {'Content-Type': 'application/json'}, body: jsonEncode({'idToken': idToken}));
+
+      final status = response.statusCode;
+      final body = response.body;
+
+      // ignore: avoid_print
+      print('AuthService.signInWithGoogle -> status: $status body: $body');
+
+      dynamic parsed;
+      try {
+        parsed = jsonDecode(body);
+      } catch (_) {
+        parsed = null;
+      }
+
+      if (status >= 200 && status < 300) {
+        // Persist token + userId
+        final token = (parsed is Map<String, dynamic>) ? (parsed['token'] ?? parsed['data']?['token']) : null;
+        if (token != null) {
+          await _saveCredentials(token as String);
+        }
+
+        if (parsed is Map<String, dynamic>) {
+          await _saveToken(parsed);
+          if (parsed.containsKey('success')) return parsed;
+          return {'success': true, 'data': parsed};
+        }
+        return {'success': true, 'data': parsed};
+      }
+
+      String message = 'Google sign-in failed';
+      if (parsed is Map && parsed['message'] != null) {
+        message = parsed['message'].toString();
+      } else if (body.isNotEmpty) {
+        message = body;
+      }
+
+      return {'success': false, 'message': message, 'statusCode': status};
+    } catch (e, st) {
+      // Detailed error logging for sign-in failures
+      // ignore: avoid_print
+      print('AuthService.signInWithGoogle -> exception: $e');
+      // ignore: avoid_print
+      print(st);
+      return {'success': false, 'message': 'Google sign-in error: $e'};
+    }
+  }
+
+  static Future<Map<String, dynamic>> sendOTP({required String email}) async {
+    try {
+      final response = await http.post(Uri.parse(ApiConfig.sendOTP), headers: {'Content-Type': 'application/json'}, body: jsonEncode({'email': email}));
+
+      final status = response.statusCode;
+      final body = response.body;
+      // Log for debugging
+      // ignore: avoid_print
+      print('AuthService.sendOTP -> status: $status body: $body');
+
+      dynamic parsed;
+      try {
+        parsed = jsonDecode(body);
+      } catch (_) {
+        parsed = null;
+      }
+
+      if (status >= 200 && status < 300) {
+        if (parsed is Map<String, dynamic>) {
+          if (parsed.containsKey('success')) return parsed;
+          return {'success': true, 'message': parsed['message'] ?? 'OTP sent successfully'};
+        }
+        return {'success': true, 'message': 'OTP sent successfully'};
+      }
+
+      String message = 'Failed to send OTP';
+      if (parsed is Map && parsed['message'] != null) {
+        message = parsed['message'].toString();
+      } else if (body.isNotEmpty) {
+        message = body;
+      }
+
+      return {'success': false, 'message': message, 'statusCode': status};
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> resetPasswordWithOTP({required String email, required String otp, required String newPassword}) async {
+    try {
+      final response = await http.post(
+        Uri.parse(ApiConfig.resetPasswordWithOTP),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'otp': otp, 'newPassword': newPassword}),
+      );
+
+      final status = response.statusCode;
+      final body = response.body;
+      // Log for debugging
+      // ignore: avoid_print
+      print('AuthService.resetPasswordWithOTP -> status: $status body: $body');
+
+      dynamic parsed;
+      try {
+        parsed = jsonDecode(body);
+      } catch (_) {
+        parsed = null;
+      }
+
+      if (status >= 200 && status < 300) {
+        if (parsed is Map<String, dynamic>) {
+          if (parsed.containsKey('success')) return parsed;
+          return {'success': true, 'message': parsed['message'] ?? 'Password reset successfully'};
+        }
+        return {'success': true, 'message': 'Password reset successfully'};
+      }
+
+      String message = 'Failed to reset password';
+      if (parsed is Map && parsed['message'] != null) {
+        message = parsed['message'].toString();
+      } else if (body.isNotEmpty) {
+        message = body;
+      }
+
+      return {'success': false, 'message': message, 'statusCode': status};
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+}

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:lockedin_frontend/ui/screens/auth/sign_up_screen.dart';
-import 'package:lockedin_frontend/theme/app_colors.dart';
-import '../../widgets/long_button.dart';
-import 'login_screen.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lockedin_frontend/ui/theme/app_theme.dart';
+import 'package:lockedin_frontend/ui/widgets/actions/long_button.dart';
+import 'package:provider/provider.dart';
+import '../../../provider/auth_provider.dart';
+
+
 
 class GettingStartedScreen extends StatelessWidget {
   const GettingStartedScreen({super.key});
@@ -23,7 +26,7 @@ class GettingStartedScreen extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Image.asset("assets/icon.png", height: 81, width: 81),
+                      Image.asset("assets/images/icon.png", height: 81, width: 81),
                       const SizedBox(width: 15),
                       const Text(
                         "LockedIn",
@@ -48,21 +51,15 @@ class GettingStartedScreen extends StatelessWidget {
                   LongButton(
                     text: "Login",
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const LoginScreen()),
-                      );
+                      context.go('/login');
                     },
                   ),
                   const SizedBox(height: 16),
                   LongButton(
-                    text: "Sign up", 
+                    text: "Sign up",
                     onPressed: () {
-                      Navigator.push(
-                        context, 
-                        MaterialPageRoute(builder: (context) => const SignUpScreen())
-                      );
-                    }
+                      context.go('/register');
+                    },
                   ),
                   const SizedBox(height: 24),
                   Row(
@@ -95,10 +92,23 @@ class GettingStartedScreen extends StatelessWidget {
                   const SizedBox(height: 24),
                   LongButton(
                     text: "Continue with Google",
-                    onPressed: () {},
+                    onPressed: () async {
+                        final auth = context.read<AuthProvider>();
+                        final success = await auth.signInWithGoogle();
+                        
+                        if (success) {
+                          context.go('/productivity-hub');
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(auth.errorMessage ?? 'Google sign-in failed'),
+                            ),
+                          );
+                        }
+                      },
                     isOutlined: true,
                     icon: Image.asset(
-                      "assets/google.png",
+                      "assets/images/google.png",
                       height: 24,
                       width: 24,
                     ),
