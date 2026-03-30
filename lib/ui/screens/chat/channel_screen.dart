@@ -78,10 +78,10 @@ class _ChannelScreenState extends State<ChannelScreen> with ActivityTracker {
           onPressed: () => _handleBackNavigation(context),
         ),
         title: GestureDetector(
-          onTap: !isMock && otherMember != null && otherMember.user != null && (otherMember.userId?.isNotEmpty ?? false) && (otherMember.user!.name ?? '').isNotEmpty
+          onTap: !isMock && otherMember != null && otherMember.user != null && (otherMember.userId?.isNotEmpty ?? false) && (otherMember.user!.name).isNotEmpty
               ? () => _openUserProfile(
                     otherMember.userId ?? '',
-                    otherMember.user!.name ?? 'User',
+                    otherMember.user!.name,
                     otherMember.user!.image,
                   )
               : null,

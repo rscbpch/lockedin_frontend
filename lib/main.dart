@@ -396,76 +396,10 @@ class _MyAppState extends State<MyApp> {
         return StreamChat(
           client: streamClient,
           streamChatThemeData: StreamChatAppTheme.theme,
-          child: _StreakCompletionHost(
-            child: _PomodoroPromptHost(child: child!),
-          ),
+          child: _PomodoroPromptHost(child: child!),
         );
       },
     );
-  }
-}
-
-class _StreakCompletionHost extends StatefulWidget {
-  const _StreakCompletionHost({required this.child});
-  final Widget child;
-
-  @override
-  State<_StreakCompletionHost> createState() => _StreakCompletionHostState();
-}
-
-class _StreakCompletionHostState extends State<_StreakCompletionHost> {
-  bool _isDialogOpen = false;
-  StreakProvider? _provider;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final nextProvider = context.read<StreakProvider>();
-    if (identical(_provider, nextProvider)) return;
-    _provider?.removeListener(_onProviderChanged);
-    _provider = nextProvider;
-    _provider!.addListener(_onProviderChanged);
-  }
-
-  void _onProviderChanged() {
-    final provider = _provider;
-    if (provider == null || _isDialogOpen) return;
-    if (!provider.hasPendingGoalCompletion) return;
-    _showCompletionDialog(provider);
-  }
-
-  void _showCompletionDialog(StreakProvider provider) {
-    final rootContext = appRootNavigatorKey.currentContext;
-    if (rootContext == null) return;
-
-    _isDialogOpen = true;
-    provider.acknowledgeGoalCompletion();
-
-    showDialog<void>(
-      context: rootContext,
-      useRootNavigator: true,
-      builder: (_) => const AppAlertDialog(
-        title: '🔥 Streak Goal Completed!',
-        message:
-            "Great job! You've hit your daily study goal. Keep the streak alive!",
-        confirmLabel: 'Okay',
-      ),
-    ).whenComplete(() {
-      if (mounted) {
-        setState(() => _isDialogOpen = false);
-      } else {
-        _isDialogOpen = false;
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) => widget.child;
-
-  @override
-  void dispose() {
-    _provider?.removeListener(_onProviderChanged);
-    super.dispose();
   }
 }
 
